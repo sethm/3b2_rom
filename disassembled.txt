@@ -22,10 +22,14 @@
 00001282: 04 7f 08 00 00 02 4a                           MOVAW $0x2000008,%ap
 00001289: 04 7f 08 08 00 02 4e                           MOVAW $0x2000808,%isp
 
+;; Next we set some timers. These commands write to the 8253 programmable
+;; timer chip and configure Counter 0 and Counter 2. It is as yet unknown what
+;; these timers are used for or what they're connected to.
+
 ;; Send 0x16 to the command register of the 8253.
 ;; BCD=0, M=011, RL=01, SC=00
 ;; This selects counter 0, sets Read/Load to "Lest significant byte only",
-;; and sets mode to "Mode 3" (square wave generator)
+;; and sets mode to "Mode 3" (Square Wave generator)
 
 00001290: 87 16 7f 0f 20 04 00                           MOVB &0x16,$0x4200f
 00001297: 70                                             NOP 
@@ -35,15 +39,13 @@
 00001298: 87 6f 64 7f 03 20 04 00                        MOVB &0x64,$0x42003
 000012a0: 70                                             NOP 
 
-
 ;; Send 0x94 to the command register of the 8253.
 ;; BCD=0, M=010, RL=01, SC=10
 ;; This selects counter 2, sets Read/Load to "Least significant byte only",
-;; and sets mode to "Mode 2" (rate generator)
+;; and sets mode to "Mode 2" (Rate generator)
 
 000012a1: 87 5f 94 00 7f 0f 20 04 00                     MOVB &0x94,$0x4200f
 000012aa: 70                                             NOP 
-
 
 ;; Puts 0xa into Counter 2
 
@@ -53,22 +55,22 @@
 ;; Send 0x74 to the command register of the 8253.
 ;; BCD=0, M=010, RL=11, SC=01
 ;; Select counter 1, sets Read/Load to "Least, then most SB",
-;; then sets mode to "Mode 2" (rate generator)
+;; then sets mode to "Mode 2" (Rate generator)
 
 000012b3: 87 6f 74 7f 0f 20 04 00                        MOVB &0x74,$0x4200f
 000012bb: 70                                             NOP 
 
-;; ... but oddly, we don't seem to do anything with timer 1, we just let
-;; it sit in this square wave mode without loading any data into it, so
-;; its period is unknown. Counter 1 (0x42007) is unused in the rest of the
-;; ROM.
+;; ... but oddly, we don't seem to do anything with timer 1, we just let it
+;; sit there without loading any data into it, so its period is unknown.
+;; Counter 1 (0x42007) is unused in the rest of the ROM!
 
-;; Jump to 0x12d5 -- basically we skip the next block
+;; Unconditional jump to 0x12d5 -- basically we skip the next block
 
 000012bc: 24 7f d5 12 00 00                              JMP $0x12d5
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Unknown Entry Point. Who jumps here?
+;; Unknown Entry Point. Who jumps here? Could it be some kind of
+;; table or constant instead of code?
 
 000012c2: 70                                             NOP 
 000012c3: 70                                             NOP 
@@ -78,7 +80,9 @@
 000012d4: 70                                             NOP 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Unknown Entry Point, but possibly some kind of sanity check.
+;; Unknown Entry Point, but my current guess is that this is some
+;; kind of sanity check or power-on self-test of the CPU.
+;;
 
 ;;
 ;; Set the PSW's NZCV flags to all '0's, leaving the rest of the PSW
@@ -91,10 +95,11 @@
 000012e0: 84 40 4b                                       MOVW %r0,%psw
 
 ;;
-;; Branch based on the status of setting the PSW. The reason
-;; behind these checks is currently opaque to me, but in short
-;; each check looks to see if any of N, V, Z, or C is set.
-;; If they are, branch to 0x1923. If not, fall through.
+;; Branches based on the state of the PSW after clearing
+;; the NZCV bits. In short, each check looks to see if one
+;; of the bits is set when it should not be set. If they
+;; are, we jump to 0x1923. If not, we branch to the next
+;; check.
 ;;
 
 ;; If (Z == 0), branch to 0x12e8
@@ -122,8 +127,8 @@
 ;; No, branch to 0x1923
 000012f9: 7a 2a 06                                       BRH &0x62a
 
-;; Q: Why check twice? The previous check cannot change the flag.
 ;; if (C == 0) branch to 0x12fc
+;; Why are we repeating this check?
 000012fc: 53 05                                          BGEUB &0x5
 ;; No, branch to 0x1923
 000012fe: 7a 25 06                                       BRH &0x625
@@ -142,8 +147,9 @@
 
 
 ;;
-;; Now we do another check of the flags, very similar to the behavior
-;; above.
+;; Now we do another check of the flags, very similar to
+;; the behavior above. Each check looks to see if a flag
+;; is clear when it should not be clear.
 ;;
 
 ;; If (Z == 1), branch to 0x1319
@@ -159,16 +165,32 @@
 ;; If ((N == 0) | (Z == 1)), branch to 0x1323
 0000131e: 43 05                                          BGEB &0x5
 ;; No, branch to 0x1923
-
 00001320: 7a 03 06                                       BRH &0x603
+
+;; If ((C|Z) == 1), branch to 0x1328
 00001323: 5f 05                                          BLEUB &0x5
+;; No, branch to 0x1923
 00001325: 7a fe 05                                       BRH &0x5fe
+
+;; If (C == 1), branch to 0x132d
 00001328: 5b 05                                          BLUB &0x5
+;; No, branch to 0x1923
 0000132a: 7a f9 05                                       BRH &0x5f9
+
+;; If (C == 1), branch to 0x1332. 
+;; Again, we repeat a check -- why?
 0000132d: 5b 05                                          BLUB &0x5
+;; No, branch to 0x1923
 0000132f: 7a f4 05                                       BRH &0x5f4
+
+;; If (V == 1), branch to 0x1337
 00001332: 6b 05                                          BVSB &0x5
+;; No, branch to 0x1923
 00001334: 7a ef 05                                       BRH &0x5ef
+
+;; We've fallen through.
+;; Time for some more self-testing!
+
 00001337: 70                                             NOP 
 00001338: 84 4b 40                                       MOVW %psw,%r0
 0000133b: b8 4f ff ff c3 ff 40                           ANDW2 &0xffc3ffff,%r0
