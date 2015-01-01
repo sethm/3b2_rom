@@ -10,8 +10,8 @@ AT&T 3B2 ROM images
 - 310_AAYYF.bin
 - 310_full.bin
 
-These are binary images of Intel D2764A EPROMs from an AT&T 3B2 Model 310.
-The 3B2 reads full 32-bit words from the 4 ROMs. The low byte
+These are binary images of Intel D2764A EPROMs from an AT&T 3B2 Model
+310.  The 3B2 reads full 32-bit words from the 4 ROMs. The low byte
 comes from AAYYC, the next byte from AAYYD, the next byte from AAYYE,
 and the high byte from AAYYD.
 
@@ -31,10 +31,25 @@ This is a canonical HEX+ASCII dump of the `310_full.bin` file.
 - 400_AAYYF.bin
 - 400_full.bin
 
-These are binary images of Intel D2764A EPROMs from an AT&T 3B2 Model 400.
-They appear to be identical to the 310 ROMs except for the final few
-bytes. They are included for completeness.
+These are binary images of Intel D2764A EPROMs from an AT&T 3B2 Model
+400.  They appear to be identical to the 310 ROMs except for the final
+few bytes. They are included for completeness.
 
 - 400_full.hex
 
 This is a canonical HEX+ASCII dump of the `400_full.bin` file.
+
+WE32100 Disassembler
+--------------------
+
+A very bare-bones WE32100 disassembler can be found in the file
+`we32dis.rb`.  It is implemented in Ruby and requires at least Ruby
+2.0 to function correctly.
+
+Disassembled ROM
+----------------
+
+The file `disassembled.txt` contains a disassembled and commented
+version of the Model 400 ROM. It is a work in progress, and has not
+been fully commented yet.
+
