@@ -666,7 +666,7 @@ class Decoder
 
       if op == nil
         # Catch-all if no operand was found.
-        op = Op.new(opcode, -1, Op::NONE, Op::NA, "???")
+        op = Op.new(opcode, -1, Op::NONE, Op::NA, false, "???")
       end
     else
       op = @@op_table[opcode]
