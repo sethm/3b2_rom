@@ -98,10 +98,11 @@ class Op
 end
 
 class Operand
-  attr_accessor :pc, :mode, :reg, :etype, :data, :displacement
+  attr_accessor :pc, :op, :mode, :reg, :etype, :data, :displacement
 
-  def initialize(pc)
+  def initialize(pc, op)
     @pc = pc
+    @op = op
     @mode = 0
     @reg = 0
     @data = 0
@@ -110,12 +111,14 @@ class Operand
 
   def compute_displacement
     # We're only smart enough to compute the displacement
-    # for absolute and literal operands
-    case @mode
-    when 0, 1, 2, 3
-      @displacement = @pc + @data
-    when 15
-      @displacement = @pc - @data.byte_complement
+    # for literal displacement types
+    case @op.op_mode
+    when Op::BYTE
+      @displacement = @pc + @data.byte_complement
+    when Op::HALF
+      @displacement = @pc + @data.half_complement
+    when Op::WORD
+      @displacement = @pc + @data.word_complement
     else
       @displacement = nil
     end
@@ -685,31 +688,31 @@ class Decoder
 
     case instr.op_mode
     when Op::BYTE
-      operand = Operand.new(offset)
+      operand = Operand.new(offset, op)
       operand.data = consume_byte(byte_stream, offset + consumed, instr)
       operand.compute_displacement
       consumed += 1
       instr.operands << operand
     when Op::HALF
-      operand = Operand.new(offset)
+      operand = Operand.new(offset, op)
       operand.data = consume_halfword(byte_stream, offset + consumed, instr)
       operand.compute_displacement
       consumed += 2
       instr.operands << operand
     when Op::COPR
-      operand = Operand.new(offset)
+      operand = Operand.new(offset, op)
       operand.data = consume_word(byte_stream, offset + consumed, instr)
       consumed += 4
       instr.operands << operand
       (instr.op_count - 1).times do |i|
         consumed += decode_operand(byte_stream, offset + consumed,
-                                   instr, Operand.new(offset),
+                                   instr, Operand.new(offset, op),
                                    op.is_displace)
       end
     when Op::DESC
       instr.op_count.times do |i|
         consumed += decode_operand(byte_stream, offset + consumed,
-                                   instr, Operand.new(offset),
+                                   instr, Operand.new(offset, op),
                                    op.is_displace)
       end
     end
