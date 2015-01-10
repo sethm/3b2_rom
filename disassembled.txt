@@ -314,7 +314,14 @@
 00001478: 82 48                                          CLRH %r8
 0000147a: 84 5f ee 7f 45                                 MOVW &0x7fee,%r5
 0000147f: 80 47                                          CLRW %r7
+
+;; Tests for the carry bit (I think)
+
+;; First jump to 14c0 to start the test...
 00001481: 7b 3f                                          BRB &0x3f <0x14c0>
+
+ 
+;; While r5 < r7...
 00001483: 86 e2 48 e0 40                                 MOVH {uhalf}%r8,{uword}%r0
 00001488: 87 57 e2 41                                    MOVB (%r7),{uhalf}%r1
 0000148c: ba 5f ff 00 41                                 ANDH2 &0xff,%r1
@@ -332,6 +339,7 @@
 000014be: 90 47                                          INCW %r7
 000014c0: 3c 45 47                                       CMPW %r5,%r7
 000014c3: 5b c0                                          BLUB &0xc0 <0x1483>
+
 000014c5: 86 e2 48 e0 40                                 MOVH {uhalf}%r8,{uword}%r0
 000014ca: 88 40 40                                       MCOMW %r0,%r0
 000014cd: 86 40 48                                       MOVH %r0,%r8
@@ -342,7 +350,9 @@
 000014e2: b0 42 41                                       ORW2 %r2,%r1
 000014e5: 3c 41 40                                       CMPW %r1,%r0
 000014e8: 77 08                                          BNEB &0x8 <0x14f0>
+
 000014ea: 24 7f 6e 15 00 00                              JMP $0x156e
+
 000014f0: 86 e2 48 e0 40                                 MOVH {uhalf}%r8,{uword}%r0
 000014f5: 88 40 40                                       MCOMW %r0,%r0
 000014f8: 86 40 48                                       MOVH %r0,%r8
@@ -415,6 +425,8 @@
 0000161f: dc 01 7f a0 04 00 00 40                        ADDW3 &0x1,$0x4a0,%r0
 00001627: a0 40                                          PUSHW %r0
 00001629: a0 01                                          PUSHW &0x1
+
+;; Read NVRAM
 0000162b: 2c cc f4 7f 24 52 00 00                        CALL -12(%sp),$0x5224
 00001633: 28 40                                          TSTW %r0
 00001635: 77 28                                          BNEB &0x28 <0x165d>
@@ -511,8 +523,16 @@
 000017c5: 87 01 7f 68 08 00 02                           MOVB &0x1,$0x2000868
 000017cc: 70                                             NOP
 000017cd: 82 48                                          CLRH %r8
+
+;; Put $43800 into R5. This is the top of NVRAM, and the stopping
+;; point for the upcoming block that clears NVRAM.
+
 000017cf: 84 4f 00 38 04 00 45                           MOVW &0x43800,%r5
+
+;; Put $43000 into R7. This is the base of NVRAM.
 000017d6: 84 4f 00 30 04 00 47                           MOVW &0x43000,%r7
+
+;;
 000017dd: 7b 40                                          BRB &0x40 <0x181d>
 000017df: 86 e2 48 e0 40                                 MOVH {uhalf}%r8,{uword}%r0
 000017e4: 86 e2 c7 02 e0 41                              MOVH {uhalf}2(%r7),{uword}%r1
@@ -529,6 +549,7 @@
 00001814: b0 41 40                                       ORW2 %r1,%r0
 00001817: 86 40 48                                       MOVH %r0,%r8
 0000181a: 9c 04 47                                       ADDW2 &0x4,%r7
+
 0000181d: 3c 45 47                                       CMPW %r5,%r7
 00001820: 5b bf                                          BLUB &0xbf <0x17df>
 00001822: 86 e2 48 e0 40                                 MOVH {uhalf}%r8,{uword}%r0
@@ -546,21 +567,42 @@
 00001853: d0 0c 42 42                                    LLSW3 &0xc,%r2,%r2
 00001857: b0 42 41                                       ORW2 %r2,%r1
 0000185a: 3c 41 40                                       CMPW %r1,%r0
+
+;; If R1 != R0, we clear out the NVRAM. Othwerise, jump to 191d
 0000185d: 77 08                                          BNEB &0x8 <0x1865>
 0000185f: 24 7f 1d 19 00 00                              JMP $0x191d
+
+;; Load the NVRAM base address into R7
 00001865: 84 4f 00 30 04 00 47                           MOVW &0x43000,%r7
+
 0000186c: 7b 08                                          BRB &0x8 <0x1874>
+
+;; Clear the NVRAM memory location stored in %r7
 0000186e: 80 57                                          CLRW (%r7)
 00001870: 70                                             NOP
+
+;; Add 4 bytes to the address
 00001871: 9c 04 47                                       ADDW2 &0x4,%r7
+
+;; Is %r7 == %r5?
 00001874: 3c 45 47                                       CMPW %r5,%r7
+
+;; No, jump back and keep zeroing NVRAM.
 00001877: 5b f7                                          BLUB &0xf7 <0x186e>
+
+;; Yes, we're done.
+
+;; Store 1 in $43060
 00001879: 84 01 7f 60 30 04 00                           MOVW &0x1,$0x43060
 00001880: 70                                             NOP
+
+;; Store 0 in $43064
 00001881: 80 7f 64 30 04 00                              CLRW $0x43064
 00001887: 70                                             NOP
+
 00001888: 82 48                                          CLRH %r8
 0000188a: 84 4f 00 30 04 00 47                           MOVW &0x43000,%r7
+
 00001891: 7b 40                                          BRB &0x40 <0x18d1>
 00001893: 86 e2 48 e0 40                                 MOVH {uhalf}%r8,{uword}%r0
 00001898: 86 e2 c7 02 e0 41                              MOVH {uhalf}2(%r7),{uword}%r1
@@ -577,6 +619,8 @@
 000018c8: b0 41 40                                       ORW2 %r1,%r0
 000018cb: 86 40 48                                       MOVH %r0,%r8
 000018ce: 9c 04 47                                       ADDW2 &0x4,%r7
+
+
 000018d1: 3c 45 47                                       CMPW %r5,%r7
 000018d4: 5b bf                                          BLUB &0xbf <0x1893>
 000018d6: 86 e2 48 e0 40                                 MOVH {uhalf}%r8,{uword}%r0
@@ -598,6 +642,8 @@
 00001910: 70                                             NOP
 00001911: b0 4f 00 00 00 20 7f 5c 08 00 02               ORW2 &0x20000000,$0x200085c
 0000191c: 70                                             NOP
+
+;; 
 0000191d: 24 7f b1 21 00 00                              JMP $0x21b1
 
 ;;
@@ -1132,6 +1178,7 @@
 000021a7: 70                                             NOP
 000021a8: 10 45                                          SAVE %r5
 000021aa: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
+
 000021b1: 84 4f 28 0b 00 02 48                           MOVW &0x2000b28,%r8
 000021b8: 84 4f e4 05 00 00 47                           MOVW &0x5e4,%r7
 000021bf: 80 45                                          CLRW %r5
