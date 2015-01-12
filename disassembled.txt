@@ -320,7 +320,7 @@
 ;; First jump to 14c0 to start the test...
 00001481: 7b 3f                                          BRB &0x3f <0x14c0>
 
- 
+
 ;; While r5 < r7...
 00001483: 86 e2 48 e0 40                                 MOVH {uhalf}%r8,{uword}%r0
 00001488: 87 57 e2 41                                    MOVB (%r7),{uhalf}%r1
@@ -643,7 +643,7 @@
 00001911: b0 4f 00 00 00 20 7f 5c 08 00 02               ORW2 &0x20000000,$0x200085c
 0000191c: 70                                             NOP
 
-;; 
+;;
 0000191d: 24 7f b1 21 00 00                              JMP $0x21b1
 
 ;;
@@ -1634,6 +1634,7 @@
 00002979: 08                                             RET
 0000297a: 70                                             NOP
 0000297b: 70                                             NOP
+
 0000297c: 10 45                                          SAVE %r5
 0000297e: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00002985: 84 4f c4 2a 00 00 7f f4 11 00 02               MOVW &0x2ac4,$0x20011f4
@@ -2026,6 +2027,8 @@
 0000303e: dc 0e 50 40                                    ADDW3 &0xe,(%r0),%r0
 00003042: a0 40                                          PUSHW %r0
 00003044: 2c cc f8 7f b0 7f 00 00                        CALL -8(%sp),$0x7fb0
+
+
 0000304c: 04 a9 b8 00 40                                 MOVAW 0xb8(%fp),%r0
 00003051: 87 a9 ac 00 e0 41                              MOVB 0xac(%fp),{uword}%r1
 00003057: d0 04 41 41                                    LLSW3 &0x4,%r1,%r1
@@ -2770,7 +2773,11 @@
 00003baa: dc 03 7f a4 04 00 00 40                        ADDW3 &0x3,$0x4a4,%r0
 00003bb2: a0 40                                          PUSHW %r0
 00003bb4: a0 01                                          PUSHW &0x1
+
+;; Call 'rnvram'
 00003bb6: 2c cc f4 7f 24 52 00 00                        CALL -12(%sp),$0x5224
+
+;;
 00003bbe: 3c 01 40                                       CMPW &0x1,%r0
 00003bc1: 77 51                                          BNEB &0x51 <0x3c12>
 00003bc3: dc 02 7f a4 04 00 00 40                        ADDW3 &0x2,$0x4a4,%r0
@@ -4593,6 +4600,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 'chknvram' - Routine to check NVRAM
 ;;
+;; This appears to be called only from 'rnvram' and 'wnvram'
+;;
 
 00005320: 10 47                                          SAVE %r7
 00005322: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
@@ -4803,6 +4812,7 @@
 00005589: 87 7f 0e 90 04 00 59                           MOVB $0x4900e,(%fp)
 00005590: 70                                             NOP
 00005591: 7b 28                                          BRB &0x28 <0x55b9>
+
 00005593: 2c 5c 7f de 62 00 00                           CALL (%sp),$0x62de
 0000559a: 2b 7f a4 12 00 02                              TSTB $0x20012a4
 000055a0: 7f 19                                          BEB &0x19 <0x55b9>
@@ -4812,7 +4822,11 @@
 000055b1: 70                                             NOP
 000055b2: 86 e2 72 e0 40                                 MOVH {uhalf}0(%ap),{uword}%r0
 000055b7: 7b 2c                                          BRB &0x2c <0x55e3>
+
+;; See if bit 4 (0x08) is set in the UART's interrupt status register.
 000055b9: 3b 7f 05 90 04 00 08                           BITB $0x49005,&0x8
+
+;; If it is, jump back to 5593
 000055c0: 7f d3                                          BEB &0xd3 <0x5593>
 000055c2: 86 72 40                                       MOVH 0(%ap),%r0
 000055c5: 96 72                                          DECH 0(%ap)
@@ -5666,12 +5680,22 @@
 000062da: 20 49                                          POPW %fp
 000062dc: 08                                             RET
 000062dd: 70                                             NOP
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Unknown routine.
+;;
 000062de: 10 49                                          SAVE %fp
 000062e0: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
+
+;; Check soft power inhibit (*510 = 020012d0)
 000062e7: 3f 01 ef 10 05 00 00                           CMPB &0x1,*$0x510
 000062ee: 7f 2b                                          BEB &0x2b <0x6319>
+
+;; Check programmable interval timer (8253)
 000062f0: 3f 6f 64 7f 03 20 04 00                        CMPB &0x64,$0x42003
 000062f8: 7f 21                                          BEB &0x21 <0x6319>
+
+;; Clear some state and enter a terminal condition
 000062fa: 80 ef 8c 04 00 00                              CLRW *$0x48c
 00006300: 70                                             NOP
 00006301: 80 ef 14 05 00 00                              CLRW *$0x514
@@ -5680,12 +5704,16 @@
 0000630e: 70                                             NOP
 0000630f: 87 04 7f 0e 90 04 00                           MOVB &0x4,$0x4900e
 00006316: 70                                             NOP
+;; Terminal condition - infinite loop
 00006317: 7b 00                                          BRB &0x0 <0x6317>
+
+;; Not sure why this is monkeying with the stack.
 00006319: 04 c9 e8 4c                                    MOVAW -24(%fp),%sp
 0000631d: 20 49                                          POPW %fp
 0000631f: 08                                             RET
 00006320: 70                                             NOP
 00006321: 70                                             NOP
+
 00006322: 10 49                                          SAVE %fp
 00006324: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 0000632b: 2c 5c cf b3                                    CALL (%sp),-77(%pc)
@@ -5825,6 +5853,7 @@
 00006549: 04 c9 e8 4c                                    MOVAW -24(%fp),%sp
 0000654d: 20 49                                          POPW %fp
 0000654f: 08                                             RET
+
 00006550: 10 49                                          SAVE %fp
 00006552: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00006559: f8 03 7f 58 12 00 02 40                        ANDW3 &0x3,$0x2001258,%r0
@@ -7662,6 +7691,12 @@
 00007fac: 20 49                                          POPW %fp
 00007fae: 08                                             RET
 00007faf: 70                                             NOP
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Unknown routine.
+;;
+
 00007fb0: 10 49                                          SAVE %fp
 00007fb2: 84 5a 41                                       MOVW (%ap),%r1
 00007fb5: 84 74 40                                       MOVW 0(%ap),%r0
