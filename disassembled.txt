@@ -736,8 +736,14 @@
 000019f5: 08                                             RET
 000019f6: 70                                             NOP
 000019f7: 70                                             NOP
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Unknown Routine - in fact, nothing calls this code! It looks unreachable.
+;;
 000019f8: 10 43                                          SAVE %r3
 000019fa: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
+
+;; Jump point from 0x25d3
 00001a01: 87 5f d0 00 7f 00 d0 04 00                     MOVB &0xd0,$0x4d000
 00001a0a: 70                                             NOP
 00001a0b: a0 01                                          PUSHW &0x1
@@ -1176,9 +1182,12 @@
 000021a5: 08                                             RET
 000021a6: 70                                             NOP
 000021a7: 70                                             NOP
+
+;; More unreacable code?
 000021a8: 10 45                                          SAVE %r5
 000021aa: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 
+;; Jump point from 0x191d
 000021b1: 84 4f 28 0b 00 02 48                           MOVW &0x2000b28,%r8
 000021b8: 84 4f e4 05 00 00 47                           MOVW &0x5e4,%r7
 000021bf: 80 45                                          CLRW %r5
@@ -4777,6 +4786,7 @@
 0000550d: 86 e2 72 e0 40                                 MOVH {uhalf}0(%ap),{uword}%r0
 00005512: a0 40                                          PUSHW %r0
 00005514: a0 5f ff 08                                    PUSHW &0x8ff
+;; Call 0x552C
 00005518: 2c cc f8 af 14 00                              CALL -8(%sp),0x14(%pc)
 0000551e: 86 e2 40 e0 40                                 MOVH {uhalf}%r0,{uword}%r0
 00005523: 7b 02                                          BRB &0x2 <0x5525>
@@ -4813,8 +4823,11 @@
 00005590: 70                                             NOP
 00005591: 7b 28                                          BRB &0x28 <0x55b9>
 
+;; Jump point. Calls our mysterious timer / soft power inhibit routine 0x62de
 00005593: 2c 5c 7f de 62 00 00                           CALL (%sp),$0x62de
+;; Set Z and N based on contents of 0x20012a4
 0000559a: 2b 7f a4 12 00 02                              TSTB $0x20012a4
+;; If 20012a4 == 0, jump to 0x55b9
 000055a0: 7f 19                                          BEB &0x19 <0x55b9>
 000055a2: 87 7f 0f 90 04 00 59                           MOVB $0x4900f,(%fp)
 000055a9: 70                                             NOP
@@ -4826,8 +4839,10 @@
 ;; See if bit 4 (0x08) is set in the UART's interrupt status register.
 000055b9: 3b 7f 05 90 04 00 08                           BITB $0x49005,&0x8
 
-;; If it is, jump back to 5593
+;; If it is, jump back to 0x5593
 000055c0: 7f d3                                          BEB &0xd3 <0x5593>
+
+;; If it's not...
 000055c2: 86 72 40                                       MOVH 0(%ap),%r0
 000055c5: 96 72                                          DECH 0(%ap)
 000055c7: 70                                             NOP
@@ -4909,6 +4924,7 @@
 000056ce: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
 000056d6: 87 64 e0 40                                    MOVB 4(%fp),{uword}%r0
 000056da: 7b 15                                          BRB &0x15 <0x56ef>
+;; Call 0x5D3E
 000056dc: 2c 5c af 62 06                                 CALL (%sp),0x662(%pc)
 000056e1: 3c 01 40                                       CMPW &0x1,%r0
 000056e4: 7f 05                                          BEB &0x5 <0x56e9>
@@ -5350,6 +5366,10 @@
 00005d3b: 08                                             RET
 00005d3c: 70                                             NOP
 00005d3d: 70                                             NOP
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Unknown Routine
+;; Called by: 0x56DC (fw_sysgen)
 00005d3e: 10 49                                          SAVE %fp
 00005d40: 9c 4f 04 00 00 00 4c                           ADDW2 &0x4,%sp
 00005d47: 86 01 7f cc 12 00 02                           MOVH &0x1,$0x20012cc
