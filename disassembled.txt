@@ -748,7 +748,6 @@
 000019f1: 20 43                                          POPW %r3
 000019f3: 20 49                                          POPW %fp
 000019f5: 08                                             RET
-
 000019f6: 70                                             NOP
 000019f7: 70                                             NOP
 
@@ -1198,7 +1197,7 @@
 000021a6: 70                                             NOP
 000021a7: 70                                             NOP
 
-;; More unreacable code?
+;; More unreachable code?
 000021a8: 10 45                                          SAVE %r5
 000021aa: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 
@@ -1285,13 +1284,22 @@
 00002323: 20 45                                          POPW %r5
 00002325: 20 49                                          POPW %fp
 00002327: 08                                             RET
+
+
+;; Who jumps here?
 00002328: 10 49                                          SAVE %fp
 0000232a: 9c 4f 08 00 00 00 4c                           ADDW2 &0x8,%sp
+
+;; Jumped to from $0x2313
 00002331: 84 4f 00 90 04 00 7f e8 11 00 02               MOVW &0x49000,$0x20011e8
 0000233c: 70                                             NOP
+
+;; We only seem to hit this once?
 0000233d: 2c 5c 7f 90 3b 00 00                           CALL (%sp),$0x3b90
-;; Call 0x26c0
-00002344: 2c 5c af 7c 03                                 CALL (%sp),0x37c(%pc)
+;;
+00002344: 2c 5c af 7c 03                                 CALL (%sp),0x37c(%pc) <0x26c0>
+
+;;
 00002349: 87 40 59                                       MOVB %r0,(%fp)
 0000234c: 70                                             NOP
 0000234d: 2b 59                                          TSTB (%fp)
@@ -1426,7 +1434,7 @@
 000025ad: 7f 1f                                          BEB &0x1f <0x25cc>
 000025af: 3c 4f 1e ac eb ad 7f 64 08 00 02               CMPW &0xadebac1e,$0x2000864
 000025ba: 7f 12                                          BEB &0x12 <0x25cc>
-000025bc: 2c 5c af 80 00                                 CALL (%sp),0x80(%pc)
+000025bc: 2c 5c af 80 00                                 CALL (%sp),0x80(%pc) <0x263c>
 000025c1: 28 40                                          TSTW %r0
 000025c3: 77 09                                          BNEB &0x9 <0x25cc>
 000025c5: 2c 5c 7f e0 5d 00 00                           CALL (%sp),$0x5de0
@@ -1435,6 +1443,8 @@
 000025d9: 04 c9 e8 4c                                    MOVAW -24(%fp),%sp
 000025dd: 20 49                                          POPW %fp
 000025df: 08                                             RET
+
+
 000025e0: 10 49                                          SAVE %fp
 000025e2: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 000025e9: 86 e2 7f 02 40 04 00 e0 40                     MOVH {uhalf}$0x44002,{uword}%r0
@@ -1455,6 +1465,8 @@
 00002635: 04 c9 e8 4c                                    MOVAW -24(%fp),%sp
 00002639: 20 49                                          POPW %fp
 0000263b: 08                                             RET
+
+
 0000263c: 10 47                                          SAVE %r7
 0000263e: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00002645: 84 4f 00 40 00 02 48                           MOVW &0x2004000,%r8
@@ -1742,6 +1754,8 @@
 00002abf: 20 45                                          POPW %r5
 00002ac1: 20 49                                          POPW %fp
 00002ac3: 08                                             RET
+
+
 00002ac4: 10 49                                          SAVE %fp
 00002ac6: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00002acd: 87 01 7f f2 11 00 02                           MOVB &0x1,$0x20011f2
@@ -1749,6 +1763,8 @@
 00002ad5: 04 c9 e8 4c                                    MOVAW -24(%fp),%sp
 00002ad9: 20 49                                          POPW %fp
 00002adb: 08                                             RET
+
+
 00002adc: 10 49                                          SAVE %fp
 00002ade: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00002ae5: 84 4f 00 e1 81 00 cd 0c                        MOVW &0x81e100,12(%pcbp)
@@ -1807,10 +1823,10 @@
 00002b9a: a0 4f 60 06 00 00                              PUSHW &0x660
 00002ba0: 2c cc fc 7f e4 44 00 00                        CALL -4(%sp),$0x44e4
 00002ba8: e0 c9 50                                       PUSHAW 80(%fp)
-00002bab: 2c cc fc af 09 0f                              CALL -4(%sp),0xf09(%pc)
+00002bab: 2c cc fc af 09 0f                              CALL -4(%sp),0xf09(%pc) <0x3ab4>
 00002bb1: 28 40                                          TSTW %r0
 00002bb3: 77 07                                          BNEB &0x7 <0x2bba>
-00002bb5: 2c 5c af 59 0f                                 CALL (%sp),0xf59(%pc)
+00002bb5: 2c 5c af 59 0f                                 CALL (%sp),0xf59(%pc) <0x3b0e>
 00002bba: a0 4f 00 30 04 00                              PUSHW &0x43000
 00002bc0: e0 c9 5a                                       PUSHAW 90(%fp)
 00002bc3: a0 09                                          PUSHW &0x9
@@ -1820,27 +1836,27 @@
 00002bd3: 2c cc f8 7f 68 7f 00 00                        CALL -8(%sp),$0x7f68
 00002bdb: 28 40                                          TSTW %r0
 00002bdd: 7f 07                                          BEB &0x7 <0x2be4>
-00002bdf: 2c 5c af 2f 0f                                 CALL (%sp),0xf2f(%pc)
+00002bdf: 2c 5c af 2f 0f                                 CALL (%sp),0xf2f(%pc) <0x3b0e>
 00002be4: a0 4f 76 06 00 00                              PUSHW &0x676
 00002bea: 2c cc fc 7f e4 44 00 00                        CALL -4(%sp),$0x44e4
 00002bf2: e0 59                                          PUSHAW (%fp)
-00002bf4: 2c cc fc af c0 0e                              CALL -4(%sp),0xec0(%pc)
+00002bf4: 2c cc fc af c0 0e                              CALL -4(%sp),0xec0(%pc) <0x3ab4>
 00002bfa: 28 40                                          TSTW %r0
 00002bfc: 77 07                                          BNEB &0x7 <0x2c03>
-00002bfe: 2c 5c af 10 0f                                 CALL (%sp),0xf10(%pc)
+00002bfe: 2c 5c af 10 0f                                 CALL (%sp),0xf10(%pc) <0x3b0e>
 00002c03: a0 4f 8c 06 00 00                              PUSHW &0x68c
 00002c09: 2c cc fc 7f e4 44 00 00                        CALL -4(%sp),$0x44e4
 00002c11: e0 c9 50                                       PUSHAW 80(%fp)
-00002c14: 2c cc fc af a0 0e                              CALL -4(%sp),0xea0(%pc)
+00002c14: 2c cc fc af a0 0e                              CALL -4(%sp),0xea0(%pc) <0x3ab4>
 00002c1a: 28 40                                          TSTW %r0
 00002c1c: 77 07                                          BNEB &0x7 <0x2c23>
-00002c1e: 2c 5c af f0 0e                                 CALL (%sp),0xef0(%pc)
+00002c1e: 2c 5c af f0 0e                                 CALL (%sp),0xef0(%pc) <0x3b0e>
 00002c23: e0 c9 50                                       PUSHAW 80(%fp)
 00002c26: e0 59                                          PUSHAW (%fp)
 00002c28: 2c cc f8 7f 68 7f 00 00                        CALL -8(%sp),$0x7f68
 00002c30: 28 40                                          TSTW %r0
 00002c32: 7f 07                                          BEB &0x7 <0x2c39>
-00002c34: 2c 5c af da 0e                                 CALL (%sp),0xeda(%pc)
+00002c34: 2c 5c af da 0e                                 CALL (%sp),0xeda(%pc) <0x3b0e>
 00002c39: a0 4f 9c 06 00 00                              PUSHW &0x69c
 00002c3f: 2c cc fc 7f e4 44 00 00                        CALL -4(%sp),$0x44e4
 00002c47: e0 59                                          PUSHAW (%fp)
@@ -2405,7 +2421,7 @@
 000035cc: 70                                             NOP
 000035cd: 7b 23                                          BRB &0x23 <0x35f0>
 000035cf: e0 c9 5a                                       PUSHAW 90(%fp)
-000035d2: 2c cc fc af 68 05                              CALL -4(%sp),0x568(%pc)
+000035d2: 2c cc fc af 68 05                              CALL -4(%sp),0x568(%pc) <0x3b3a>
 000035d8: 86 a9 b4 00 e4 41                              MOVH 0xb4(%fp),{word}%r1
 000035de: 3c 40 41                                       CMPW %r0,%r1
 000035e1: 77 0a                                          BNEB &0xa <0x35eb>
@@ -2666,7 +2682,7 @@
 000039f8: 70                                             NOP
 000039f9: 7b 23                                          BRB &0x23 <0x3a1c>
 000039fb: e0 c9 5a                                       PUSHAW 90(%fp)
-000039fe: 2c cc fc af 3c 01                              CALL -4(%sp),0x13c(%pc)
+000039fe: 2c cc fc af 3c 01                              CALL -4(%sp),0x13c(%pc) <0x3b3a>
 00003a04: 86 a9 b6 00 e4 41                              MOVH 0xb6(%fp),{word}%r1
 00003a0a: 3c 40 41                                       CMPW %r0,%r1
 00003a0d: 77 0a                                          BNEB &0xa <0x3a17>
@@ -2713,6 +2729,8 @@
 00003ab1: 08                                             RET
 00003ab2: 70                                             NOP
 00003ab3: 70                                             NOP
+
+
 00003ab4: 10 49                                          SAVE %fp
 00003ab6: 9c 4f 04 00 00 00 4c                           ADDW2 &0x4,%sp
 00003abd: 82 59                                          CLRH (%fp)
@@ -2751,6 +2769,8 @@
 00003b0b: 08                                             RET
 00003b0c: 70                                             NOP
 00003b0d: 70                                             NOP
+
+
 00003b0e: 10 49                                          SAVE %fp
 00003b10: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00003b17: a0 4f 4c 0a 00 00                              PUSHW &0xa4c
@@ -2993,7 +3013,7 @@
 00003e6b: 86 e2 59 e0 40                                 MOVH {uhalf}(%fp),{uword}%r0
 00003e70: a0 40                                          PUSHW %r0
 00003e72: a0 74                                          PUSHW 0(%ap)
-00003e74: 2c cc f8 af 10 00                              CALL -8(%sp),0x10(%pc)
+00003e74: 2c cc f8 af 10 00                              CALL -8(%sp),0x10(%pc) <0x3e84>
 00003e7a: 04 c9 ec 4c                                    MOVAW -20(%fp),%sp
 00003e7e: 20 48                                          POPW %r8
 00003e80: 20 49                                          POPW %fp
@@ -4050,7 +4070,7 @@
 00004b8b: 24 7f 96 4c 00 00                              JMP $0x4c96
 00004b91: 84 5a 48                                       MOVW (%ap),%r8
 00004b94: e0 5a                                          PUSHAW (%ap)
-00004b96: 2c cc fc af 46 01                              CALL -4(%sp),0x146(%pc)
+00004b96: 2c cc fc af 46 01                              CALL -4(%sp),0x146(%pc) <0x4cdc>
 00004b9c: 7b 14                                          BRB &0x14 <0x4bb0>
 00004b9e: 84 d9 08 40                                    MOVW *8(%fp),%r0
 00004ba2: 70                                             NOP
@@ -4084,7 +4104,7 @@
 00004be9: 84 5a 48                                       MOVW (%ap),%r8
 00004bec: 04 67 47                                       MOVAW 7(%fp),%r7
 00004bef: e0 5a                                          PUSHAW (%ap)
-00004bf1: 2c cc fc af eb 00                              CALL -4(%sp),0xeb(%pc)
+00004bf1: 2c cc fc af eb 00                              CALL -4(%sp),0xeb(%pc) <0x4cdc>
 00004bf7: 94 5a                                          DECW (%ap)
 00004bf9: 70                                             NOP
 00004bfa: 87 da 00 57                                    MOVB *0(%ap),(%r7)
@@ -4102,7 +4122,7 @@
 00004c15: 7b 1d                                          BRB &0x1d <0x4c32>
 00004c17: 87 57 e0 40                                    MOVB (%r7),{uword}%r0
 00004c1b: a0 40                                          PUSHW %r0
-00004c1d: 2c cc fc af 5f 01                              CALL -4(%sp),0x15f(%pc)
+00004c1d: 2c cc fc af 5f 01                              CALL -4(%sp),0x15f(%pc) <0x4d7c>
 00004c23: d0 02 46 41                                    LLSW3 &0x2,%r6,%r1
 00004c27: d0 41 40 40                                    LLSW3 %r1,%r0,%r0
 00004c2b: b0 40 45                                       ORW2 %r0,%r5
@@ -4111,7 +4131,7 @@
 00004c32: 28 46                                          TSTW %r6
 00004c34: 43 e3                                          BGEB &0xe3 <0x4c17>
 00004c36: e0 5a                                          PUSHAW (%ap)
-00004c38: 2c cc fc af a4 00                              CALL -4(%sp),0xa4(%pc)
+00004c38: 2c cc fc af a4 00                              CALL -4(%sp),0xa4(%pc) <0x4cdc>
 00004c3e: 3f 6f 78 da 04                                 CMPB &0x78,*4(%ap)
 00004c43: 77 12                                          BNEB &0x12 <0x4c55>
 00004c45: 84 d9 08 40                                    MOVW *8(%fp),%r0
@@ -4138,7 +4158,7 @@
 00004c88: 84 40 51                                       MOVW %r0,(%r1)
 00004c8b: 70                                             NOP
 00004c8c: e0 5a                                          PUSHAW (%ap)
-00004c8e: 2c cc fc af 4e 00                              CALL -4(%sp),0x4e(%pc)
+00004c8e: 2c cc fc af 4e 00                              CALL -4(%sp),0x4e(%pc) <0x4cdc>
 00004c94: 7b 2c                                          BRB &0x2c <0x4cc0>
 00004c96: 3c 40 6f 44                                    CMPW %r0,&0x44
 00004c9a: 7f c5                                          BEB &0xc5 <0x4c5f>
@@ -4294,7 +4314,7 @@
 00004e14: 10 49                                          SAVE %fp
 00004e16: 9c 4f 08 00 00 00 4c                           ADDW2 &0x8,%sp
 00004e1d: a0 00                                          PUSHW &0x0
-00004e1f: 2c cc fc af b3 03                              CALL -4(%sp),0x3b3(%pc)
+00004e1f: 2c cc fc af b3 03                              CALL -4(%sp),0x3b3(%pc) <0x51d2>
 00004e25: a0 4f 80 0b 00 00                              PUSHW &0xb80
 00004e2b: 2c cc fc 7f e4 44 00 00                        CALL -4(%sp),$0x44e4
 00004e33: 28 40                                          TSTW %r0
@@ -4514,7 +4534,7 @@
 000051b2: a0 4f 3a 0d 00 00                              PUSHW &0xd3a
 000051b8: 2c cc fc 7f e4 44 00 00                        CALL -4(%sp),$0x44e4
 000051c0: a0 01                                          PUSHW &0x1
-000051c2: 2c cc fc af 10 00                              CALL -4(%sp),0x10(%pc)
+000051c2: 2c cc fc af 10 00                              CALL -4(%sp),0x10(%pc) <0x51d2>
 000051c8: 04 c9 e8 4c                                    MOVAW -24(%fp),%sp
 000051cc: 20 49                                          POPW %fp
 000051ce: 08                                             RET
@@ -4830,8 +4850,7 @@
 0000550d: 86 e2 72 e0 40                                 MOVH {uhalf}0(%ap),{uword}%r0
 00005512: a0 40                                          PUSHW %r0
 00005514: a0 5f ff 08                                    PUSHW &0x8ff
-;; Call 0x552C
-00005518: 2c cc f8 af 14 00                              CALL -8(%sp),0x14(%pc)
+00005518: 2c cc f8 af 14 00                              CALL -8(%sp),0x14(%pc) <0x552c>
 0000551e: 86 e2 40 e0 40                                 MOVH {uhalf}%r0,{uword}%r0
 00005523: 7b 02                                          BRB &0x2 <0x5525>
 00005525: 04 c9 e8 4c                                    MOVAW -24(%fp),%sp
@@ -4929,7 +4948,7 @@
 ;; If it isn't, jump back to 0x5593
 000055c0: 7f d3                                          BEB &0xd3 <0x5593>
 
-;; If it is...
+;; If it's not, it means the timer is expired....
 000055c2: 86 72 40                                       MOVH 0(%ap),%r0
 000055c5: 96 72                                          DECH 0(%ap)
 000055c7: 70                                             NOP
@@ -4982,12 +5001,12 @@
 00005662: a0 5f 14 08                                    PUSHW &0x814
 00005666: 2c cc f8 ef 18 05 00 00                        CALL -8(%sp),*$0x518
 0000566e: a0 14                                          PUSHW &0x14
-00005670: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+00005670: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 00005678: d0 15 5a 40                                    LLSW3 &0x15,(%ap),%r0
 0000567c: 87 c0 01 e0 59                                 MOVB 1(%r0),{uword}(%fp)
 00005681: 70                                             NOP
 00005682: a0 14                                          PUSHW &0x14
-00005684: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+00005684: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 0000568c: d0 15 5a 40                                    LLSW3 &0x15,(%ap),%r0
 00005690: 87 c0 03 e0 59                                 MOVB 3(%r0),{uword}(%fp)
 00005695: 70                                             NOP
@@ -5000,7 +5019,7 @@
 000056a7: 70                                             NOP
 000056a8: 7b 15                                          BRB &0x15 <0x56bd>
 000056aa: a0 01                                          PUSHW &0x1
-000056ac: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+000056ac: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 000056b4: 90 59                                          INCW (%fp)
 000056b6: 70                                             NOP
 000056b7: 3c 6f 64 59                                    CMPW &0x64,(%fp)
@@ -5011,11 +5030,11 @@
 000056c7: 87 01 c0 05                                    MOVB &0x1,5(%r0)
 000056cb: 70                                             NOP
 000056cc: a0 14                                          PUSHW &0x14
-000056ce: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+000056ce: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 000056d6: 87 64 e0 40                                    MOVB 4(%fp),{uword}%r0
 000056da: 7b 15                                          BRB &0x15 <0x56ef>
 ;; Call 0x5D3E
-000056dc: 2c 5c af 62 06                                 CALL (%sp),0x662(%pc)
+000056dc: 2c 5c af 62 06                                 CALL (%sp),0x662(%pc) <0x5d3e>
 000056e1: 3c 01 40                                       CMPW &0x1,%r0
 000056e4: 7f 05                                          BEB &0x5 <0x56e9>
 000056e6: 83 64                                          CLRB 4(%fp)
@@ -5070,7 +5089,7 @@
 000057b3: 7f 6a                                          BEB &0x6a <0x581d>
 000057b5: 2b 7f ef 37 00 02                              TSTB $0x20037ef
 000057bb: 77 4c                                          BNEB &0x4c <0x5807>
-000057bd: 2c 5c af 81 05                                 CALL (%sp),0x581(%pc)
+000057bd: 2c 5c af 81 05                                 CALL (%sp),0x581(%pc) <0x5d3e>
 000057c2: 3c 01 40                                       CMPW &0x1,%r0
 000057c5: 7f 18                                          BEB &0x18 <0x57dd>
 000057c7: 84 4f ef be ed fe ef 8c 04 00 00               MOVW &0xfeedbeef,*$0x48c
@@ -5154,7 +5173,7 @@
 0000590f: 7f 78                                          BEB &0x78 <0x5987>
 00005911: 2b 7f ef 37 00 02                              TSTB $0x20037ef
 00005917: 77 53                                          BNEB &0x53 <0x596a>
-00005919: 2c 5c af 25 04                                 CALL (%sp),0x425(%pc)
+00005919: 2c 5c af 25 04                                 CALL (%sp),0x425(%pc) <0x5d3e>
 0000591e: 3c 01 40                                       CMPW &0x1,%r0
 00005921: 7f 1f                                          BEB &0x1f <0x5940>
 00005923: 2c 5c 7f de 62 00 00                           CALL (%sp),$0x62de
@@ -5230,7 +5249,7 @@
 00005a37: 70                                             NOP
 00005a38: 7b 5d                                          BRB &0x5d <0x5a95>
 00005a3a: a0 01                                          PUSHW &0x1
-00005a3c: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+00005a3c: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 00005a44: 2b 7f ef 37 00 02                              TSTB $0x20037ef
 00005a4a: 77 28                                          BNEB &0x28 <0x5a72>
 00005a4c: 87 01 64                                       MOVB &0x1,4(%fp)
@@ -5253,12 +5272,12 @@
 00005a83: 87 01 c0 05                                    MOVB &0x1,5(%r0)
 00005a87: 70                                             NOP
 00005a88: a0 14                                          PUSHW &0x14
-00005a8a: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+00005a8a: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 00005a92: 90 59                                          INCW (%fp)
 00005a94: 70                                             NOP
 00005a95: 3c 6f 64 59                                    CMPW &0x64,(%fp)
 00005a99: 5b a1                                          BLUB &0xa1 <0x5a3a>
-00005a9b: 2c 5c af a3 02                                 CALL (%sp),0x2a3(%pc)
+00005a9b: 2c 5c af a3 02                                 CALL (%sp),0x2a3(%pc) <0x5d3e>
 00005aa0: 3c 01 40                                       CMPW &0x1,%r0
 00005aa3: 7f 1c                                          BEB &0x1c <0x5abf>
 00005aa5: 83 64                                          CLRB 4(%fp)
@@ -5268,7 +5287,7 @@
 00005ab0: 87 01 c0 05                                    MOVB &0x1,5(%r0)
 00005ab4: 70                                             NOP
 00005ab5: a0 14                                          PUSHW &0x14
-00005ab7: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+00005ab7: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 00005abf: 87 64 e0 40                                    MOVB 4(%fp),{uword}%r0
 00005ac3: 7b 02                                          BRB &0x2 <0x5ac5>
 00005ac5: 04 c9 e8 4c                                    MOVAW -24(%fp),%sp
@@ -5283,7 +5302,7 @@
 00005adf: 87 01 c0 05                                    MOVB &0x1,5(%r0)
 00005ae3: 70                                             NOP
 00005ae4: a0 14                                          PUSHW &0x14
-00005ae6: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+00005ae6: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 00005aee: 87 73 e0 40                                    MOVB 0(%ap),{uword}%r0
 00005af2: a0 40                                          PUSHW %r0
 00005af4: 2c cc fc af f8 fa                              CALL -4(%sp),0x..faf8(%pc)
@@ -5313,7 +5332,7 @@
 00005b58: 70                                             NOP
 00005b59: 7b 31                                          BRB &0x31 <0x5b8a>
 00005b5b: a0 01                                          PUSHW &0x1
-00005b5d: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+00005b5d: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 00005b65: 3f 5f ff 00 7f ef 37 00 02                     CMPB &0xff,$0x20037ef
 00005b6e: 7f 19                                          BEB &0x19 <0x5b87>
 00005b70: 2b 7f ef 37 00 02                              TSTB $0x20037ef
@@ -5328,7 +5347,7 @@
 00005b89: 70                                             NOP
 00005b8a: 3c 5f 30 75 64                                 CMPW &0x7530,4(%fp)
 00005b8f: 4b cc                                          BLB &0xcc <0x5b5b>
-00005b91: 2c 5c af ad 01                                 CALL (%sp),0x1ad(%pc)
+00005b91: 2c 5c af ad 01                                 CALL (%sp),0x1ad(%pc) <0x5d3e>
 00005b96: 28 40                                          TSTW %r0
 00005b98: 7f 07                                          BEB &0x7 <0x5b9f>
 00005b9a: 84 59 40                                       MOVW (%fp),%r0
@@ -5399,7 +5418,7 @@
 00005c7b: 70                                             NOP
 00005c7c: 7b 2d                                          BRB &0x2d <0x5ca9>
 00005c7e: a0 01                                          PUSHW &0x1
-00005c80: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+00005c80: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 00005c88: 3f 5f ff 00 7f ef 37 00 02                     CMPB &0xff,$0x20037ef
 00005c91: 7f 15                                          BEB &0x15 <0x5ca6>
 00005c93: 2b 7f ef 37 00 02                              TSTB $0x20037ef
@@ -5414,7 +5433,7 @@
 00005ca8: 70                                             NOP
 00005ca9: 3c 5f 28 23 64                                 CMPW &0x2328,4(%fp)
 00005cae: 4b d0                                          BLB &0xd0 <0x5c7e>
-00005cb0: 2c 5c af 8e 00                                 CALL (%sp),0x8e(%pc)
+00005cb0: 2c 5c af 8e 00                                 CALL (%sp),0x8e(%pc) <0x5d3e>
 00005cb5: 28 40                                          TSTW %r0
 00005cb7: 7f 06                                          BEB &0x6 <0x5cbd>
 00005cb9: 2b 59                                          TSTB (%fp)
@@ -5505,7 +5524,7 @@
 00005ddf: 70                                             NOP
 00005de0: 10 49                                          SAVE %fp
 00005de2: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
-00005de9: 2c 5c af 89 01                                 CALL (%sp),0x189(%pc)
+00005de9: 2c 5c af 89 01                                 CALL (%sp),0x189(%pc) <0x5f72>
 00005dee: 87 01 ef c4 04 00 00                           MOVB &0x1,*$0x4c4
 00005df5: 70                                             NOP
 00005df6: 38 7f 5c 08 00 02 4f 00 00 00 20               BITW $0x200085c,&0x20000000
@@ -5570,7 +5589,7 @@
 00005f58: 80 7f 5c 08 00 02                              CLRW $0x200085c
 00005f5e: 70                                             NOP
 00005f5f: a0 01                                          PUSHW &0x1
-00005f61: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+00005f61: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 00005f69: 04 c9 e8 4c                                    MOVAW -24(%fp),%sp
 00005f6d: 20 49                                          POPW %fp
 00005f6f: 08                                             RET
@@ -5902,7 +5921,7 @@
 00006423: 87 01 c0 05                                    MOVB &0x1,5(%r0)
 00006427: 70                                             NOP
 00006428: a0 14                                          PUSHW &0x14
-0000642a: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+0000642a: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 00006432: dc 02 7f a4 04 00 00 40                        ADDW3 &0x2,$0x4a4,%r0
 0000643a: 87 50 e0 40                                    MOVB (%r0),{uword}%r0
 0000643e: a0 40                                          PUSHW %r0
@@ -6827,16 +6846,16 @@
 00007335: 87 01 7f 01 a0 04 00                           MOVB &0x1,$0x4a001
 0000733c: 70                                             NOP
 0000733d: a0 01                                          PUSHW &0x1
-0000733f: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+0000733f: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 00007347: a0 20                                          PUSHW &0x20
 00007349: a0 4f 74 0a 00 02                              PUSHW &0x2000a74
 0000734f: a0 08                                          PUSHW &0x8
-00007351: 2c cc f4 af 83 00                              CALL -12(%sp),0x83(%pc)
+00007351: 2c cc f4 af 83 00                              CALL -12(%sp),0x83(%pc) <0x73d4>
 00007357: 28 40                                          TSTW %r0
 00007359: 7f 1b                                          BEB &0x1b <0x7374>
 0000735b: 87 73 e0 40                                    MOVB 0(%ap),{uword}%r0
 0000735f: a0 40                                          PUSHW %r0
-00007361: 2c cc fc af 1f 00                              CALL -4(%sp),0x1f(%pc)
+00007361: 2c cc fc af 1f 00                              CALL -4(%sp),0x1f(%pc) <0x7380>
 00007367: 28 40                                          TSTW %r0
 00007369: 7f 07                                          BEB &0x7 <0x7370>
 0000736b: 84 01 40                                       MOVW &0x1,%r0
@@ -6858,7 +6877,7 @@
 00007382: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00007389: 87 73 e0 40                                    MOVB 0(%ap),{uword}%r0
 0000738d: a0 40                                          PUSHW %r0
-0000738f: 2c cc fc af a1 02                              CALL -4(%sp),0x2a1(%pc)
+0000738f: 2c cc fc af a1 02                              CALL -4(%sp),0x2a1(%pc) <0x7630>
 00007395: 28 40                                          TSTW %r0
 00007397: 77 06                                          BNEB &0x6 <0x739d>
 00007399: 80 40                                          CLRW %r0
@@ -6867,12 +6886,12 @@
 000073a2: a0 40                                          PUSHW %r0
 000073a4: a0 00                                          PUSHW &0x0
 000073a6: a0 00                                          PUSHW &0x0
-000073a8: 2c cc f4 af 2c 00                              CALL -12(%sp),0x2c(%pc)
+000073a8: 2c cc f4 af 2c 00                              CALL -12(%sp),0x2c(%pc) <0x73d4>
 000073ae: f3 6f 58 73 40                                 ORB3 &0x58,0(%ap),%r0
 000073b3: a0 40                                          PUSHW %r0
 000073b5: a0 00                                          PUSHW &0x0
 000073b7: a0 00                                          PUSHW &0x0
-000073b9: 2c cc f4 af 1b 00                              CALL -12(%sp),0x1b(%pc)
+000073b9: 2c cc f4 af 1b 00                              CALL -12(%sp),0x1b(%pc) <0x73d4>
 000073bf: 28 40                                          TSTW %r0
 000073c1: 7f 07                                          BEB &0x7 <0x73c8>
 000073c3: 84 01 40                                       MOVW &0x1,%r0
@@ -6929,7 +6948,7 @@
 0000745e: 70                                             NOP
 0000745f: 7b 0f                                          BRB &0xf <0x746e>
 00007461: a0 01                                          PUSHW &0x1
-00007463: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+00007463: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 0000746b: 92 59                                          INCH (%fp)
 0000746d: 70                                             NOP
 0000746e: 86 e2 59 e0 40                                 MOVH {uhalf}(%fp),{uword}%r0
@@ -6957,7 +6976,7 @@
 000074cd: 70                                             NOP
 000074ce: 7b 0f                                          BRB &0xf <0x74dd>
 000074d0: a0 01                                          PUSHW &0x1
-000074d2: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+000074d2: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 000074da: 92 59                                          INCH (%fp)
 000074dc: 70                                             NOP
 000074dd: 86 e2 59 e0 40                                 MOVH {uhalf}(%fp),{uword}%r0
@@ -7150,7 +7169,7 @@
 00007780: 87 73 e0 40                                    MOVB 0(%ap),{uword}%r0
 00007784: a0 40                                          PUSHW %r0
 00007786: e0 6c                                          PUSHAW 12(%fp)
-00007788: 2c cc f8 af f8 00                              CALL -8(%sp),0xf8(%pc)
+00007788: 2c cc f8 af f8 00                              CALL -8(%sp),0xf8(%pc) <0x7880>
 0000778e: 28 40                                          TSTW %r0
 00007790: 77 08                                          BNEB &0x8 <0x7798>
 00007792: 24 7f 40 78 00 00                              JMP $0x7840
@@ -7325,16 +7344,16 @@
 000079ba: 87 01 7f 1b 40 04 00                           MOVB &0x1,$0x4401b
 000079c1: 70                                             NOP
 000079c2: a0 5f 2c 01                                    PUSHW &0x12c
-000079c6: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+000079c6: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 000079ce: a0 5f c8 00                                    PUSHW &0xc8
-000079d2: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+000079d2: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 000079da: 87 5f d0 00 7f 00 d0 04 00                     MOVB &0xd0,$0x4d000
 000079e3: 70                                             NOP
 000079e4: a0 01                                          PUSHW &0x1
-000079e6: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+000079e6: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 000079ee: 3b 7f 00 d0 04 00 5f 80 00                     BITB $0x4d000,&0x80
 000079f7: 7f 0b                                          BEB &0xb <0x7a02>
-000079f9: 2c 5c af 3b 00                                 CALL (%sp),0x3b(%pc)
+000079f9: 2c 5c af 3b 00                                 CALL (%sp),0x3b(%pc) <0x7a34>
 000079fe: 80 40                                          CLRW %r0
 00007a00: 7b 2d                                          BRB &0x2d <0x7a2d>
 00007a02: 3f 01 73                                       CMPB &0x1,0(%ap)
@@ -7345,12 +7364,12 @@
 00007a0e: b0 08 40                                       ORW2 &0x8,%r0
 00007a11: a0 40                                          PUSHW %r0
 00007a13: a0 10                                          PUSHW &0x10
-00007a15: 2c cc f8 af 47 00                              CALL -8(%sp),0x47(%pc)
+00007a15: 2c cc f8 af 47 00                              CALL -8(%sp),0x47(%pc) <0x7a5c>
 00007a1b: 28 40                                          TSTW %r0
 00007a1d: 7f 07                                          BEB &0x7 <0x7a24>
 00007a1f: 84 01 40                                       MOVW &0x1,%r0
 00007a22: 7b 0b                                          BRB &0xb <0x7a2d>
-00007a24: 2c 5c af 10 00                                 CALL (%sp),0x10(%pc)
+00007a24: 2c 5c af 10 00                                 CALL (%sp),0x10(%pc) <0x7a34>
 00007a29: 80 40                                          CLRW %r0
 00007a2b: 7b 02                                          BRB &0x2 <0x7a2d>
 00007a2d: 04 c9 e8 4c                                    MOVAW -24(%fp),%sp
@@ -7392,7 +7411,7 @@
 00007aaf: 84 00 40                                       MOVW &0x0,%r0
 00007ab2: 7b 72                                          BRB &0x72 <0x7b24>
 00007ab4: a0 01                                          PUSHW &0x1
-00007ab6: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+00007ab6: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528 <0x5504>
 00007abe: 90 59                                          INCW (%fp)
 00007ac0: 70                                             NOP
 00007ac1: 3b 7f 00 d0 04 00 01                           BITB $0x4d000,&0x1
@@ -7504,7 +7523,7 @@
 00007c43: 70                                             NOP
 00007c44: e0 68                                          PUSHAW 8(%fp)
 00007c46: a0 4f 74 08 00 02                              PUSHW &0x2000874
-00007c4c: 2c cc f8 af 8a 01                              CALL -8(%sp),0x18a(%pc)
+00007c4c: 2c cc f8 af 8a 01                              CALL -8(%sp),0x18a(%pc) <0x7dd6>
 00007c52: 87 5f 9c 00 66                                 MOVB &0x9c,6(%fp)
 00007c57: 70                                             NOP
 00007c58: 3f 01 7b                                       CMPB &0x1,0(%ap)
@@ -7532,7 +7551,7 @@
 00007c8f: 24 7f 30 7d 00 00                              JMP $0x7d30
 00007c95: 87 69 e0 40                                    MOVB 9(%fp),{uword}%r0
 00007c99: a0 40                                          PUSHW %r0
-00007c9b: 2c cc fc af 01 01                              CALL -4(%sp),0x101(%pc)
+00007c9b: 2c cc fc af 01 01                              CALL -4(%sp),0x101(%pc) <0x7d9c>
 00007ca1: 28 40                                          TSTW %r0
 00007ca3: 77 1a                                          BNEB &0x1a <0x7cbd>
 00007ca5: a0 01                                          PUSHW &0x1
