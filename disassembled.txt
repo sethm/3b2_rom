@@ -535,12 +535,18 @@
 ;;
 000017dd: 7b 40                                          BRB &0x40 <0x181d>
 000017df: 86 e2 48 e0 40                                 MOVH {uhalf}%r8,{uword}%r0
+;; Read NVRAM address + 2 into R1
 000017e4: 86 e2 c7 02 e0 41                              MOVH {uhalf}2(%r7),{uword}%r1
+;; Mask the low nybble of R1
 000017ea: ba 0f 41                                       ANDH2 &0xf,%r1
+;; Zero-extend the halfword into a word
 000017ed: 86 e2 41 e0 41                                 MOVH {uhalf}%r1,{uword}%r1
+;; Add R1 to R0, store in R0
 000017f2: 9c 41 40                                       ADDW2 %r1,%r0
+;; Move R0 to R8
 000017f5: 86 40 48                                       MOVH %r0,%r8
 000017f8: 86 e2 48 e0 40                                 MOVH {uhalf}%r8,{uword}%r0
+;; Left-shift R0 by 1
 000017fd: d0 01 40 40                                    LLSW3 &0x1,%r0,%r0
 00001801: 86 e2 40 e0 40                                 MOVH {uhalf}%r0,{uword}%r0
 00001806: 86 e2 48 e0 41                                 MOVH {uhalf}%r8,{uword}%r1
@@ -548,10 +554,17 @@
 0000180f: 86 e2 41 e0 41                                 MOVH {uhalf}%r1,{uword}%r1
 00001814: b0 41 40                                       ORW2 %r1,%r0
 00001817: 86 40 48                                       MOVH %r0,%r8
+
+;; Increment the address in R7 by 4 bytes
 0000181a: 9c 04 47                                       ADDW2 &0x4,%r7
 
+;; While R5 < R7, keep going
 0000181d: 3c 45 47                                       CMPW %r5,%r7
 00001820: 5b bf                                          BLUB &0xbf <0x17df>
+
+;; Now we do something odd with 43800, 43804, 43808, and 4380c. What
+;; is this? Serial number structure of some kind?
+
 00001822: 86 e2 48 e0 40                                 MOVH {uhalf}%r8,{uword}%r0
 00001827: 88 40 40                                       MCOMW %r0,%r0
 0000182a: 86 40 48                                       MOVH %r0,%r8
@@ -592,11 +605,11 @@
 
 ;; Yes, we're done.
 
-;; Store 1 in $43060
+;; Store 01 in $43060
 00001879: 84 01 7f 60 30 04 00                           MOVW &0x1,$0x43060
 00001880: 70                                             NOP
 
-;; Store 0 in $43064
+;; Store 00 in $43064
 00001881: 80 7f 64 30 04 00                              CLRW $0x43064
 00001887: 70                                             NOP
 
