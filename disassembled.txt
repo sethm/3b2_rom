@@ -1525,48 +1525,78 @@
 000026bd: 20 49                                          POPW %fp
 000026bf: 08                                             RET
 
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; These look like UART tests, specifically testing the Tx/Rx buffer
 ;;
 000026c0: 10 49                                          SAVE %fp
 000026c2: 9c 4f 04 00 00 00 4c                           ADDW2 &0x4,%sp
+
+;; Set up the UART for our test. These three commands are as follows:
+;; 0x20 = Reset Receiver (Disable receiver, flush FIFO)
+;; 0x30 = Start Break (Forces TxDA output low)
+;; 0x10 = Reset MR pointer. Causes channel A MR pointer to point to
+;;        channel 1.
+
 000026c9: 87 20 7f 02 90 04 00                           MOVB &0x20,$0x49002
 000026d0: 70                                             NOP
 000026d1: 87 30 7f 02 90 04 00                           MOVB &0x30,$0x49002
 000026d8: 70                                             NOP
 000026d9: 87 10 7f 02 90 04 00                           MOVB &0x10,$0x49002
 000026e0: 70                                             NOP
+
+;; Now set bit 4 of the MRA (no parity)
 000026e1: 87 7f 00 90 04 00 e2 40                        MOVB $0x49000,{uhalf}%r0
 000026e9: 86 40 59                                       MOVH %r0,(%fp)
 000026ec: 70                                             NOP
 000026ed: b3 5f 80 00 7f 00 90 04 00                     ORB2 &0x80,$0x49000
 000026f6: 70                                             NOP
+
+;; Now reset chanel a break change interrupt.
 000026f7: 87 05 7f 02 90 04 00                           MOVB &0x5,$0x49002
 000026fe: 70                                             NOP
+
+;; Run the UART delay clock for 14 clock cycles
 000026ff: a0 14                                          PUSHW &0x14
 00002701: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+
+;; Write 0x55 into the UART's buffer.
 00002709: 87 6f 55 7f 03 90 04 00                        MOVB &0x55,$0x49003
 00002711: 70                                             NOP
+
+;; Run the UART delay clock for 14 clock cycles
 00002712: a0 14                                          PUSHW &0x14
-;; Jump to p_hwcntr (DUART counter delay)
 00002714: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
 
-;; Check to see if UART MRA bit 1 is set.
+;; Check to see if UART status bit RxRDY is set. If it is, go to next
+;; check. If not, return.
 0000271c: 3b 7f 01 90 04 00 01                           BITB $0x49001,&0x1
 00002723: 77 0a                                          BNEB &0xa <0x272d>
 00002725: 80 40                                          CLRW %r0
 00002727: 24 7f 73 29 00 00                              JMP $0x2973
+
+;; Check if 0x55 is in the UART's buffer. If it is, go to next check.
+;; If not, return.
 0000272d: 3f 6f 55 7f 03 90 04 00                        CMPB &0x55,$0x49003
 00002735: 7f 0a                                          BEB &0xa <0x273f>
 00002737: 80 40                                          CLRW %r0
 00002739: 24 7f 73 29 00 00                              JMP $0x2973
+
+;; Check to see if UART status bit RxRDY is set. If it is, go to next
+;; check. If not, return.
 0000273f: 3b 7f 01 90 04 00 01                           BITB $0x49001,&0x1
 00002746: 7f 0a                                          BEB &0xa <0x2750>
 00002748: 80 40                                          CLRW %r0
 0000274a: 24 7f 73 29 00 00                              JMP $0x2973
+
+;; Write 0xAA to the TX buffer
 00002750: 87 5f aa 00 7f 03 90 04 00                     MOVB &0xaa,$0x49003
 00002759: 70                                             NOP
+
+;; Call UART delay for 14 clock cycles
 0000275a: a0 14                                          PUSHW &0x14
 0000275c: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+
+;; Check to see if RxRDY is set again
 00002764: 3b 7f 01 90 04 00 01                           BITB $0x49001,&0x1
 0000276b: 77 0a                                          BNEB &0xa <0x2775>
 0000276d: 80 40                                          CLRW %r0
@@ -1607,20 +1637,24 @@
 000027ff: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
 00002807: 87 6f 55 7f 0b 90 04 00                        MOVB &0x55,$0x4900b
 0000280f: 70                                             NOP
+
 00002810: a0 14                                          PUSHW &0x14
 00002812: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
 0000281a: 3b 7f 09 90 04 00 01                           BITB $0x49009,&0x1
 00002821: 77 0a                                          BNEB &0xa <0x282b>
 00002823: 80 40                                          CLRW %r0
 00002825: 24 7f 73 29 00 00                              JMP $0x2973
+
 0000282b: 3f 6f 55 7f 0b 90 04 00                        CMPB &0x55,$0x4900b
 00002833: 7f 0a                                          BEB &0xa <0x283d>
 00002835: 80 40                                          CLRW %r0
 00002837: 24 7f 73 29 00 00                              JMP $0x2973
+
 0000283d: 3b 7f 09 90 04 00 01                           BITB $0x49009,&0x1
 00002844: 7f 0a                                          BEB &0xa <0x284e>
 00002846: 80 40                                          CLRW %r0
 00002848: 24 7f 73 29 00 00                              JMP $0x2973
+
 0000284e: 87 5f aa 00 7f 0b 90 04 00                     MOVB &0xaa,$0x4900b
 00002857: 70                                             NOP
 00002858: a0 14                                          PUSHW &0x14
@@ -1688,6 +1722,7 @@
 0000296d: 70                                             NOP
 0000296e: 84 01 40                                       MOVW &0x1,%r0
 00002971: 7b 02                                          BRB &0x2 <0x2973>
+
 00002973: 04 c9 e8 4c                                    MOVAW -24(%fp),%sp
 00002977: 20 49                                          POPW %fp
 00002979: 08                                             RET
@@ -3199,6 +3234,15 @@
 0000409d: 08                                             RET
 0000409e: 70                                             NOP
 0000409f: 70                                             NOP
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Main interrupt handler during ROM startup. This is pointed at by
+;; the PCBP at 0x2000bc8 during at least part of ROM startup. 
+;;
+;; The clever part of this is the call to 0x64ec, which will then call
+;; whatever function is currently registered at 0x494.
+;;
 000040a0: 84 ce fc 40                                    MOVW -4(%isp),%r0
 000040a4: 84 50 7f 58 12 00 02                           MOVW (%r0),$0x2001258
 000040ab: 70                                             NOP
@@ -3206,7 +3250,7 @@
 000040b4: 70                                             NOP
 000040b5: 87 00 7f 60 12 00 02                           MOVB &0x0,$0x2001260
 000040bc: 70                                             NOP
-;; Call the code that calls the exception handler
+;; Call the code that calls the registered handler
 000040bd: 2c 5c 7f ec 64 00 00                           CALL (%sp),$0x64ec
 000040c4: 30 c8                                          RETPS
 
@@ -5538,6 +5582,8 @@
 00005ddd: 08                                             RET
 00005dde: 70                                             NOP
 00005ddf: 70                                             NOP
+
+
 00005de0: 10 49                                          SAVE %fp
 00005de2: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00005de9: 2c 5c af 89 01                                 CALL (%sp),0x189(%pc) <0x5f72>
