@@ -906,9 +906,11 @@
 00001c1f: 5b d7                                          BLUB &0xd7 <0x1bf6>
 00001c21: 87 47 e0 40                                    MOVB %r7,{uword}%r0
 00001c25: a0 40                                          PUSHW %r0
+;; XXX Call to 6e28
 00001c27: 2c cc fc 7f 28 6e 00 00                        CALL -4(%sp),$0x6e28
 00001c2f: 28 40                                          TSTW %r0
 00001c31: 77 39                                          BNEB &0x39 <0x1c6a>
+;; Here we seem to be setting 0x2 in r0
 00001c33: f0 02 7f 7c 0a 00 02 40                        ORW3 &0x2,$0x2000a7c,%r0
 00001c3b: 87 47 e0 41                                    MOVB %r7,{uword}%r1
 00001c3f: d0 17 41 41                                    LLSW3 &0x17,%r1,%r1
@@ -2140,8 +2142,6 @@
 0000303e: dc 0e 50 40                                    ADDW3 &0xe,(%r0),%r0
 00003042: a0 40                                          PUSHW %r0
 00003044: 2c cc f8 7f b0 7f 00 00                        CALL -8(%sp),$0x7fb0
-
-
 0000304c: 04 a9 b8 00 40                                 MOVAW 0xb8(%fp),%r0
 00003051: 87 a9 ac 00 e0 41                              MOVB 0xac(%fp),{uword}%r1
 00003057: d0 04 41 41                                    LLSW3 &0x4,%r1,%r1
@@ -2781,6 +2781,7 @@
 00003a80: 2c 5c 7f 70 69 00 00                           CALL (%sp),$0x6970
 00003a87: 28 40                                          TSTW %r0
 00003a89: 77 1f                                          BNEB &0x1f <0x3aa8>
+;; Sets the "Boot Failure" flag in 0x200085c
 00003a8b: b0 04 7f 5c 08 00 02                           ORW2 &0x4,$0x200085c
 00003a92: 70                                             NOP
 00003a93: 2c 5c 7f e0 5d 00 00                           CALL (%sp),$0x5de0
@@ -2793,6 +2794,10 @@
 00003ab2: 70                                             NOP
 00003ab3: 70                                             NOP
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Unknown Routine - maybe get input of some kind? It calls 0x4484,
+;; which checks to see if a character is available as input.
 
 00003ab4: 10 49                                          SAVE %fp
 00003ab6: 9c 4f 04 00 00 00 4c                           ADDW2 &0x4,%sp
@@ -3295,6 +3300,7 @@
 0000412e: 70                                             NOP
 0000412f: 2c 5c 7f ec 64 00 00                           CALL (%sp),$0x64ec
 00004136: 30 c8                                          RETPS
+
 00004138: 84 ce fc 40                                    MOVW -4(%isp),%r0
 0000413c: 84 50 7f 58 12 00 02                           MOVW (%r0),$0x2001258
 00004143: 70                                             NOP
@@ -3304,6 +3310,7 @@
 00004154: 70                                             NOP
 00004155: 2c 5c 7f ec 64 00 00                           CALL (%sp),$0x64ec
 0000415c: 30 c8                                          RETPS
+
 0000415e: 84 ce fc 40                                    MOVW -4(%isp),%r0
 00004162: 84 50 7f 58 12 00 02                           MOVW (%r0),$0x2001258
 00004169: 70                                             NOP
@@ -3549,6 +3556,8 @@
 
 00004484: 10 49                                          SAVE %fp
 00004486: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
+
+;; Call soft-power inhibit/timer function.
 0000448d: 2c 5c 7f de 62 00 00                           CALL (%sp),$0x62de
 00004494: dc 02 7f a4 04 00 00 40                        ADDW3 &0x2,$0x4a4,%r0
 0000449c: 2b 50                                          TSTB (%r0)
@@ -3556,15 +3565,23 @@
 000044a0: dc 04 7f a4 04 00 00 40                        ADDW3 &0x4,$0x4a4,%r0
 000044a8: 3f 01 50                                       CMPB &0x1,(%r0)
 000044ab: 7f 21                                          BEB &0x21 <0x44cc>
+
+;; R0 = 0x49001 (UART port A status)
 000044ad: dc 01 7f e8 11 00 02 40                        ADDW3 &0x1,$0x20011e8,%r0
+;; If BIT 1 (RxRDY) is set, jump to 44C8
 000044b5: 3b 50 01                                       BITB (%r0),&0x1
 000044b8: 7f 10                                          BEB &0x10 <0x44c8>
+
+;; If not, grab the data in 49003
+;; R0 = 0x49004 (UART port A data)
 000044ba: dc 03 7f e8 11 00 02 40                        ADDW3 &0x3,$0x20011e8,%r0
 000044c2: 87 50 e0 40                                    MOVB (%r0),{uword}%r0
 000044c6: 7b 16                                          BRB &0x16 <0x44dc>
+
 000044c8: 80 40                                          CLRW %r0
 000044ca: 7b 12                                          BRB &0x12 <0x44dc>
 000044cc: a0 01                                          PUSHW &0x1
+
 000044ce: 2c cc fc 7f f8 56 00 00                        CALL -4(%sp),$0x56f8
 000044d6: 87 40 e0 40                                    MOVB %r0,{uword}%r0
 000044da: 7b 02                                          BRB &0x2 <0x44dc>
@@ -4656,6 +4673,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 'rnvram' - Routine to read NVRAM
 ;;
+;;  (%ap) = NVRAM address to read from
+;; 4(%ap) = Address to write to
+;; 8(%ap) = Length
 
 00005224: 10 48                                          SAVE %r8
 00005226: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
@@ -4915,11 +4935,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interrupt handler inserted by the UART delay routine
 ;; at 0x552c.  If interrupted, put 1 into 20012a4
-;;
-;; But wait... this does a RET, not a RETG or a RETPS. So it can't be
-;; an interrupt handler. Some other handler must be calling the
-;; function poinmted at by 0x494!
-;;
 
 000054ec: 10 49                                          SAVE %fp
 000054ee: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
@@ -5843,6 +5858,14 @@
 000061b9: 04 c9 e8 4c                                    MOVAW -24(%fp),%sp
 000061bd: 20 49                                          POPW %fp
 000061bf: 08                                             RET
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Unknown Routine
+;;
+
+;; We're called with the flag for "DISK SANITY FAILURE" (0x10000) already
+;; set in %ap. Seems to get set at 0x6e93
+;;
 000061c0: 10 49                                          SAVE %fp
 000061c2: 9c 4f 0c 00 00 00 4c                           ADDW2 &0xc,%sp
 000061c9: a0 4f ec 31 04 00                              PUSHW &0x431ec
@@ -6134,7 +6157,7 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
+;; Unknown Exception Handler
 ;;
 000065a4: 10 49                                          SAVE %fp
 000065a6: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
@@ -6181,10 +6204,12 @@
 0000666c: a0 4f 00 30 04 00                              PUSHW &0x43000
 00006672: e0 c9 64                                       PUSHAW 100(%fp)
 00006675: a0 09                                          PUSHW &0x9
+;; Call 'rnvram'
 00006677: 2c cc f4 7f 24 52 00 00                        CALL -12(%sp),$0x5224
 0000667f: 2b c9 64                                       TSTB 100(%fp)
 00006682: 77 26                                          BNEB &0x26 <0x66a8>
 00006684: e0 c9 64                                       PUSHAW 100(%fp)
+;; This is the pointer to the default password, 'mcp'
 00006687: a0 4f 40 10 00 00                              PUSHW &0x1040
 0000668d: 2c cc f8 7f b0 7f 00 00                        CALL -8(%sp),$0x7fb0
 00006695: e0 c9 64                                       PUSHAW 100(%fp)
@@ -6196,7 +6221,6 @@
 000066af: 77 08                                          BNEB &0x8 <0x66b7>
 000066b1: 24 7f 3c 67 00 00                              JMP $0x673c
 000066b7: 3c 4f ef be ed fe 48                           CMPW &0xfeedbeef,%r8
-;; Yes, in my bootup, r8 is 0xfeedbeef
 000066be: 7f 7e                                          BEB &0x7e <0x673c>
 000066c0: dc 04 7f a4 04 00 00 40                        ADDW3 &0x4,$0x4a4,%r0
 000066c8: 2b 50                                          TSTB (%r0)
@@ -6275,6 +6299,7 @@
 000067df: a0 4f 93 10 00 00                              PUSHW &0x1093
 000067e5: 2c cc fc 7f e4 44 00 00                        CALL -4(%sp),$0x44e4
 
+;; Call 3ab4 XXX
 000067ed: e0 59                                          PUSHAW (%fp)
 000067ef: 2c cc fc 7f b4 3a 00 00                        CALL -4(%sp),$0x3ab4
 000067f7: e0 59                                          PUSHAW (%fp)
@@ -6364,6 +6389,10 @@
 0000696e: 70                                             NOP
 0000696f: 70                                             NOP
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Unknown Routine
+;;
 
 00006970: 10 49                                          SAVE %fp
 00006972: 9c 4f 10 00 00 00 4c                           ADDW2 &0x10,%sp
@@ -6699,7 +6728,9 @@
 00006e7d: a0 00                                          PUSHW &0x0
 00006e7f: a0 4f 74 08 00 02                              PUSHW &0x2000874
 00006e85: a0 00                                          PUSHW &0x0
+;; Access the hard drive.
 00006e87: 2c cc f0 7f 98 76 00 00                        CALL -16(%sp),$0x7698
+;; If %r0
 00006e8f: 28 40                                          TSTW %r0
 00006e91: 77 16                                          BNEB &0x16 <0x6ea7>
 00006e93: 84 4f 00 00 01 00 7f 7c 0a 00 02               MOVW &0x10000,$0x2000a7c
@@ -7060,45 +7091,71 @@
 000073d3: 70                                             NOP
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Unknown Procedure
+;; Unknown Procedure, but something to do with accessing the hard disk.
 ;;
 
 000073d4: 10 49                                          SAVE %fp
 000073d6: 9c 4f 08 00 00 00 4c                           ADDW2 &0x8,%sp
 000073dd: 70                                             NOP
+
+;; Save the current PSW into 20014FC
 000073de: 84 4b 7f fc 14 00 02                           MOVW %psw,$0x20014fc
 000073e5: 70                                             NOP
 000073e6: 70                                             NOP
 000073e7: b0 4f 00 e1 01 00 4b                           ORW2 &0x1e100,%psw
+
+;; Read the disk controller status.
 000073ee: 87 7f 01 a0 04 00 e0 40                        MOVB $0x4a001,{uword}%r0
 000073f6: 84 40 7f d4 12 00 02                           MOVW %r0,$0x20012d4
 000073fd: 70                                             NOP
+
+;; If the controller available, GOTO 742D
 000073fe: 38 40 5f 80 00                                 BITW %r0,&0x80
 00007403: 7f 2a                                          BEB &0x2a <0x742d>
-00007405: 87 73 e0 40                                    MOVB 0(%ap),{uword}%r0
+
+;; If the controller is busy, move the argument into R0
+00007405: 87 73 e0 40                                    MOVB 3(%ap),{uword}%r0
+
+;; Shift it left 24 (0x18) bits (so it occupies the top byte)
 00007409: d0 18 40 40                                    LLSW3 &0x18,%r0,%r0
 0000740d: b0 40 7f d4 12 00 02                           ORW2 %r0,$0x20012d4
 00007414: 70                                             NOP
+
+;; 
 00007415: 87 08 7f 01 a0 04 00                           MOVB &0x8,$0x4a001
 0000741c: 70                                             NOP
 0000741d: 84 7f fc 14 00 02 4b                           MOVW $0x20014fc,%psw
 00007424: 84 00 40                                       MOVW &0x0,%r0
 00007427: 24 7f 26 76 00 00                              JMP $0x7626
+
+
+;; Send a CLEAR BUFFER
 0000742d: 87 02 7f 01 a0 04 00                           MOVB &0x2,$0x4a001
 00007434: 70                                             NOP
+;; Send a CLEAR CE BITS
 00007435: 87 08 7f 01 a0 04 00                           MOVB &0x8,$0x4a001
 0000743c: 70                                             NOP
+;; GOTO 0x7450
 0000743d: 7b 13                                          BRB &0x13 <0x7450>
+
+
 0000743f: 84 74 40                                       MOVW 0(%ap),%r0
 00007442: 90 74                                          INCW 0(%ap)
 00007444: 70                                             NOP
+
+;; Write to data buffer
+;; (e.g., write 00 then 48
 00007445: 87 50 7f 00 a0 04 00                           MOVB (%r0),$0x4a000
 0000744c: 70                                             NOP
 0000744d: 97 7b                                          DECB 0(%ap)
 0000744f: 70                                             NOP
-00007450: 2b 7b                                          TSTB 0(%ap)
+
+;; 
+00007450: 2b 7b                                          TSTB 11(%ap)
 00007452: 77 ed                                          BNEB &0xed <0x743f>
-00007454: 87 73 7f 01 a0 04 00                           MOVB 0(%ap),$0x4a001
+
+;; Disk Command
+00007454: 87 73 7f 01 a0 04 00                           MOVB 3(%ap),$0x4a001
 0000745b: 70                                             NOP
 0000745c: 82 59                                          CLRH (%fp)
 0000745e: 70                                             NOP
@@ -7115,9 +7172,11 @@
 00007485: 87 7f 01 a0 04 00 e0 40                        MOVB $0x4a001,{uword}%r0
 0000748d: 84 40 7f d4 12 00 02                           MOVW %r0,$0x20012d4
 00007494: 70                                             NOP
+;; Is the controller busy? If so jump to 74c4
 00007495: 38 40 5f 80 00                                 BITW %r0,&0x80
 0000749a: 7f 2a                                          BEB &0x2a <0x74c4>
-0000749c: 87 73 e0 40                                    MOVB 0(%ap),{uword}%r0
+;; It's not, so...
+0000749c: 87 73 e0 40                                    MOVB 3(%ap),{uword}%r0
 000074a0: d0 18 40 40                                    LLSW3 &0x18,%r0,%r0
 000074a4: b0 40 7f d4 12 00 02                           ORW2 %r0,$0x20012d4
 000074ab: 70                                             NOP
@@ -7125,8 +7184,11 @@
 000074b3: 70                                             NOP
 000074b4: 84 7f fc 14 00 02 4b                           MOVW $0x20014fc,%psw
 000074bb: 84 00 40                                       MOVW &0x0,%r0
+;; Just return.
 000074be: 24 7f 26 76 00 00                              JMP $0x7626
-000074c4: 3b 73 5f f0 00                                 BITB 0(%ap),&0xf0
+
+;; Are any of the top bits set in our argument?
+000074c4: 3b 73 5f f0 00                                 BITB 3(%ap),&0xf0
 000074c9: 7f 2a                                          BEB &0x2a <0x74f3>
 000074cb: 82 59                                          CLRH (%fp)
 000074cd: 70                                             NOP
@@ -7151,11 +7213,16 @@
 00007512: 87 7f 01 a0 04 00 e0 40                        MOVB $0x4a001,{uword}%r0
 0000751a: 84 40 7f d4 12 00 02                           MOVW %r0,$0x20012d4
 00007521: 70                                             NOP
+
+;; Check for CE flags
 00007522: b8 6f 60 40                                    ANDW2 &0x60,%r0
 00007526: 3c 6f 40 40                                    CMPW &0x40,%r0
+;; If CEH/CEL != 0x40, go to 7532
 0000752a: 77 08                                          BNEB &0x8 <0x7532>
+
+;; GOTO 0x75b7
 0000752c: 24 7f b7 75 00 00                              JMP $0x75b7
-00007532: 87 73 e0 40                                    MOVB 0(%ap),{uword}%r0
+00007532: 87 73 e0 40                                    MOVB 3(%ap),{uword}%r0
 00007536: d0 18 40 40                                    LLSW3 &0x18,%r0,%r0
 0000753a: 87 7f 00 a0 04 00 e0 41                        MOVB $0x4a000,{uword}%r1
 00007542: d0 08 41 41                                    LLSW3 &0x8,%r1,%r1
@@ -7164,7 +7231,7 @@
 00007550: 70                                             NOP
 00007551: 38 7f d4 12 00 02 5f 00 20                     BITW $0x20012d4,&0x2000
 0000755a: 7f 11                                          BEB &0x11 <0x756b>
-0000755c: 3b 73 5f b0 00                                 BITB 0(%ap),&0xb0
+0000755c: 3b 73 5f b0 00                                 BITB 3(%ap),&0xb0
 00007561: 7f 0a                                          BEB &0xa <0x756b>
 00007563: 87 01 7f 00 15 00 02                           MOVB &0x1,$0x2001500
 0000756a: 70                                             NOP
@@ -7174,13 +7241,13 @@
 0000757b: 70                                             NOP
 0000757c: fb 01 73 40                                    ANDB3 &0x1,0(%ap),%r0
 00007580: a0 40                                          PUSHW %r0
-00007582: 2c cc fc af aa fd                              CALL -4(%sp),0x..fdaa(%pc)
+00007582: 2c cc fc af aa fd                              CALL -4(%sp),0xfdaa(%pc)
 00007588: 28 40                                          TSTW %r0
 0000758a: 7f 11                                          BEB &0x11 <0x759b>
 0000758c: fb 01 73 40                                    ANDB3 &0x1,0(%ap),%r0
 00007590: b4 01 40                                       XORW2 &0x1,%r0
 00007593: a0 40                                          PUSHW %r0
-00007595: 2c cc fc af eb fd                              CALL -4(%sp),0x..fdeb(%pc)
+00007595: 2c cc fc af eb fd                              CALL -4(%sp),0xfdeb(%pc)
 0000759b: 84 64 7f d4 12 00 02                           MOVW 4(%fp),$0x20012d4
 000075a2: 70                                             NOP
 000075a3: 87 08 7f 01 a0 04 00                           MOVB &0x8,$0x4a001
@@ -7188,6 +7255,8 @@
 000075ab: 84 7f fc 14 00 02 4b                           MOVW $0x20014fc,%psw
 000075b2: 84 00 40                                       MOVW &0x0,%r0
 000075b5: 7b 71                                          BRB &0x71 <0x7626>
+
+
 000075b7: 38 7f d4 12 00 02 08                           BITW $0x20012d4,&0x8
 000075be: 7f 4d                                          BEB &0x4d <0x760b>
 000075c0: 87 73 e0 40                                    MOVB 0(%ap),{uword}%r0
@@ -7198,7 +7267,7 @@
 000075d7: 70                                             NOP
 000075d8: fb 01 73 40                                    ANDB3 &0x1,0(%ap),%r0
 000075dc: a0 40                                          PUSHW %r0
-000075de: 2c cc fc af 4e fd                              CALL -4(%sp),0x..fd4e(%pc)
+000075de: 2c cc fc af 4e fd                              CALL -4(%sp),0xfd4e(%pc)
 000075e4: 28 40                                          TSTW %r0
 000075e6: 7f 11                                          BEB &0x11 <0x75f7>
 000075e8: fb 01 73 40                                    ANDB3 &0x1,0(%ap),%r0
@@ -7215,8 +7284,11 @@
 00007613: 80 7f d4 12 00 02                              CLRW $0x20012d4
 00007619: 70                                             NOP
 0000761a: 84 7f fc 14 00 02 4b                           MOVW $0x20014fc,%psw
+
+;; Why are we flagging R0?
 00007621: 84 01 40                                       MOVW &0x1,%r0
 00007624: 7b 02                                          BRB &0x2 <0x7626>
+
 00007626: 04 c9 e8 4c                                    MOVAW -24(%fp),%sp
 0000762a: 20 49                                          POPW %fp
 0000762c: 08                                             RET
@@ -7264,10 +7336,13 @@
 ;; 'hd_acs' - Routine to access hard disk
 ;;
 
+;; Here, argument 1 seems to get some kind of failure code if we can't
+;; access the hard drive -- I'm trying to figure out what that is.
+
 00007698: 10 49                                          SAVE %fp
 0000769a: 9c 4f 14 00 00 00 4c                           ADDW2 &0x14,%sp
-000076a1: eb 6f 54 73 40                                 MULB3 &0x54,0(%ap),%r0
-000076a6: eb 6f 54 73 41                                 MULB3 &0x54,0(%ap),%r1
+000076a1: eb 6f 54 73 40                                 MULB3 &0x54,3(%ap),%r0
+000076a6: eb 6f 54 73 41                                 MULB3 &0x54,3(%ap),%r1
 000076ab: e8 81 a0 0a 00 02 80 9c 0a 00 02 40            MULW3 0x2000aa0(%r1),0x2000a9c(%r0),%r0
 000076b7: ec e0 40 74 40                                 DIVW3 {uword}%r0,0(%ap),%r0
 000076bc: 84 40 64                                       MOVW %r0,4(%fp)
@@ -7301,6 +7376,7 @@
 00007731: 87 73 e0 40                                    MOVB 0(%ap),{uword}%r0
 00007735: a0 40                                          PUSHW %r0
 00007737: e0 6c                                          PUSHAW 12(%fp)
+;; Call 0x7100
 00007739: 2c cc f8 7f 00 71 00 00                        CALL -8(%sp),$0x7100
 00007741: 28 40                                          TSTW %r0
 00007743: 77 0a                                          BNEB &0xa <0x774d>
@@ -7321,10 +7397,12 @@
 00007770: 7f 10                                          BEB &0x10 <0x7780>
 00007772: 87 73 e0 40                                    MOVB 0(%ap),{uword}%r0
 00007776: a0 40                                          PUSHW %r0
+;; Call 0x7380
 00007778: 2c cc fc 7f 80 73 00 00                        CALL -4(%sp),$0x7380
 00007780: 87 73 e0 40                                    MOVB 0(%ap),{uword}%r0
 00007784: a0 40                                          PUSHW %r0
 00007786: e0 6c                                          PUSHAW 12(%fp)
+;; Call 0x7880
 00007788: 2c cc f8 af f8 00                              CALL -8(%sp),0xf8(%pc) <0x7880>
 0000778e: 28 40                                          TSTW %r0
 00007790: 77 08                                          BNEB &0x8 <0x7798>
@@ -7355,6 +7433,7 @@
 000077e8: a0 40                                          PUSHW %r0
 000077ea: eb 6f 54 73 40                                 MULB3 &0x54,0(%ap),%r0
 000077ef: a0 80 a4 0a 00 02                              PUSHW 0x2000aa4(%r0)
+;; Call 0x6cec
 000077f5: 2c cc f4 7f ec 6c 00 00                        CALL -12(%sp),$0x6cec
 000077fd: 28 40                                          TSTW %r0
 000077ff: 77 06                                          BNEB &0x6 <0x7805>
@@ -7512,7 +7591,7 @@
 000079f9: 2c 5c af 3b 00                                 CALL (%sp),0x3b(%pc) <0x7a34>
 000079fe: 80 40                                          CLRW %r0
 00007a00: 7b 2d                                          BRB &0x2d <0x7a2d>
-00007a02: 3f 01 73                                       CMPB &0x1,0(%ap)
+00007a02: 3f 01 73                                       CMPB &0x1,3(%ap)
 00007a05: 77 07                                          BNEB &0x7 <0x7a0c>
 00007a07: 84 04 40                                       MOVW &0x4,%r0
 00007a0a: 7b 04                                          BRB &0x4 <0x7a0e>
@@ -7581,7 +7660,7 @@
 00007ae4: a0 01                                          PUSHW &0x1
 00007ae6: a0 5f e6 00                                    PUSHW &0xe6
 00007aea: 2c cc f8 7f 2c 55 00 00                        CALL -8(%sp),$0x552c
-00007af2: 3b 7f 00 d0 04 00 77                           BITB $0x4d000,0(%ap)
+00007af2: 3b 7f 00 d0 04 00 77                           BITB $0x4d000,7(%ap)
 00007af9: 7f 1f                                          BEB &0x1f <0x7b18>
 00007afb: 3b 7f 00 d0 04 00 08                           BITB $0x4d000,&0x8
 00007b02: 7f 0a                                          BEB &0xa <0x7b0c>
@@ -7668,7 +7747,7 @@
 00007c18: a0 4f 74 08 00 02                              PUSHW &0x2000874
 00007c1e: a0 00                                          PUSHW &0x0
 00007c20: a0 01                                          PUSHW &0x1
-00007c22: 2c cc f0 af 0a ff                              CALL -16(%sp),0x..f0a(%pc)
+00007c22: 2c cc f0 af 0a ff                              CALL -16(%sp),0xff0a(%pc)
 00007c28: 28 40                                          TSTW %r0
 00007c2a: 77 0a                                          BNEB &0xa <0x7c34>
 00007c2c: 80 40                                          CLRW %r0
@@ -7787,11 +7866,11 @@
 
 00007d9c: 10 49                                          SAVE %fp
 00007d9e: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
-00007da5: 3f 73 7f 01 d0 04 00                           CMPB 0(%ap),$0x4d001
+00007da5: 3f 73 7f 01 d0 04 00                           CMPB 3(%ap),$0x4d001
 00007dac: 77 07                                          BNEB &0x7 <0x7db3>
 00007dae: 84 01 40                                       MOVW &0x1,%r0
 00007db1: 7b 1d                                          BRB &0x1d <0x7dce>
-00007db3: 87 73 7f 03 d0 04 00                           MOVB 0(%ap),$0x4d003
+00007db3: 87 73 7f 03 d0 04 00                           MOVB 3(%ap),$0x4d003
 00007dba: 70                                             NOP
 00007dbb: a0 1c                                          PUSHW &0x1c
 00007dbd: a0 10                                          PUSHW &0x10
