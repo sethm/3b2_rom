@@ -39,6 +39,23 @@ few bytes. They are included for completeness.
 
 This is a canonical HEX+ASCII dump of the `400_full.bin` file.
 
+3B2 Model 500
+-------------
+
+- 500_abtrt.bin
+- 500_abtru.bin
+- 500_abtrw.bin
+- 500_abtry.bin
+- 500_full.bin
+
+These are binary images of 32KB EPROMs (presumably D27C128 or
+equivalent) from an AT&T 3B2 Model 500. Together, they comprise a
+128KB / 32KW ROM.
+
+- 500_full.hex
+
+This is the canonical HEX+ASCII dump of the `500_full.bin` file.
+
 WE32100 Disassembler
 --------------------
 
