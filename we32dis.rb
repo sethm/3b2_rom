@@ -605,6 +605,8 @@ class Decoder
       if operand.reg == 15 # Absolute
         operand.data = consume_word(byte_stream, offset + consumed, instr)
         consumed += 4
+      else
+        operand.data = operand.reg
       end
 
     when 8, 9

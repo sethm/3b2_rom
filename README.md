@@ -63,10 +63,10 @@ A very bare-bones WE32100 disassembler can be found in the file
 `we32dis.rb`.  It is implemented in Ruby and requires at least Ruby
 2.0 to function correctly.
 
-Disassembled ROM
-----------------
+Disassembled Model 400 ROM
+--------------------------
 
-The file `disassembled.txt` contains a disassembled and commented
-version of the Model 400 ROM. It is a work in progress, and has not
-been fully commented yet.
+The file `400_full.s` contains a disassembled and commented version of
+the Model 400 ROM. It is a work in progress, and has not been fully
+commented yet.
 
