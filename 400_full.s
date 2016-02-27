@@ -7,6 +7,106 @@
 ;;    we32dis.rb -s 0x1274 -i 400_full.bin > disassembled.txt
 ;;
 
+;;; Strings
+628:	"SBD"
+62c:	"\nEnter name of program to execute [ %s ]: "
+659:	"passwd"
+660:	"\nenter old password: "
+676:	"\nenter new password: "
+68c:	"\nconfirmation: "
+69c:	"\n"
+69e:	"newkey"
+6a5:	"\nCreating a floppy key to enable clearing of saved NVRAM information.\n\n"
+6ec:	"go"
+6ef:	"Insert a formatted floppy, then type 'go' (q to quit): "
+727:	"\nCreation of floppy key complete\n\n"
+74a:	"sysdump"
+752:	"version"
+75a:	"\nCreated: %s\n"
+768:	"Issue: %08lx\n"
+776:	"Release: %s\nLoad: %s\n"
+78c:	"Serial Number: %08lx\n\n"
+7a3:	"q"
+7a5:	"edt"
+7a9:	"error info"
+7b4:	"baud"
+7b9:	"?"
+7bb:	"Enter an executable or system file, a directory name,\n"
+7f3:	"or one of the possible firmware program names:\n\n"
+824:	"baud    edt    newkey    passwd    sysdump    version    q(uit)\n\n"
+866:	"*VOID*"
+86d:	"\tPossible load devices are:\n\n"
+88b:	"Option Number    Slot     Name\n"
+8ab:	"---------------------------------------\n"
+8d4:	"      %2d         %2d"
+8ea:	"*VOID*"
+8f1:	"     %10s\n"
+8fd:	"\nEnter Load Device Option Number "
+91f:	"[%d"
+923:	"*VOID*"
+92a:	" (%s)"
+930:	"]: "
+936:	"\n%s is not a valid option number.\n"
+959:	"Possible subdevices are:\n\n"
+974:	"Option Number   Subdevice    Name\n"
+997:	"--------------------------------------------\n"
+
+;;; Exception Vector Table
+;;; ----------------------
+;;;
+;;; Normal Exception Vector = 0x00000548 which points to 0x421F
+;;;
+;;; Interrupt Vector Table Pointers
+;;; -------------------------------
+;;;
+;;; NMI Interrupt Handler
+;;;
+;;;   0x8C = 02000bc8
+;;;
+;;; Auto Vector Interrupts
+;;;
+;;;   0x090:  02000bc8
+;;;   0x094:  02000bc8
+;;;   0x098:  02000bc8
+;;;   0x09C:  02000bc8
+;;;   0x0A0:  02000bc8
+;;;   0x0A4:  02000bc8
+;;;   0x0A8:  02000bc8
+;;;   0x0AC:  02000c18
+;;;   0x0B0:  02000c68
+;;;   0x0B4:  02000cb8
+;;;   0x0B8:  02000d08
+;;;   0x0BC:  02000d58
+;;;   0x0C0:  0x200da8
+;;;   0x0C4:  0x200da8
+;;;   0x0C8:  0x200e48
+;;;   0x0CC:  0x200bc8
+;;;   0x0D0:  0x200bc8
+;;;    ... [same] ...
+;;;   0x104:  0x200bc8
+;;;   0x108:  0x200bc8
+;;;
+;;; Device Interrupt Handlers
+;;;
+;;;   0x10c:  0x200bc8
+;;;   0x110:  0x200bc8
+;;;    ... [same] ...
+;;;   0x484:  0x200bc8
+;;;   0x488:  0x200bc8
+;;;
+;;;
+;;; In all, there are 8 distinct interrupt PCBPs:
+;;;
+;;;    02000bc8
+;;;    02000c18
+;;;    02000c68
+;;;    02000d08
+;;;    02000cb8
+;;;    02000d58
+;;;    02000da8
+;;;    02000e48
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; Reset entry point. We start running here at power-up.
@@ -1229,8 +1329,11 @@
 000021d1: 90 45                                          INCW %r5
 000021d3: 3c 6f 44 45                                    CMPW &0x44,%r5
 000021d7: 5b ec                                          BLUB &0xec <0x21c3>
+
+;;; Stick initial PSW 0x81e180 into PCB at 0x2000b78
 000021d9: 84 4f 80 e1 81 00 7f 78 0b 00 02               MOVW &0x81e180,$0x2000b78
 000021e4: 70                                             NOP
+;;; Stick PC 0x41f8 into PCB at 0x2000b78
 000021e5: 84 4f f8 41 00 00 7f 7c 0b 00 02               MOVW &0x41f8,$0x2000b7c
 000021f0: 70                                             NOP
 000021f1: 84 4f e8 0e 00 02 7f 80 0b 00 02               MOVW &0x2000ee8,$0x2000b80
@@ -1242,7 +1345,18 @@
 00002215: 80 7f c4 0b 00 02                              CLRW $0x2000bc4
 0000221b: 70                                             NOP
 0000221c: 80 45                                          CLRW %r5
+
+;;; GOTO 2258
 0000221e: 7b 3a                                          BRB &0x3a <0x2258>
+
+;;; Each time through this loop, we're incrementing the PCBP by 50, to
+;;; point at the next PCBP.
+;;;    Loop 0: r5 = 0
+;;;    Loop 1: r5 = 1
+;;;    Loop 2: r5 = 2, etc...
+;;;
+;;; %r0 accumulates the new PCBP, which we stuff into R6.
+
 00002220: e8 6f 50 45 40                                 MULW3 &0x50,%r5,%r0
 00002225: 9c 4f c8 0b 00 02 40                           ADDW2 &0x2000bc8,%r0
 0000222c: 84 40 46                                       MOVW %r0,%r6
@@ -1257,28 +1371,72 @@
 00002252: 80 c6 4c                                       CLRW 76(%r6)
 00002255: 70                                             NOP
 00002256: 90 45                                          INCW %r5
+
+;;; If R5 < 9, GOTO 2220
 00002258: 3c 09 45                                       CMPW &0x9,%r5
 0000225b: 4b c5                                          BLB &0xc5 <0x2220>
+
+;;; After the loop, PCBPs look like this:
+;;;
+;;;     PSW = 0x81e180
+;;;     PC = Undefined (filled out below)
+;;;     Stack Pointer = 0x20010e8
+;;;     Stack Lower Bound = 0x200010e8
+;;;     Stack Upper Bound = 0x200011e8
+;;;
+
+
+;;; Now, fill the Interrupt PCB Program Counters
+;;;
+;;; Each interrupt vector in the ROM interrupt vectors table (located at
+;;; 0x090 through 0x108) points to a PCB in RAM, consisting of
+;;; at least a PSW/PC/SP "initial context". This set of MOVs appears
+;;; to fill the PCB PC's
+;;;
+
+;;; PCBP = 0x2000bc8. Handler = 0x40a0
 0000225d: 84 4f a0 40 00 00 7f cc 0b 00 02               MOVW &0x40a0,$0x2000bcc
 00002268: 70                                             NOP
+
+;;; PCBP = 0x2000c18. Handler = 0x40c6
 00002269: 84 4f c6 40 00 00 7f 1c 0c 00 02               MOVW &0x40c6,$0x2000c1c
 00002274: 70                                             NOP
+
+;;; PCBP = 0x2000c68. Handler = 0x40ec
 00002275: 84 4f ec 40 00 00 7f 6c 0c 00 02               MOVW &0x40ec,$0x2000c6c
 00002280: 70                                             NOP
+
+;;; PCBP = 0x2000cb8. Handler = 0x4112
 00002281: 84 4f 12 41 00 00 7f bc 0c 00 02               MOVW &0x4112,$0x2000cbc
 0000228c: 70                                             NOP
+
+;;; PCBP = 0x2000d08. Handler = 0x4138
 0000228d: 84 4f 38 41 00 00 7f 0c 0d 00 02               MOVW &0x4138,$0x2000d0c
 00002298: 70                                             NOP
+
+;;; PCBP = 0x2000d58. Handler = 0x415e
 00002299: 84 4f 5e 41 00 00 7f 5c 0d 00 02               MOVW &0x415e,$0x2000d5c
 000022a4: 70                                             NOP
+
+;;; PCBP = 0x2000da8. Handler = 0x4184
 000022a5: 84 4f 84 41 00 00 7f ac 0d 00 02               MOVW &0x4184,$0x2000dac
 000022b0: 70                                             NOP
+
+;;; PCBP = 0x2000df8. Handler = 0x41aa
+;;; (n.b.: This PCBP doesn't seem to appear in the vector table. Mysterious!)
 000022b1: 84 4f aa 41 00 00 7f fc 0d 00 02               MOVW &0x41aa,$0x2000dfc
 000022bc: 70                                             NOP
+
+;;; PCBP = 0x2000e48. Handler = 0x41d0
 000022bd: 84 4f d0 41 00 00 7f 4c 0e 00 02               MOVW &0x41d0,$0x2000e4c
 000022c8: 70                                             NOP
+
+;;; PCBP = 0x2000e90. PSW = 0x81e180.
+;;; (n.b.: This PCBP doesn't seem to appear in the vector table, either.)
 000022c9: 84 4f 80 e1 81 00 7f 98 0e 00 02               MOVW &0x81e180,$0x2000e98
 000022d4: 70                                             NOP
+
+
 000022d5: 84 4f 8e 42 00 00 7f 9c 0e 00 02               MOVW &0x428e,$0x2000e9c
 000022e0: 70                                             NOP
 000022e1: 84 4f e8 0e 00 02 7f a0 0e 00 02               MOVW &0x2000ee8,$0x2000ea0
@@ -3275,7 +3433,7 @@
 000040c4: 30 c8                                          RETPS
 
 
-;;
+;; Interrupt handler 40c6
 000040c6: 84 ce fc 40                                    MOVW -4(%isp),%r0
 000040ca: 84 50 7f 58 12 00 02                           MOVW (%r0),$0x2001258
 000040d1: 70                                             NOP
@@ -3285,6 +3443,8 @@
 000040e2: 70                                             NOP
 000040e3: 2c 5c 7f ec 64 00 00                           CALL (%sp),$0x64ec
 000040ea: 30 c8                                          RETPS
+
+;; Interrupt handler 40ec
 000040ec: 84 ce fc 40                                    MOVW -4(%isp),%r0
 000040f0: 84 50 7f 58 12 00 02                           MOVW (%r0),$0x2001258
 000040f7: 70                                             NOP
@@ -3294,6 +3454,8 @@
 00004108: 70                                             NOP
 00004109: 2c 5c 7f ec 64 00 00                           CALL (%sp),$0x64ec
 00004110: 30 c8                                          RETPS
+
+;;
 00004112: 84 ce fc 40                                    MOVW -4(%isp),%r0
 00004116: 84 50 7f 58 12 00 02                           MOVW (%r0),$0x2001258
 0000411d: 70                                             NOP
@@ -3323,6 +3485,7 @@
 0000417a: 70                                             NOP
 0000417b: 2c 5c 7f ec 64 00 00                           CALL (%sp),$0x64ec
 00004182: 30 c8                                          RETPS
+
 00004184: 84 ce fc 40                                    MOVW -4(%isp),%r0
 00004188: 84 50 7f 58 12 00 02                           MOVW (%r0),$0x2001258
 0000418f: 70                                             NOP
@@ -6182,7 +6345,7 @@
 ;; Print the string "03: UNEXPECTED FAULT"
 000065c4: 2c cc f8 7f e4 44 00 00                        CALL -8(%sp),$0x44e4
 ;; Print the string "EXECUTION HALTED"
-sim000065cc: a0 4f 9c 0d 00 00                              PUSHW &0xd9c
+000065cc: a0 4f 9c 0d 00 00                              PUSHW &0xd9c
 000065d2: 2c cc fc 7f e4 44 00 00                        CALL -4(%sp),$0x44e4
 000065da: a0 4f ef be ed fe                              PUSHW &0xfeedbeef
 000065e0: 2c cc fc 7f 22 63 00 00                        CALL -4(%sp),$0x6322
@@ -7135,7 +7298,7 @@ sim000065cc: a0 4f 9c 0d 00 00                              PUSHW &0xd9c
 0000740d: b0 40 7f d4 12 00 02                           ORW2 %r0,$0x20012d4
 00007414: 70                                             NOP
 
-;; 
+;;
 00007415: 87 08 7f 01 a0 04 00                           MOVB &0x8,$0x4a001
 0000741c: 70                                             NOP
 0000741d: 84 7f fc 14 00 02 4b                           MOVW $0x20014fc,%psw
@@ -7164,7 +7327,7 @@ sim000065cc: a0 4f 9c 0d 00 00                              PUSHW &0xd9c
 0000744d: 97 7b                                          DECB 11(%ap)
 0000744f: 70                                             NOP
 
-;; 
+;;
 00007450: 2b 7b                                          TSTB 11(%ap)
 00007452: 77 ed                                          BNEB &0xed <0x743f>
 
