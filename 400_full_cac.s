@@ -10,11 +10,13 @@
 ## $ od -Ax -v -t x1 -w4 --endian=big 400_full.bin | awk '{printf "\t.byte\t 0x%s, 0x%s, 0x%s, 0x%s\t# %s\n", $2, $3, $4, $5, $1}' | less > cacb.tmp
 ##
 
+	.section	.text, "x"
 	.word	0x00000548, 0xffffffff, 0xffffffff, 0xffffffff	# 000000
 	.word	0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff	# 000010
 	.word	0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff	# 000020
 	.word	0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff	# 000030
 	.word	0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff	# 000040
+l50:
 	.word	0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff	# 000050
 	.word	0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff	# 000060
 	.word	0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff	# 000070
@@ -153,7 +155,7 @@
 ## Indirect entry points
 
 	.word	0x4dd4	# 4ac: 'getedt' routine
-	.word	0x44e4	# 4b0: 'printf' routine
+	.word	printf	# 4b0: 'printf' routine
 
 	.word	             0x00004360, 0x00004ae4, 0x00007f68	# 0004b0
 	.word	0x00002af8, 0x02001268, 0x00004484, 0x00005320	# 0004c0
@@ -379,7 +381,7 @@ l7b4:
 l7b9:
 	.byte	       0x3f, 0x00      	# 0007b8
 
-# 7bb:	"Enter an executable or system file, a directory name,\n"
+# 7bb:	"\nEnter an executable or system file, a directory name,\n"
 l7bb:
 	.byte	                   0x0a	# 0007b8
 	.byte	0x45, 0x6e, 0x74, 0x65	# 0007bc
@@ -619,7 +621,7 @@ la13: # "[%d"
 la17: # "*VOID*"
 	.byte	0x2a, 0x56, 0x4f, 0x49, 0x44, 0x2a, 0x00
 
-la1e: # (%s)"
+la1e: # "(%s)"
 	.byte	0x28, 0x25
 	.byte	0x73, 0x29, 0x00
 
@@ -634,7 +636,7 @@ la29: # "\n%s is not a valid option number\n"
 	.byte	0x6e, 0x6f, 0x74, 0x20, 0x61, 0x20, 0x76, 0x61
 	.byte	0x6c, 0x69, 0x64, 0x20, 0x6f, 0x70, 0x74, 0x69
 	.byte	0x6f, 0x6e, 0x20, 0x6e, 0x75, 0x6d, 0x62, 0x65
-        .byte	0x72, 0x2e, 0x0a, 0x00
+	.byte	0x72, 0x2e, 0x0a, 0x00
 
 la4c: # "\nSORRY!\n"
 	.byte	0x0a, 0x53, 0x4f, 0x52
@@ -688,6 +690,7 @@ lb27: # "\nmax input of %d characters, re-enter entire line\n"
 lb5a:
 	.byte	0x00, 0x00
 
+## cac: binary to hex conversion
 lb5c: # "0123456789abcdef"
 	.byte	0x30, 0x31, 0x32, 0x33
 	.byte	0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x00
@@ -727,13 +730,13 @@ lbbc: # "%d megabyte(s)"
 	.byte	0x79, 0x74, 0x65, 0x28	# 000bc4
 	.byte	0x73, 0x29, 0x00
 
-lbca: # "%d kilobytes"
+lbcb: # "%d kilobytes"
 	.byte	0x25
 	.byte	0x64, 0x20, 0x6b, 0x69	# 000bcc
 	.byte	0x6c, 0x6f, 0x62, 0x79	# 000bd0
 	.byte	0x74, 0x65, 0x73, 0x00	# 000bd4
 
-ldb8: # "\n\n%02d - device name = %-9s, "
+lbd8: # "\n\n%02d - device name = %-9s, "
 	.byte	0x0a, 0x0a, 0x25, 0x30	# 000bd8
 	.byte	0x32, 0x64, 0x20, 0x2d	# 000bdc
 	.byte	0x20, 0x64, 0x65, 0x76	# 000be0
@@ -824,8 +827,8 @@ lccf: # "               "
 	.byte	0x20, 0x20, 0x20, 0x20	# 000cd8
 	.byte	0x20, 0x20, 0x00
 
-lce3: # "\n     subdevice(s)"
-	.byte	0x0a	# 000cdc
+lcdf: # "\n     subdevice(s)"
+	.byte	0x0a
 	.byte	0x20, 0x20, 0x20, 0x20	# 000ce0
 	.byte	0x20, 0x73, 0x75, 0x62	# 000ce4
 	.byte	0x64, 0x65, 0x76, 0x69	# 000ce8
@@ -843,12 +846,12 @@ lcf2: # "%s#%02d = %-9s, ID code = 0x%02x"
 	.byte	0x30, 0x78, 0x25, 0x30	# 000d0c
 	.byte	0x32, 0x78, 0x00
 
-lb13: # "\n     "
+ld13: # "\n     "
 	.byte	0x0a
 	.byte	0x20, 0x20, 0x20, 0x20	# 000d14
 	.byte	0x20, 0x00
 
-ld16: # ", "
+ld1a: # ", "
 	.byte	0x2c, 0x20	# 000d18
 	.byte	0x00
 
@@ -985,7 +988,7 @@ le72: # "05: SELF-CONFIGURATION FAILURE"
 	.byte	0x4c, 0x55, 0x52, 0x45	# 000e8c
 	.byte	0x00
 
-l391: # "06: BOOT FAILURE"
+le91: # "06: BOOT FAILURE"
 	.byte	0x30, 0x36, 0x3a
 	.byte	0x20, 0x42, 0x4f, 0x4f	# 000e94
 	.byte	0x54, 0x20, 0x46, 0x41	# 000e98
@@ -1210,6 +1213,7 @@ l10d5: # "03: UNEXPECTED FAULT"
 l10ea:
 	.byte	0x00, 0x00
 
+## Lookup table?
 l10ec:
 	.byte	0x18, 0xf2, 0x00
 
@@ -1292,6 +1296,7 @@ l1170:
 	.word	0x00000000, 0x00000000, 0x00000000, 0x00000000	# 001260
 	.word	0x00000000                                    	# 001270
 
+	.section	.text2,"x"
 #################################################################################
 ##
 ## Reset entry point. We start running here at power-up.
@@ -2068,7 +2073,7 @@ l197f:
 	INCW %r3
 l1981:
 	CMPW &0xc350,%r3
-	BLEUB 0x197f
+	BLEUB l197f
 
 ## Write to the CSR (what register?)
 	MOVB &0x1,$0x44017
@@ -2267,6 +2272,7 @@ l1bc5:
 l1bd0:
 	MOVH {uhalf}%r4,{uword}%r0
 	MOVH {uhalf}%r4,{uword}%r1
+# l10ec lookup table?
 	.byte	0x87, 0x81, 0xec, 0x10, 0x00, 0x00, 0x80, 0x74, 0x0a, 0x00, 0x02	# MOVB 0x10ec(%r1),0x2000a74(%r0)
 	NOP
 	INCH %r4
@@ -2282,7 +2288,7 @@ l1bf6:
 	CALL -4(%sp),$0x732c
 	TSTW %r0
 	BEB l1c0a
-	BRB 0x1c21
+	BRB l1c21
 l1c0a:
 	PUSHW &0x64
 	CALL -4(%sp),*$0x528 # DUART Delay
@@ -2823,7 +2829,7 @@ l2364:
 	#NOP
 	ADDW3 &0xc,$0x490,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0x28, 0x06, 0x00, 0x00	# PUSHW &l628	# "SBD"
+	PUSHW &l628	# "SBD"
 	CALL -8(%sp),$0x7fb0
 	ADDW3 &0x4,$0x490,%r0
 	MOVB &0x1,{uword}%r1
@@ -3365,9 +3371,10 @@ l2b0d:
 	CALL -12(%sp),$0x5224
 
 ## printf ("\nEnter name of program to execute [ %s ]: ")
-	.byte	0xa0, 0x4f, 0x2c, 0x06, 0x00, 0x00	# PUSHW &l62c
+	PUSHW &l62c
 	PUSHAW (%fp)
-	CALL -8(%sp),$0x44e4
+	CALL -8(%sp),printf
+
 	PUSHW &0x0
 	CALL -4(%sp),*$0x540
 	ADDW3 &0x2,$0x4a0,%r0
@@ -3377,24 +3384,28 @@ l2b0d:
 	BNEB l2b6e
 	PUSHW &0x1
 	CALL -4(%sp),*$0x540
-## Print "\n"
-	.byte	0xa0, 0x4f, 0x57, 0x06, 0x00, 0x00	# PUSHW &l657
-	CALL -4(%sp),$0x44e4
+
+## printf ("\n")
+	PUSHW &l657
+	CALL -4(%sp),printf
 	JMP $0x3aab
 l2b6e:
 	PUSHW &0x1
 	CALL -4(%sp),*$0x540
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0x59, 0x06, 0x00, 0x00	# PUSHW &l659
+	PUSHW &l659
 	CALL -8(%sp),$0x7f68
 	TSTW %r0
 	BEB l2b9a
 	JMP $0x2c6b
-## Print "\nenter old password: "
+
+
 l2b9a:
-	.byte	0xa0, 0x4f, 0x60, 0x06, 0x00, 0x00	# PUSHW &l660
-	CALL -4(%sp),$0x44e4
+## printf ("\nenter old password: ")
+	PUSHW &l660
+	CALL -4(%sp),printf
+
 	PUSHAW 80(%fp)
 	CALL -4(%sp),0xf09(%pc)
 	TSTW %r0
@@ -3411,19 +3422,23 @@ l2bba:
 	TSTW %r0
 	BEB l2be4
 	CALL (%sp),0xf2f(%pc)
-## Print "\nenter new password: "
+
 l2be4:
-	.byte	0xa0, 0x4f, 0x76, 0x06, 0x00, 0x00	# PUSHW &l676
-	CALL -4(%sp),$0x44e4
+## printf ("\nenter new password: ")
+	PUSHW &l676
+	CALL -4(%sp),printf
+
 	PUSHAW (%fp)
 	CALL -4(%sp),0xec0(%pc)
 	TSTW %r0
 	BNEB l2c03
 	CALL (%sp),0xf10(%pc)
-## Print "\nconfirmation: "
+
 l2c03:
-	.byte	0xa0, 0x4f, 0x8c, 0x06, 0x00, 0x00	# PUSHW &l68c
-	CALL -4(%sp),$0x44e4
+## printf ("\nconfirmation: ")
+	PUSHW &l68c
+	CALL -4(%sp),printf
+
 	PUSHAW 80(%fp)
 	CALL -4(%sp),0xea0(%pc)
 	TSTW %r0
@@ -3436,10 +3451,12 @@ l2c23:
 	TSTW %r0
 	BEB l2c39
 	CALL (%sp),0xeda(%pc)
-## Print "\nnewkey"
+
 l2c39:
-	.byte	0xa0,0x4f,0x9c,0x06,0x00,0x00	# PUSHW l69c
-	CALL -4(%sp),$0x44e4
+## printf ("\n")
+	PUSHW &l69c
+	CALL -4(%sp),printf
+
 	PUSHAW (%fp)
 	PUSHW &0x43000
 	PUSHAW (%fp)
@@ -3450,22 +3467,26 @@ l2c39:
 	JMP $0x3aa8
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0x9e, 0x06, 0x00, 0x00	# PUSHW &l69e
+	PUSHW &l69e	# "newkey"
 	CALL -8(%sp),$0x7f68
 	TSTW %r0
 	BEB l2c8d
 	JMP $0x2d52
-## Print "Creating a floppy key to to enable clearing of saved NVRAM information\n"
+
 l2c8d:
-	.byte	0xa0, 0x4f, 0xa5, 0x06, 0x00, 0x00	# PUSHW &l6a5
-	CALL -4(%sp),$0x44e4
+## printf ("\nCreating a floppy key to enable clearing of saved NVRAM information.\n\n")
+	PUSHW &l6a5
+	CALL -4(%sp),printf
+
 	CLRB (%fp)
 	#NOP
 	BRB l2cc4
-## Print "Insert a formatted floppy, then type 'go' (q to quit)"
+
 l2ca0:
-	.byte	0xa0, 0x4f, 0xef, 0x06, 0x00, 0x00	# PUSHW &l6ef
-	CALL -4(%sp),$0x44e4
+## printf ("Insert a formatted floppy, then type 'go' (q to quit): ")
+	PUSHW &l6ef
+	CALL -4(%sp),printf
+
 	PUSHAW (%fp)
 	CALL -4(%sp),$0x4360
 	CMPB &0x71,(%fp)
@@ -3473,7 +3494,7 @@ l2ca0:
 	JMP $0x3aab
 l2cc4:
 	PUSHAW (%fp)
-	.byte	0xa0, 0x4f, 0xec, 0x06, 0x00, 0x00	# PUSHW &l6ec
+	PUSHW &l6ec	# "go"
 	CALL -8(%sp),$0x7f68
 	TSTW %r0
 	BNEB l2ca0
@@ -3501,13 +3522,16 @@ l2cc4:
 	CALL (%sp),$0x5de0
 	PUSHW &0xfeedbeef
 	CALL -4(%sp),$0x6322
+
 l2d3e:
-	.byte	0xa0, 0x4f, 0x27, 0x07, 0x00, 0x00	# PUSHW &l727
-	CALL -4(%sp),$0x44e4
+## printf ("\nCreation of floppy key complete\n\n")
+	PUSHW &l727	
+	CALL -4(%sp),printf
+
 	JMP $0x3aa8
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0x4a, 0x07, 0x00, 0x00	# PUSHW &l74a
+	PUSHW &l74a	# "sysdump"
 	CALL -8(%sp),$0x7f68
 	TSTW %r0
 	BNEB l2d89
@@ -3518,26 +3542,32 @@ l2d3e:
 l2d89:
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0x52, 0x07, 0x00, 0x00	# PUSHW &l752
+	PUSHW &l752	# "version"
 	CALL -8(%sp),$0x7f68
 	TSTW %r0
 	BEB l2dab
 	.byte	0x24, 0x7f, 0x38, 0x2e, 0x00, 0x00	# JMP l2e38
-## Print "Created: 05/31/85"
+
 l2dab:
-	.byte	0xa0, 0x4f, 0x5a, 0x07, 0x00, 0x00	# PUSHW &l75a
-	.byte	0xa0, 0x4f, 0x58, 0x11, 0x00, 0x00	# PUSHW &l1158
-	CALL -8(%sp),$0x44e4
-## Print "Issue: %s"
-	.byte	0xa0, 0x4f, 0x68, 0x07, 0x00, 0x00	# PUSHW &l768
+## printf ("\nCreated: %s\n", "05/31/85")
+	PUSHW &l75a
+	PUSHW &l1158	# "05/31/85"
+	CALL -8(%sp),printf
+
+## printf ("Issue: %08lx")
+	PUSHW &l768
 	PUSHW $0x7ff0
-	CALL -8(%sp),$0x44e4
-## Print "Release: 1.2.1.PF3"
-	.byte	0xa0, 0x4f, 0x76, 0x07, 0x00, 0x00	# PUSHW &l776
-	.byte	0xa0, 0x4f, 0x68, 0x11, 0x00, 0x00	# PUSHW &l1168
-	.byte	0xa0, 0x4f, 0x64, 0x11, 0x00, 0x00	# PUSHW &l1164
-	CALL -12(%sp),$0x44e4
-	.byte	0xa0, 0x4f, 0x8c, 0x07, 0x00, 0x00	# PUSHW &l78c
+	CALL -8(%sp),printf
+
+## printf ("Release: %s\nLoad: %s\n", "1.2.1", "PF3")
+	PUSHW &l776
+	PUSHW &l1168	# "1.2.1"
+	PUSHW &l1164	# "PF3"
+	CALL -12(%sp),printf
+
+## printf ("Serial Number: %08lx\n\n")
+	PUSHW &l78c	# "Serial Number: %08lx\n\n"
+
 	MOVB $0x7ff3,{uword}%r0
 	LLSW3 &0x8,%r0,%r0
 	MOVB $0x7ff7,{uword}%r1
@@ -3549,12 +3579,17 @@ l2dab:
 	MOVB $0x7fff,{uword}%r1
 	ORW2 %r1,%r0
 	PUSHW %r0
-	CALL -8(%sp),$0x44e4
+
+	CALL -8(%sp),printf
+
+
+
+
 	JMP $0x3aa8
 l2e38:
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0xa3, 0x07, 0x00, 0x00	# PUSHW &l7a3
+	PUSHW &l7a3	# "q"
 	CALL -8(%sp),$0x7f68
 	TSTW %r0
 	BNEB l2e5a
@@ -3562,7 +3597,7 @@ l2e38:
 l2e5a:
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0xa5, 0x07, 0x00, 0x00	# PUSHW &l7a5
+	PUSHW &l7a5	# "edt"
 	CALL -8(%sp),$0x7f68
 	TSTW %r0
 	BNEB l2e83
@@ -3571,7 +3606,7 @@ l2e5a:
 l2e83:
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0xa9, 0x07, 0x00, 0x00	# PUSHW &l7a9
+	PUSHW &l7a9	# ""error info"
 	CALL -8(%sp),$0x7f68
 	TSTW %r0
 	BNEB l2eac
@@ -3580,7 +3615,7 @@ l2e83:
 l2eac:
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0xb4, 0x07, 0x00, 0x00	# PUSHW &l7b4
+	PUSHW &l7b4	# "baud"
 	CALL -8(%sp),$0x7f68
 	TSTW %r0
 	BNEB l2ed5
@@ -3589,19 +3624,23 @@ l2eac:
 l2ed5:
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0xb9, 0x07, 0x00, 0x00	# PUSHW &l7b9
+	PUSHW &l7b9	# "?"
 	CALL -8(%sp),$0x7f68
 	TSTW %r0
 	BNEB l2f21
-## Print "\nEnter an executable or system file, a directory name, "
-	.byte	0xa0, 0x4f, 0xbb, 0x07, 0x00, 0x00	# PUSHW &l7bb
-	CALL -4(%sp),$0x44e4
-## Print "or one of the possible firmware program names:\n\n"
-	.byte	0xa0, 0x4f, 0xf3, 0x07, 0x00, 0x00	# PUSHW &l7f3
-	CALL -4(%sp),$0x44e4
-## Print: "baud    edt    newkey    passwd    sysdump    version    q(uit)"
-	.byte	0xa0, 0x4f, 0x24, 0x08, 0x00, 0x00	# PUSHW &l824
-	CALL -4(%sp),$0x44e4
+
+## printf "\nEnter an executable or system file, a directory name,\n"
+	PUSHW &l7bb
+	CALL -4(%sp),printf
+
+## printf ("or one of the possible firmware program names:\n\n"
+	PUSHW &l7f3
+	CALL -4(%sp),printf
+
+## printf ("baud    edt    newkey    passwd    sysdump    version    q(uit)\n\n")
+	PUSHW &l824
+	CALL -4(%sp),printf
+
 	JMP $0x3aa8
 l2f21:
 	ADDW3 &0x2,$0x4a0,%r0
@@ -3847,7 +3886,7 @@ l31f5:
 	ADDW2 $0x490,%r0
 	ADDW2 &0xc,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0x66, 0x08, 0x00, 0x00	# PUSHW &l866
+	.byte	0xa0, 0x4f, 0x66, 0x08, 0x00, 0x00	# PUSHW &l866	# "*VOID*"
 	CALL -8(%sp),$0x7f68
 	TSTW %r0
 	BNEB l3334
@@ -3884,20 +3923,27 @@ l3334:
 	MOVB *$0x4e0,{uword}%r1
 	CMPW %r1,%r0
 	BLH l31d3
-## Print "Possible load devices are:\n\n"
-	.byte	0xa0, 0x4f, 0x6d, 0x08, 0x00, 0x00	# PUSHW &l86d
-	CALL -4(%sp),$0x44e4
-## Print "Option Number    Slot     Name\n"
-	.byte	0xa0, 0x4f, 0x8b, 0x08, 0x00, 0x00	# PUSHW &l88b
-	CALL -4(%sp),$0x44e4
-## Print "------------------------------\n"
-	.byte	0xa0, 0x4f, 0xab, 0x08, 0x00, 0x00	# PUSHW &l8ab
-	CALL -4(%sp),$0x44e4
+
+## printf ("\tPossible load devices are:\n\n")
+	PUSHW &l86d
+	CALL -4(%sp),printf
+
+## printf ("Option Number    Slot     Name\n")
+	PUSHW &l88b
+	CALL -4(%sp),printf
+
+## printf ("------------------------------\n")
+	PUSHW &l8ab
+	CALL -4(%sp),printf
+
 	CLRH 0xb4(%fp)
 	#NOP
 	JMP $0x3413
+
 l3382:
-	.byte	0xa0, 0x4f, 0xd4, 0x08, 0x00, 0x00	# PUSHW &l8d4
+
+## printf ("%2d         %2d")
+	PUSHW &l8d4
 	MOVH 0xb4(%fp),{word}%r0
 	PUSHW %r0
 	MOVAW 0xb8(%fp),%r0
@@ -3906,28 +3952,38 @@ l3382:
 	ADDW2 %r1,%r0
 	MOVH {uhalf}4(%r0),{uword}%r0
 	PUSHW %r0
-	CALL -12(%sp),$0x44e4
+	CALL -12(%sp),printf
+
 	MOVAW 0xb8(%fp),%r0
 	MOVH 0xb4(%fp),{word}%r1
 	LLSW3 &0x4,%r1,%r1
 	ADDW2 %r1,%r0
 	ADDW2 &0x6,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0xea, 0x08, 0x00, 0x00	# PUSHW &l8ea
+	PUSHW &l8ea	# "*VOID*"
 	CALL -8(%sp),$0x7f68
 	TSTW %r0
 	BEB l3400
-	.byte	0xa0, 0x4f, 0xf1, 0x08, 0x00, 0x00	# PUSHW &l8f1
+
+
+## printf ("     %10s\n")
+	PUSHW &l8f1
+
 	MOVAW 0xb8(%fp),%r0
 	MOVH 0xb4(%fp),{word}%r1
 	LLSW3 &0x4,%r1,%r1
 	ADDW2 %r1,%r0
 	ADDW2 &0x6,%r0
 	PUSHW %r0
-	CALL -8(%sp),$0x44e4
+
+	CALL -8(%sp),printf
+
+
 l3400:
-	.byte	0xa0, 0x4f, 0xfb, 0x08, 0x00, 0x00	# PUSHW &l8fb
-	CALL -4(%sp),$0x44e4
+## printf ("\n")
+	PUSHW &l8fb
+	CALL -4(%sp),printf
+
 	INCH 0xb4(%fp)
 	#NOP
 	MOVH 0xb4(%fp),{word}%r0
@@ -3996,33 +4052,50 @@ l34f4:
 	MOVB 0xb5(%fp),0xaf(%fp)
 	#NOP
 l34fc:
-	.byte	0xa0, 0x4f, 0xfd, 0x08, 0x00, 0x00	# PUSHW &l8fd
-	CALL -4(%sp),$0x44e4
-	.byte	0xa0, 0x4f, 0x1f, 0x09, 0x00, 0x00	# PUSHW &l91f
+
+## printf ("\nEnter Load Device Option Number ")
+	PUSHW &l8fd
+	CALL -4(%sp),printf
+
+## printf ("[%d")
+	PUSHW &l91f
+
 	MOVB 0xaf(%fp),{uword}%r0
 	PUSHW %r0
-	CALL -8(%sp),$0x44e4
+
+	CALL -8(%sp),printf
+
+
 	MOVAW 0xb8(%fp),%r0
 	MOVB 0xaf(%fp),{uword}%r1
 	LLSW3 &0x4,%r1,%r1
 	ADDW2 %r1,%r0
 	ADDW2 &0x6,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0x23, 0x09, 0x00, 0x00	# PUSHW &l923
+	PUSHW &l923	# "*VOID*
 	CALL -8(%sp),$0x7f68
 	TSTW %r0
 	BEB l356e
-	.byte	0xa0, 0x4f, 0x2a, 0x09, 0x00, 0x00	# PUSHW &l92a
+
+# printf (" (%s)")
+	PUSHW &l92a
+
 	MOVAW 0xb8(%fp),%r0
 	MOVB 0xaf(%fp),{uword}%r1
 	LLSW3 &0x4,%r1,%r1
 	ADDW2 %r1,%r0
 	ADDW2 &0x6,%r0
 	PUSHW %r0
-	CALL -8(%sp),$0x44e4
+
+	CALL -8(%sp),printf
+
+
 l356e:
-	.byte	0xa0, 0x4f, 0x30, 0x09, 0x00, 0x00	# PUSHW &l930
-	CALL -4(%sp),$0x44e4
+
+## printf ("]: ")
+	PUSHW &l930
+	CALL -4(%sp),printf
+
 	PUSHW &0x0
 	CALL -4(%sp),*$0x540
 	PUSHAW 90(%fp)
@@ -4031,8 +4104,11 @@ l356e:
 	BNEB l35b4
 	PUSHW &0x1
 	CALL -4(%sp),*$0x540
-	.byte	0xa0, 0x4f, 0x34, 0x09, 0x00, 0x00	# PUSHW &l934
-	CALL -4(%sp),$0x44e4
+
+## printf ("\n");
+	PUSHW &l934
+	CALL -4(%sp),printf
+
 	JMP $0x3aab
 l35b4:
 	PUSHW &0x1
@@ -4064,9 +4140,15 @@ l35f0:
 l3601:
 	.byte	0x2b, 0xa9, 0xaa, 0x00	# TSTB 0xaa(%fp) # as adds NOP
 	BNEB l361b
-	.byte	0xa0, 0x4f, 0x36, 0x09, 0x00, 0x00	# PUSHW &l936
+
+## printf ("\n%s is not a valid option number.\n")
+	PUSHW &l936
+
 	PUSHAW 90(%fp)
-	CALL -8(%sp),$0x44e4
+
+	CALL -8(%sp),printf
+
+
 	BRH l34fc
 l361b:
 	MOVB 0xb5(%fp),0xae(%fp)
@@ -4196,50 +4278,73 @@ l37d1:
 	MOVB 0xac(%fp),{uword}%r1
 	CMPW %r1,%r0
 	BLUB l3773
-	.byte	0xa0, 0x4f, 0x59, 0x09, 0x00, 0x00	# PUSHW &l959
-	CALL -4(%sp),$0x44e4
-	.byte	0xa0, 0x4f, 0x74, 0x09, 0x00, 0x00	# PUSHW &l974
-	CALL -4(%sp),$0x44e4
+
+
+## printf ("Possible subdevices are:\n\n")
+	PUSHW &l959
+	CALL -4(%sp),printf
+
+## printf ("Option Number   Subdevice    Name\n")
+	PUSHW &l974
+	CALL -4(%sp),printf
+
 # printf ("----------------------------\n")
-	.byte	0xa0, 0x4f, 0x97, 0x09, 0x00, 0x00	# PUSHW &l997
-	CALL -4(%sp),$0x44e4
+	PUSHW &l997
+	CALL -4(%sp),printf
 	CLRH 0xb6(%fp)
 	#NOP
 	JMP $0x38ae
 l3817:
-	.byte	0xa0, 0x4f, 0xc5, 0x09, 0x00, 0x00	# PUSHW &l9c5
+
+## printf ("      %2d         %2d")
+	PUSHW &l9c5
+
 	MOVH 0xb6(%fp),{word}%r0
 	PUSHW %r0
+
 	MOVAW 0xb8(%fp),%r0
 	MOVH 0xb6(%fp),{word}%r1
 	LLSW3 &0x4,%r1,%r1
 	ADDW2 %r1,%r0
 	MOVH {uhalf}4(%r0),{uword}%r0
 	PUSHW %r0
-	CALL -12(%sp),$0x44e4
+
+	CALL -12(%sp),printf
+
+
 	MOVAW 0xb8(%fp),%r0
 	MOVH 0xb6(%fp),{word}%r1
 	LLSW3 &0x4,%r1,%r1
 	ADDW2 %r1,%r0
 	ADDW2 &0x6,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0xdc, 0x09, 0x00, 0x00	# PUSHW &l9dc
+	PUSHW &l9dc	# "*VOID*"
 	CALL -8(%sp),$0x7f68
 	TSTW %r0
 	BEB l389b
 	.byte	0x2b, 0xa9, 0xab, 0x00	# TSTB 0xab(%fp)
 	BEB l389b
-	.byte	0xa0, 0x4f, 0xe3, 0x09, 0x00, 0x00	# PUSHW &l9e3
+
+## printf ("         %10s")
+	PUSHW &l9e3
+
 	MOVAW 0xb8(%fp),%r0
 	MOVH 0xb6(%fp),{word}%r1
 	LLSW3 &0x4,%r1,%r1
 	ADDW2 %r1,%r0
 	ADDW2 &0x6,%r0
 	PUSHW %r0
-	CALL -8(%sp),$0x44e4
+
+	CALL -8(%sp),printf
+
 l389b:
-	.byte	0xa0, 0x4f, 0xf1, 0x09, 0x00, 0x00	# PUSHW &l9f1
-	CALL -4(%sp),$0x44e4
+
+## printf ("\n")
+	PUSHW &l9f1
+
+	CALL -4(%sp),printf
+
+
 	INCH 0xb6(%fp)
 	#NOP
 	MOVH 0xb6(%fp),{word}%r0
@@ -4281,25 +4386,33 @@ l391a:
 	MOVB 0xb7(%fp),0xaf(%fp)
 	#NOP
 l3922:
-	.byte	0xa0, 0x4f, 0xf3, 0x09, 0x00, 0x00 	# PUSHW &l9f3
-	CALL -4(%sp),$0x44e4
-	.byte	0xa0, 0x4f, 0x13, 0x0a, 0x00, 0x00	# PUSHW &la13
+
+## printf ("Enter Subdevice Option Number ")
+	PUSHW &l9f3
+	CALL -4(%sp),printf
+
+## printf ("[%d")
+	PUSHW &la13
+
 	MOVB 0xaf(%fp),{uword}%r0
 	PUSHW %r0
-	CALL -8(%sp),$0x44e4
+
+	CALL -8(%sp),printf
+
+
 	MOVAW 0xb8(%fp),%r0
 	MOVB 0xaf(%fp),{uword}%r1
 	LLSW3 &0x4,%r1,%r1
 	ADDW2 %r1,%r0
 	ADDW2 &0x6,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0x17, 0x0a, 0x00, 0x00	# PUSHW &la17
+	PUSHW &la17	# "*VOID*"
 	CALL -8(%sp),$0x7f68
 	TSTW %r0
 	BEB l399a
 	.byte	0x2b, 0xa9, 0xab, 0x00	# TSTB 0xab(%fp) # as adds NOP
 	BEB l399a
-	.byte	0xa0, 0x4f, 0x1e, 0x0a, 0x00, 0x00	# PUSHW &la1e
+	PUSHW &la1e	# "(%s)"
 	MOVAW 0xb8(%fp),%r0
 	MOVB 0xaf(%fp),{uword}%r1
 	LLSW3 &0x4,%r1,%r1
@@ -4307,10 +4420,13 @@ l3922:
 	ADDW2 &0x6,%r0
 	PUSHW %r0
 l3992:
-	CALL -8(%sp),$0x44e4
+	CALL -8(%sp),printf
 l399a:
-	.byte	0xa0, 0x4f, 0x23, 0x0a, 0x00, 0x00	# PUSHW &la23
-	CALL -4(%sp),$0x44e4
+
+## printf ("]:")
+	PUSHW &la23
+	CALL -4(%sp),printf
+
 	PUSHW &0x0
 	CALL -4(%sp),*$0x540
 	PUSHAW 90(%fp)
@@ -4319,8 +4435,11 @@ l399a:
 	BNEB l39e0
 	PUSHW &0x1
 	CALL -4(%sp),*$0x540
-	.byte	0xa0, 0x4f, 0x27, 0x0a, 0x00, 0x00	# PUSHW &xa27
-	CALL -4(%sp),$0x44e4
+
+## printf ("\n")
+	PUSHW &la27
+	CALL -4(%sp),printf
+
 	JMP $0x3aab
 l39e0:
 	PUSHW &0x1
@@ -4352,9 +4471,11 @@ l3a1c:
 l3a2d:
 	.byte	0x2b, 0xa9, 0xaa, 0x00	# TSTB 0xaa(%fp)
 	BNEB l3a47
-	.byte	0xa0, 0x4f, 0x29, 0x0a, 0x00, 0x00	# PUSHW &la29
+
+## printf ("\n%s is not a valid option number\n")
+	PUSHW &la29
 	PUSHAW 90(%fp)
-	CALL -8(%sp),$0x44e4
+	CALL -8(%sp),printf
 	BRH l3922
 l3a47:
 	MOVB 0xb7(%fp),0xae(%fp)
@@ -4445,8 +4566,10 @@ l3b05:
 l3b0e:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
-	.byte	0xa0, 0x4f, 0x4c, 0x0a, 0x00, 0x00	# PUSHW &la4c
-	CALL -4(%sp),$0x44e4
+
+## printf ("\nSORRY!\n")
+	PUSHW &la4c
+	CALL -4(%sp),printf
 	PUSHW &0xadebac1e
 	CALL -4(%sp),$0x6322
 	MOVAW -24(%fp),%sp
@@ -4647,10 +4770,16 @@ l3d6c:
 l3d82:
 	CMPH &0x10,%r8
 	BLUB l3da1
-	.byte	0xa0, 0x4f, 0xd8, 0x0a, 0x00, 0x00	# PUSHW &lad8
+
+## printf (# "Unsupported Baud Rate: %d\n")
+	PUSHW &lad8
+
 	MOVH 2(%ap),{word}%r0
 	PUSHW %r0
-	CALL -8(%sp),$0x44e4
+
+	CALL -8(%sp),printf
+
+
 	.byte	0x24, 0x7f, 0x7a, 0x3e, 0x00, 0x00	# JMP l3e7a
 l3da1:
 	INCH %r8
@@ -4842,25 +4971,37 @@ l3f60:
 	PUSHAW (%fp)
 	PUSHW &0x2
 	CALL -12(%sp),$0x5224
-	.byte	0xa0, 0x4f, 0xf3, 0x0a, 0x00, 0x00  # PUSHW &laf3
+
+## printf ("Enter new rate [%d]: ")
+	PUSHW &laf3
+
 	MOVH {uhalf}(%fp),{uword}%r0
 	ANDW2 &0xf,%r0
 	LLSW3 &0x3,%r0,%r0
 	.byte	0x86, 0x80, 0x58, 0x0a, 0x00, 0x00, 0xe4, 0x40	# MOVH 0xa58(%r0),{word}%r0
 	PUSHW %r0
-	CALL -8(%sp),$0x44e4
+
+	CALL -8(%sp),printf
+
+
 	PUSHAW 2(%fp)
 	.byte	0x2c, 0xcc, 0xfc, 0xef, 0xb4, 0x04, 0x00, 0x00	# CALL -4(%sp),*$0x4b4
 	.byte	0x2b, 0x62	# TSTB 2(%fp) # as adds NOP
 	BEB l4053
 	PUSHAW 2(%fp)
-	.byte	0xa0, 0x4f, 0x09, 0x0b, 0x00, 0x00	# PUSHW &lb09
+	PUSHW &lb09	# "%d"
 	PUSHAW (%fp)
 	CALL -12(%sp),$0x4ae4
-	.byte	0xa0, 0x4f, 0x0c, 0x0b, 0x00, 0x00	# PUSHW &lb0c
+
+## printf (# "Change baud rate to %d\n")
+	PUSHW &lb0c
+
 	MOVH {uhalf}(%fp),{uword}%r0
 	PUSHW %r0
-	CALL -8(%sp),$0x44e4
+
+	CALL -8(%sp),printf
+
+
 	MOVH {uhalf}(%fp),{uword}%r0
 	PUSHW %r0
 	PUSHW &0x49000
@@ -5180,8 +5321,11 @@ l4405:
 	BNEB l442c
 	CMPW %r8,(%ap)
 	BEB l442a
-	.byte	0xa0, 0x4f, 0x24, 0x0b, 0x00, 0x00	# PUSHW lb24
-	CALL -4(%sp),$0x44e4
+
+## printf (" \b")
+	PUSHW &lb24
+	CALL -4(%sp),printf
+
 	TSTW %r0
 	BGEB l4427
 	MOVW &-1,%r0
@@ -5212,9 +5356,12 @@ l4455:
 	SUBW3 %r8,(%ap),%r0
 	CMPW &0x50,%r0
 	BLH l4389
-	.byte	0xa0, 0x4f, 0x27, 0x0b, 0x00, 0x00	# PUSHW lb24
+
+## printf ("\nmax input of %d characters, re-enter entire line\n")
+	PUSHW &lb27
 	PUSHW &0x50
-	CALL -8(%sp),$0x44e4
+	CALL -8(%sp),printf
+
 	MOVW %r8,(%ap)
 	#NOP
 	BRH l4383
@@ -5274,7 +5421,8 @@ l44dc:
 ## 'printf' Routine
 ##
 
-l44e4:
+#l44e4:
+printf:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x38, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x38,%sp
 	.byte	0x2b, 0xef, 0xc4, 0x04, 0x00, 0x00	# TSTB *$0x4c4 # as adds NOP
@@ -5373,8 +5521,8 @@ l45cf:
 	#NOP
 	.byte	0x28, 0xc9, 0x14	# TSTW 20(%fp) # as adds NOP
 	BNEB l45e7
-	.byte	0x84, 0x4f, 0x70, 0x0b, 0x00, 0x00, 0xc9, 0x14	# MOVW &lb70,20(%fp) # lb70: "(null pointer)"
-	NOP
+	MOVW &lb70,20(%fp) # lb70: "(null pointer)"
+	#NOP
 l45e7:
 	CLRW 12(%fp)
 	#NOP
@@ -5461,8 +5609,9 @@ l46a4:
 	MOVAW 44(%fp),%r0
 	ADDW2 12(%fp),%r0
 	.byte	0xe4, 0xe0, 0xc9, 0x24, 0xc9, 0x20, 0x41	# MODW3 {uword}36(%fp),32(%fp),%r1
-	.byte	0x87, 0x81, 0x5c, 0x0b, 0x00, 0x00, 0x50	# MOVB 0xb5c(%r1),(%r0)
-	NOP
+## cac: binary to hex conversion
+	MOVB lb5c(%r1),(%r0)
+	#NOP
 	DIVW2 {uword}36(%fp),32(%fp)
 	#NOP
 	INCW 12(%fp)
@@ -6259,35 +6408,50 @@ l4e14:
 	PUSHW &0x0
 	CALL -4(%sp),0x3b3(%pc)
 	.byte	0xa0, 0x4f, 0x80, 0x0b, 0x00, 0x00	# PUSHW &0l80
-	CALL -4(%sp),$0x44e4
+	CALL -4(%sp),printf
 	TSTW %r0
 	BGEB l4e3d
 	JMP $0x51c0
 l4e3d:
 	MOVW *$0x4e4,4(%fp)
 	#NOP
-	.byte	0xa0, 0x4f, 0xa1, 0x0b, 0x00, 0x00	# PUSHW &lba1 # lba1: "System Board memory size: "
-	CALL -4(%sp),$0x44e4
+
+## printf ("System Board memory size: ")
+	PUSHW &lba1
+	CALL -4(%sp),printf
 	TSTW %r0
 	BGEB l4e5d
 	JMP $0x51c0
 l4e5d:
 	CMPW &0x100000,4(%fp)
 	BLB l4e8a
-	.byte	0xa0, 0x4f, 0xbc, 0x0b, 0x00, 0x00	# PUSHW &lbbc # lbbc: "%d megabyte(s)"
+
+## printf ("%d megabyte(s)")
+	PUSHW &lbbc # lbbc: "%d megabyte(s)"
+
 	LRSW3 &0x14,*$0x4e4,%r0
 	PUSHW %r0
-	CALL -8(%sp),$0x44e4
+
+	CALL -8(%sp),printf
+
+
+
 	TSTW %r0
 	BGEB l4e88
 	JMP $0x51c0
 l4e88:
 	BRB l4eac
 l4e8a:
-	.byte	0xa0, 0x4f, 0xcb, 0x0b, 0x00, 0x00	# PUSHW &0xbcb
+
+## printf ("%d kilobytes")
+	PUSHW &lbcb
+
 	LRSW3 &0xa,*$0x4e4,%r0
 	PUSHW %r0
-	CALL -8(%sp),$0x44e4
+
+	CALL -8(%sp),printf
+
+
 	TSTW %r0
 	BGEB l4eac
 	JMP $0x51c0
@@ -6296,41 +6460,60 @@ l4eac:
 	#NOP
 	JMP $0x51a8
 l4eb5:
-	.byte	0xa0, 0x4f, 0xd8, 0x0b, 0x00, 0x00	# PUSHW &0xbd8
+
+## printf ("\n\n%02d - device name = %-9s, ")
+	PUSHW &lbd8
+
 	MOVB (%fp),{uword}%r0
 	PUSHW %r0
+
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
 	.byte	0x9c, 0x7f, 0x90, 0x04, 0x00, 0x00, 0x40	# ADDW2 $0x490,%r0
 	ADDW2 &0xc,%r0
 	PUSHW %r0
-	CALL -12(%sp),$0x44e4
+
+	CALL -12(%sp),printf
+
+
 	TSTW %r0
 	BGEB l4ee7
 	JMP $0x51c0
 l4ee7:
-	.byte	0xa0, 0x4f, 0xf6, 0x0b, 0x00, 0x00	# PUSHW &0xbf6
+
+## printf ("occurrence = %2d, slot = %02d, ID code = 0x%02x\n")
+	PUSHW &lbf6
+
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
 	ADDW2 $0x490,%r0
 	EXTFW &0x3,&0x8,(%r0),%r0
 	PUSHW %r0
+
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
 	ADDW2 $0x490,%r0
 	EXTFW &0x3,&0xc,(%r0),%r0
 	PUSHW %r0
+
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
 	ADDW2 $0x490,%r0
 	EXTFW &0xf,&0x10,(%r0),%r0
 	PUSHW %r0
-	CALL -16(%sp),$0x44e4
+
+	CALL -16(%sp),printf
+
+
+
 	TSTW %r0
 	BGEB l4f41
 	JMP $0x51c0
 l4f41:
-	.byte	0xa0, 0x4f, 0x27, 0x0c, 0x00, 0x00	# PUSHW &0xc27
+
+## printf ("     boot device = %c, board width = %s, word width = %d byte(s),\n")
+	PUSHW &lc27
+
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
 	ADDW2 $0x490,%r0
@@ -6343,46 +6526,62 @@ l4f67:
 	MOVW &0x6e,%r0
 l4f6b:
 	PUSHW %r0
+
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
 	ADDW2 $0x490,%r0
 	EXTFW &0x0,&0x5,4(%r0),%r0
 	CMPW &0x0,%r0
 	BEB l4f90
-	.byte	0x84, 0x4f, 0x6a, 0x0c, 0x00, 0x00, 0x40	# MOVW &0xc6a,%r0
+	MOVW &lc6a,%r0	# "double"
 	BRB l4f97
 l4f90:
-	.byte	0x84, 0x4f, 0x71, 0x0c, 0x00, 0x00, 0x40	# MOVW &0xc71,%r0
+	MOVW &lc71,%r0	# "single"
 l4f97:
 	PUSHW %r0
+
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
 	ADDW2 $0x490,%r0
 	EXTFW &0x0,&0x6,4(%r0),%r0
 	ADDW2 &0x1,%r0
 	PUSHW %r0
-	CALL -16(%sp),$0x44e4
+
+	CALL -16(%sp),printf
+
+
+
 	TSTW %r0
 	BGEB l4fc5
 	JMP $0x51c0
 l4fc5:
-	.byte	0xa0, 0x4f, 0x78, 0x0c, 0x00, 0x00	# PUSHW &0xc78
+
+## printf ("     req Q size = 0x%02x, comp Q size = 0x%02x, ")
+	PUSHW &lc78
+
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
 	ADDW2 $0x490,%r0
 	EXTFW &0x7,&0x0,(%r0),%r0
 	PUSHW %r0
+
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
 	ADDW2 $0x490,%r0
 	EXTFW &0x7,&0x18,4(%r0),%r0
 	PUSHW %r0
-	CALL -12(%sp),$0x44e4
+
+	CALL -12(%sp),printf
+
+
+
 	TSTW %r0
 	BGEB l500a
 	JMP $0x51c0
 l500a:
-	.byte	0xa0, 0x4f, 0xa9, 0x0c, 0x00, 0x00	# PUSHW &0xca9
+
+## printf ("console ability = %c")
+	PUSHW &lca9
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
 	ADDW2 $0x490,%r0
@@ -6395,7 +6594,7 @@ l5030:
 	MOVW &0x6e,%r0
 l5034:
 	PUSHW %r0
-	CALL -8(%sp),$0x44e4
+	CALL -8(%sp),printf
 	TSTW %r0
 	BGEB l5048
 	JMP $0x51c0
@@ -6406,7 +6605,7 @@ l5048:
 	EXTFW &0x0,&0x9,4(%r0),%r0
 	CMPW &0x0,%r0
 	BEB l50a2
-	.byte	0xa0, 0x4f, 0xbe, 0x0c, 0x00, 0x00	# PUSHW &0xcbe
+	PUSHW &lcbe	# ", pump file = %c"
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
 	ADDW2 $0x490,%r0
@@ -6419,15 +6618,17 @@ l5088:
 	MOVW &0x6e,%r0
 l508c:
 	PUSHW %r0
-	CALL -8(%sp),$0x44e4
+	CALL -8(%sp),printf
 	TSTW %r0
 	BGEB l50a0
 	JMP $0x51c0
 l50a0:
 	BRB l50ba
 l50a2:
-	.byte	0xa0, 0x4f, 0xcf, 0x0c, 0x00, 0x00	# PUSHW &0xccf
-	CALL -4(%sp),$0x44e4
+
+## printf ("               ")
+	PUSHW &lccf
+	CALL -4(%sp),printf
 	TSTW %r0
 	BGEB l50ba
 	JMP $0x51c0
@@ -6438,22 +6639,31 @@ l50ba:
 l50c3:
 	.byte	0x2b, 0x61	# TSTB 1(%fp) as adds NOP
 	BNEB l50df
-	.byte	0xa0, 0x4f, 0xdf, 0x0c, 0x00, 0x00	# PUSHW &0xcdf
-	CALL -4(%sp),$0x44e4
+
+## printf ("\n     subdevice(s)")
+	PUSHW &lcdf
+	CALL -4(%sp),printf
+
+
 	TSTW %r0
 	BGEB l50df
 	JMP $0x51c0
 l50df:
-	.byte	0xa0, 0x4f, 0xf2, 0x0c, 0x00, 0x00	# PUSHW &0xcf2
+
+
+## printf ("%s#%02d = %-9s, ID code = 0x%02x")
+	PUSHW &lcf2
+
 	MOVB 1(%fp),{uword}%r0
 	MODW2 {uword}&0x2,%r0
 	BNEB l50f8
-	.byte	0x84, 0x4f, 0x13, 0x0d, 0x00, 0x00, 0x40	# MOVW &0xd13,%r0
+	MOVW &ld13,%r0	# "\n     "
 	BRB l50ff
 l50f8:
-	.byte	0x84, 0x4f, 0x1a, 0x0d, 0x00, 0x00, 0x40	# MOVW &0xd1a,%r0
+	MOVW &ld1a,%r0	# ", "
 l50ff:
 	PUSHW %r0
+
 	MOVB 1(%fp),{uword}%r0
 	PUSHW %r0
 	MOVB (%fp),{uword}%r0
@@ -6463,6 +6673,7 @@ l50ff:
 	ADDW3 %r1,8(%r0),%r0
 	ADDW2 &0x2,%r0
 	PUSHW %r0
+
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
 	ADDW2 $0x490,%r0
@@ -6470,7 +6681,11 @@ l50ff:
 	ADDW3 %r1,8(%r0),%r0
 	MOVH {uhalf}(%r0),{uword}%r0
 	PUSHW %r0
-	CALL -20(%sp),$0x44e4
+
+	CALL -20(%sp),printf
+
+
+
 	TSTW %r0
 	BGEB l5151
 	BRB l51c0
@@ -6488,8 +6703,11 @@ l5151:
 	SUBB3 &0x1,*$0x4e0,%r1
 	CMPW %r1,%r0
 	BGEUB l51a5
-	.byte	0xa0, 0x4f, 0x1d, 0x0d, 0x00, 0x00	# PUSHW &0xd1d
-	CALL -4(%sp),$0x44e4
+
+## printf ("\n\nPress any key to continue")
+	PUSHW &ld1d
+	CALL -4(%sp),printf
+
 	TSTW %r0
 	BGEB l5198
 	BRB l51c0
@@ -6504,8 +6722,13 @@ l51a5:
 	#NOP
 	CMPB *$0x4e0,(%fp)
 	BLUH l4eb5
-	.byte	0xa0, 0x4f, 0x3a, 0x0d, 0x00, 0x00	# PUSHW &0xd3a
-	CALL -4(%sp),$0x44e4
+
+## printf ("\nDONE\n")
+	PUSHW &ld3a
+	CALL -4(%sp),printf
+
+
+
 l51c0:
 	PUSHW &0x1
 	.byte	0x2c, 0xcc, 0xfc, 0xaf, 0x10, 0x00	# CALL -4(%sp),0x10(%pc)
@@ -7517,21 +7740,34 @@ l5cb0:
 	.byte	0x2b, 0x59	# TSTB (%fp) # as adds NOP
 	BNEB l5cf4
 l5cbd:
-	.byte	0xa0, 0x4f, 0x44, 0x0d, 0x00, 0x00	# PUSHW &0xd44
+
+## printf ("PERIPHERAL I/O %s ERROR AT BLOCK %d, SUBDEVICE %d, SLOT %d\n")
+	PUSHW &ld44
+
+## read/write?
 	.byte	0x2b, 0xca, 0x0f	# TSTB 15(%ap) # as adds NOP
 	BNEB l5cd1
-	.byte	0x84, 0x4f, 0x80, 0x0d, 0x00, 0x00, 0x40	# MOVW &0xd80,%r0
+	MOVW &ld80,%r0	# "READ"
 	BRB l5cd8
 l5cd1:
-	.byte	0x84, 0x4f, 0x85, 0x0d, 0x00, 0x00, 0x40	# MOVW &0xd85,%r0
+	MOVW &ld85,%r0	# "WRITE"
 l5cd8:
 	PUSHW %r0
+
+## block #
 	PUSHW 4(%ap)
+
+## subdevice #
 	MOVB 1(%fp),{uword}%r0
 	PUSHW %r0
+
+## slot #
 	MOVB 2(%fp),{uword}%r0
 	PUSHW %r0
-	CALL -20(%sp),$0x44e4
+
+	CALL -20(%sp),printf
+
+
 	CLRW %r0
 	BRB l5cf9
 l5cf4:
@@ -7634,77 +7870,103 @@ l5de0:
 	#NOP
 	BITW $0x200085c,&0x20000000
 	BEB l5e25
-## Print "FW ERROR 1-01: NVRAM SANITY FAILURE"
-	.byte	0xa0, 0x4f, 0x8c, 0x0d, 0x00, 0x00	# PUSHW &0xd8c
-	.byte	0xa0, 0x4f, 0xc0, 0x0d, 0x00, 0x00	# PUSHW &0xdc0
-	CALL -8(%sp),$0x44e4
-## Print "[...]DEFAULT VALUES ASSUMED\n[...]IF REPEATED, CHECK THE BATTERY"
-	.byte	0xa0, 0x4f, 0xd9, 0x0d, 0x00, 0x00	# PUSHW &0xdd9
-	CALL -4(%sp),$0x44e4
+
+## printf ("\nFW ERROR 1-%s\n")
+	PUSHW &ld8c
+
+	PUSHW &ldc0	# "01: NVRAM SANITY FAILURE"
+
+	CALL -8(%sp),printf
+
+
+## printf ("               DEFAULT VALUES ASSUMED\n               IF REPEATED, CHECK THE BATTERY\n")
+	PUSHW &ldd9
+	CALL -4(%sp),printf
+
+
 l5e25:
 	BITW $0x200085c,&0x40000000
 	BEB l5e40
-## Print "FW WARNING: NVRAM DEFAULT VALUES ASSUMED\n\n"
-	.byte	0xa0, 0x4f, 0x2e, 0x0e, 0x00, 0x00	# PUSHW &0xe2e
-	CALL -4(%sp),$0x44e4
+
+## printf ("\nFW WARNING: NVRAM DEFAULT VALUES ASSUMED\n\n")
+	PUSHW &le2e
+	CALL -4(%sp),printf
 l5e40:
 	BITW $0x200085c,&0x2
 	BEB l5e5d
-## Print "FW ERROR 1-02: DISK SANITY FAILURE"
-	.byte	0xa0, 0x4f, 0x8c, 0x0d, 0x00, 0x00	# PUSHW &0xd8c
-	.byte	0xa0, 0x4f, 0x5a, 0x0e, 0x00, 0x00	# PUSHW &0xe5a
-	CALL -8(%sp),$0x44e4
+
+## printf ("\nFW ERROR 1-%s\n")
+	PUSHW &ld8c
+
+	PUSHW &le5a	# "02: DISK SANITY FAILURE"
+	CALL -8(%sp),printf
+
 l5e5d:
 	BITW $0x200085c,&0x1
 	BEB l5e7a
-## Print "FW ERROR 1-05: SELF-CONFIGURATION FAILURE"
-	.byte	0xa0, 0x4f, 0x8c, 0x0d, 0x00, 0x00	# PUSHW &0xd8c
-	.byte	0xa0, 0x4f, 0x72, 0x0e, 0x00, 0x00	# PUSHW &0xe72
-	CALL -8(%sp),$0x44e4
+
+## printf ("\nFW ERROR 1-%s\n")
+	PUSHW &ld8c
+	PUSHW &le72	# "05: SELF-CONFIGURATION FAILURE"
+	CALL -8(%sp),printf
+
 l5e7a:
 	BITW $0x200085c,&0x4
 	BEB l5e97
-## Print "FW-ERROR 1-06: BOOT FAILURE"
-	.byte	0xa0, 0x4f, 0x8c, 0x0d, 0x00, 0x00	# PUSHW &0xd8c
-	.byte	0xa0, 0x4f, 0x91, 0x0e, 0x00, 0x00	# PUSHW &0xe91
-	CALL -8(%sp),$0x44e4
+
+## printf ("\nFW ERROR 1-%s\n")
+	PUSHW &ld8c
+	PUSHW &le91	# "06: BOOT FAILURE"
+	CALL -8(%sp),printf
+
+
 l5e97:
 	BITW $0x200085c,&0x20
 	BEB l5eb4
-## Print "FW-ERROR 1-07: FLOPPY KEY CREATE FAILURE"
-	.byte	0xa0, 0x4f, 0x8c, 0x0d, 0x00, 0x00	# PUSHW &0xd8c
-	.byte	0xa0, 0x4f, 0xa2, 0x0e, 0x00, 0x00	# PUSHW &0xea2
-	CALL -8(%sp),$0x44e4
+
+## printf ("\nFW ERROR 1-%s\n", "07: FLOPPY KEY CREATE FAILURE")
+	PUSHW &ld8c
+	PUSHW &lea2	# "07: FLOPPY KEY CREATE FAILURE"
+	CALL -8(%sp),printf
+
 l5eb4:
 	BITW $0x200085c,&0x8
 	BEB l5ed1
-## Print "FW-ERROR 1-08: MEMORY TEST FAILURE"
-	.byte	0xa0, 0x4f, 0x8c, 0x0d, 0x00, 0x00	# PUSHW &0xd8c
-	.byte	0xa0, 0x4f, 0xc0, 0x0e, 0x00, 0x00	# PUSHW &0xec0
-	CALL -8(%sp),$0x44e4
+
+## printf ("\nFW ERROR 1-%s\n", "08: MEMORY TEST FAILURE")
+	PUSHW &ld8c
+	PUSHW &lec0	# "08: MEMORY TEST FAILURE"
+	CALL -8(%sp),printf
 l5ed1:
 	BITW $0x200085c,&0x10
 	BEB l5eee
-## Print "FW-ERROR 1-09: DISK FORMAT NOT COMPATIBLE WITH SYSTEM"
-	.byte	0xa0, 0x4f, 0x8c, 0x0d, 0x00, 0x00	# PUSHW &0xd8c
-	.byte	0xa0, 0x4f, 0xd8, 0x0e, 0x00, 0x00	# PUSHW &0xed8
-	CALL -8(%sp),$0x44e4
+
+## printf ("\nFW ERROR 1-%s\n", "09: DISK FORMAT NOT COMPATIBLE WITH SYSTEM")
+	PUSHW &ld8c
+	PUSHW &led8	# "09: DISK FORMAT NOT COMPATIBLE WITH SYSTEM"
+	CALL -8(%sp),printf
+
 l5eee:
 	.byte	0x28, 0x7f, 0x5c, 0x08, 0x00, 0x02	# TSTW $0x200085c # as adds NOP
 	BEB l5f17
 	CMPW &0x1000000,$0x200085c # as adds NOP
 	BGEUB l5f17
-## Print string "EXECUTION HALTED"
-	.byte	0xa0, 0x4f, 0x03, 0x0f, 0x00, 0x00	# PUSHW &0xf03
-	.byte	0xa0, 0x4f, 0x9c, 0x0d, 0x00, 0x00	# PUSHW &0xd9c
-	CALL -8(%sp),$0x44e4
+
+## printf ("%s", "               EXECUTION HALTED\n")
+	PUSHW &lf03	# "%s"
+	PUSHW &ld9c	# "               EXECUTION HALTED\n"
+	CALL -8(%sp),printf
+
 l5f17:
 	CMPW &0x80000000,$0x200085c
 	BNEB l5f4b
 	CMPW &0xfeedbeef,$0x2000864
 	BEB l5f4b
-	.byte	0xa0, 0x4f, 0x06, 0x0f, 0x00, 0x00	# PUSHW &0xf06
-	CALL -4(%sp),$0x44e4
+
+## printf ("\n\nSELF-CHECK\n")
+	PUSHW &lf06
+	CALL -4(%sp),printf
+
 	ANDW2 &0x7fffffff,$0x200085c
 	#NOP
 l5f4b:
@@ -7781,8 +8043,11 @@ l6010:
 	CALL -12(%sp),$0x5224
 	.byte	0x28, 0x59	# TSTW (%fp) # as adds NOP
 	BNEB l603a
-	.byte	0xa0, 0x4f, 0x14, 0x0f, 0x00, 0x00	# PUSHW &0xf14
-	CALL -4(%sp),$0x44e4
+
+## printf ("\nNONE\n\n")
+	PUSHW &lf14
+	CALL -4(%sp),printf
+
 	.byte	0x24, 0x7f, 0xb9, 0x61, 0x00, 0x00	# JMP $0x61b9
 l603a:
 	BITW (%fp),&0x40
@@ -7805,60 +8070,104 @@ l604d:
 	CALL -12(%sp),$0x5224
 	BITW (%fp),&0x40
 	BEB l60a7
-	.byte	0xa0, 0x4f, 0x1c, 0x0f, 0x00, 0x00	# PUSHW &0xf1c
+
+## printf ("\nEXCEPTION, PC = 0x%08x, PSW = 0x%08x, CSR = 0x%04x\n\n")
+	PUSHW &lf1c
+## PC
 	PUSHW 4(%fp)
+## PSW
 	PUSHW 8(%fp)
+## CSR
 	ANDW3 &0xffff,12(%fp),%r0
 	PUSHW %r0
-	CALL -16(%sp),$0x44e4
+
+	CALL -16(%sp),printf
+
+
+
 	BRB l60ce
 l60a7:
-	.byte	0xa0, 0x4f, 0x52, 0x0f, 0x00, 0x00	# PUSHW &0xf52
+
+## printf ("\nINTERRUPT, PC = 0x%08x, PSW = 0x%08x, CSR = 0x%04x, LVL = %d\n\n")
+	PUSHW &lf52
+# PC
 	PUSHW 4(%fp)
+# PSW
 	PUSHW 8(%fp)
+# CSR
 	ANDW3 &0xffff,12(%fp),%r0
 	PUSHW %r0
+# LVL
 	LRSW3 &0x10,12(%fp),%r0
 	ANDW2 &0xff,%r0
 	PUSHW %r0
-	CALL -20(%sp),$0x44e4
+
+	CALL -20(%sp),printf
+
+
+
 l60ce:
 	BRB l614c
 	BITW (%fp),&0x2
 	BEB l614c
-	.byte	0xa0, 0x4f, 0x92, 0x0f, 0x00, 0x00	# PUSHW &0xf92
+
+## printf ("\nSANITY ON DISK %d, ERROR %d\n")
+	PUSHW &lf92
+
+# disk #
 	LRSW3 &0x17,(%fp),%r0
 	ANDW2 &0x1,%r0
 	PUSHW %r0
+# error #
 	LRSW3 &0x10,(%fp),%r0
 	ANDW2 &0x7f,%r0
 	PUSHW %r0
-	CALL -12(%sp),$0x44e4
+
+	CALL -12(%sp),printf
+
+
+
 	PUSHW &0x431fc
 	PUSHAW 12(%fp)
 	PUSHW &0x4
 	CALL -12(%sp),$0x5224
 	.byte	0x28, 0x6c	# TSTW 12(%fp) # as adds NOP
 	BEB l613e
-	.byte	0xa0, 0x4f, 0xb0, 0x0f, 0x00, 0x00	# PUSHW &0xfb0
+
+## printf ("COMMAND = 0x%02x, UNIT STATUS = 0x%02x, ERROR STATUS = 0x%02x, STATUS = 0x%02x")
+	PUSHW &lfb0
+# command
 	LRSW3 &0x18,12(%fp),%r0
 	PUSHW %r0
+# unit status
 	LRSW3 &0x10,12(%fp),%r0
 	ANDW2 &0xff,%r0
 	PUSHW %r0
+# error status
 	LRSW3 &0x8,12(%fp),%r0
 	ANDW2 &0xff,%r0
 	PUSHW %r0
+#status
 	ANDW3 &0xff,12(%fp),%r0
 	PUSHW %r0
-	CALL -20(%sp),$0x44e4
+
+	CALL -20(%sp),printf
+
+
+
 l613e:
-	.byte	0xa0, 0x4f, 0xff, 0x0f, 0x00, 0x00	# PUSHW &0xfff
-	CALL -4(%sp),$0x44e4
+
+## printf ("\n\n")
+	PUSHW &lfff
+	CALL -4(%sp),printf
+
 l614c:
 	BRB l615c
-	.byte	0xa0, 0x4f, 0x02, 0x10, 0x00, 0x00	# PUSHW &1002
-	CALL -4(%sp),$0x44e4
+
+## printf ("\n\nNONE\n\n")
+	PUSHW &l1002
+	CALL -4(%sp),printf
+
 l615c:
 	CLRW (%fp)
 	#NOP
@@ -8174,14 +8483,18 @@ l6504:
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
 	PUSHW &0x80
 	CALL -4(%sp),$0x61c0
-## Print the string "FW-ERROR 1-%s"
-	.byte	0xa0, 0x4f, 0x8c, 0x0d, 0x00, 0x00	# PUSHW &0xd8c
-## Print the string "UNEXPECTED INTERRUPT"
-	.byte	0xa0, 0x4f, 0x0c, 0x10, 0x00, 0x00	# PUSHW &0x100c
-	CALL -8(%sp),$0x44e4
+
+## printf ("\nFW ERROR 1-%s\n")
+	PUSHW &ld8c
+
+## printf ("04: UNEXPECTED INTERRUPT\n")
+	PUSHW &l100c
+	CALL -8(%sp),printf
+
+
 # ; Print the string "EXECUTION HALTED"
-	.byte	0xa0, 0x4f, 0x9c, 0x0d, 0x00, 0x00	# PUSHW &0xd9c
-	CALL -4(%sp),$0x44e4
+	PUSHW &ld9c	# "               EXECUTION HALTED\n"
+	CALL -4(%sp),printf
 	PUSHW &0xfeedbeef
 	CALL -4(%sp),$0x6322
 	MOVAW -24(%fp),%sp
@@ -8229,13 +8542,16 @@ l65a4:
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
 	PUSHW &0x40
 	CALL -4(%sp),$0x61c0
-	.byte	0xa0, 0x4f, 0x8c, 0x0d, 0x00, 0x00	# PUSHW &0xd8c
-	.byte	0xa0, 0x4f, 0x28, 0x10, 0x00, 0x00	# PUSHW &0x1028
-## Print the string "03: UNEXPECTED FAULT"
-	CALL -8(%sp),$0x44e4
+
+## printf ("\nFW ERROR 1-%s\n", "03: UNEXPECTED FAULT\n")
+	PUSHW &ld8c
+	PUSHW &l1028	# "03: UNEXPECTED FAULT\n"
+	CALL -8(%sp),printf
+
+
 ## Print the string "EXECUTION HALTED"
-	.byte	0xa0, 0x4f, 0x9c, 0x0d, 0x00, 0x00	# PUSHW &0xd9c
-	CALL -4(%sp),$0x44e4
+	PUSHW &ld9c	# "               EXECUTION HALTED\n"
+	CALL -4(%sp),printf
 	PUSHW &0xfeedbeef
 	CALL -4(%sp),$0x6322
 	MOVAW -24(%fp),%sp
@@ -8280,7 +8596,7 @@ l6660:
 	BNEB l66a8
 	PUSHAW 100(%fp)
 ## This is the pointer to the default password, 'mcp'
-	.byte	0xa0, 0x4f, 0x40, 0x10, 0x00, 0x00	# PUSHW &0x1040
+	PUSHW &l1040	# "mcp"
 	CALL -8(%sp),$0x7fb0
 	PUSHAW 100(%fp)
 	PUSHW &0x43000
@@ -8322,7 +8638,7 @@ l6716:
 	#NOP
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0x44, 0x10, 0x00, 0x00	# PUSHW &0x1044
+	PUSHW &l1044	# "/filledt"
 	CALL -8(%sp),$0x7fb0
 	CALL (%sp),$0x6970
 l673c:
@@ -8371,16 +8687,20 @@ l67af:
 	BNEB l67d7
 	MOVB &0x1,$0x44013
 	#NOP
-## Print "SYSTEM FAILURE: CONSULT YOUR SYSTEM ADMINISTRATION UTILITIES GUIDE"
-	.byte	0xa0, 0x4f, 0x4d, 0x10, 0x00, 0x00	# PUSHW &0x104d
-	CALL -4(%sp),$0x44e4
+
+## printf ("\nSYSTEM FAILURE: CONSULT YOUR SYSTEM ADMINISTRATION UTILITIES GUIDE\n\n")
+	PUSHW &l104d
+	CALL -4(%sp),printf
+
+
 	BRB l67ed
 l67d7:
 	MOVB &0x1,$0x44017
 	#NOP
-## Print "FIRMWARE MODE\n"
-	.byte	0xa0, 0x4f, 0x93, 0x10, 0x00, 0x00	# PUSHW &0x1093
-	CALL -4(%sp),$0x44e4
+
+## printf ("\nFIRMWARE MODE\n\n")
+	PUSHW &l1093
+	CALL -4(%sp),printf
 
 ## Call 3ab4 XXX
 l67ed:
@@ -8429,7 +8749,7 @@ l6882:
 	BEB l68e6
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0xa4, 0x10, 0x00, 0x00	# PUSHW &0x10a4
+	PUSHW &l10a4	# "/filledt"
 	CALL -8(%sp),$0x7fb0
 	CALL (%sp),$0x6970
 	TSTW %r0
@@ -8438,7 +8758,7 @@ l6882:
 l68bc:
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0xad, 0x10, 0x00, 0x00	# PUSHW &0x10ad
+	PUSHW &l10ad	# "/dgmon"
 	CALL -8(%sp),$0x7fb0
 	CALL (%sp),$0x6970
 	TSTW %r0
@@ -8459,7 +8779,7 @@ l68fb:
 	BNEB l694b
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0xb4, 0x10, 0x00, 0x00	# PUSHW &0x10b4
+	PUSHW &l10b4	# "/unix"
 	CALL -8(%sp),$0x7fb0
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
@@ -8699,14 +9019,16 @@ l6c4b:
 l6c52:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
-## Print the string "FW-ERROR 1-%s"
-	.byte	0xa0, 0x4f, 0x8c, 0x0d, 0x00, 0x00	# PUSHW &0xd8c
-## Print the string "04: UNEXPECTED INTERRUPT"
-	.byte	0xa0, 0x4f, 0xbc, 0x10, 0x00, 0x00	# PUSHW &0x10bc
+
+## 0x4b0 ("\nFW ERROR 1-%s\n", "04: UNEXPECTED INTERRUPT")
+	PUSHW &ld8c
+	PUSHW &l10bc	# "04: UNEXPECTED INTERRUPT"
 	CALL -8(%sp),*$0x4b0
-## Print the string "EXECUTION HALTED"
-	.byte	0xa0, 0x4f, 0x9c, 0x0d, 0x00, 0x00	# PUSHW &0xd9c
+
+## 0x4b0 ("               EXECUTION HALTED\n")
+	PUSHW &ld9c	# "               EXECUTION HALTED\n"
 	CALL -4(%sp),*$0x4b0
+
 	PUSHW &0x80
 	CALL -4(%sp),$0x61c0
 	PUSHW &0xfeedbeef
@@ -8720,13 +9042,16 @@ l6c52:
 l6c9e:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
-## Print the string "03: UNEXPECTED FAULT"
-	.byte	0xa0, 0x4f, 0x8c, 0x0d, 0x00, 0x00	# PUSHW &0xd8c
-	.byte	0xa0, 0x4f, 0xd5, 0x10, 0x00, 0x00	# PUSHW &0x10d5
-## Print the string "EXECUTION HALTED"
+
+## 0x4b0 ("\nFW ERROR 1-%s\n", "03: UNEXPECTED FAULT")
+	PUSHW &ld8c
+	PUSHW &l10d5
 	CALL -8(%sp),*$0x4b0
-	.byte	0xa0, 0x4f, 0x9c, 0x0d, 0x00, 0x00	# PUSHW &0xd9c
+
+## 0x4b0 ("               EXECUTION HALTED\n")
+	PUSHW &ld9c	# "               EXECUTION HALTED\n"
 	CALL -4(%sp),*$0x4b0
+
 	PUSHW &0x40
 	CALL -4(%sp),$0x61c0
 	PUSHW &0xfeedbeef
@@ -9676,7 +10001,7 @@ l7840:
 	BLUH l776b
 	.byte	0x2b, 0x7f, 0x00, 0x15, 0x00, 0x02	# TSTB $0x2001500 # as adds NOP
 	BEB l7875
-	.byte	0xa0, 0x4f, 0xf4, 0x10, 0x00, 0x00	# PUSHW &0x10f4
+	PUSHW &l10f4	# "id%d CRC error at disk address %08x (%d retries)\n"
 	MOVB 3(%ap),{uword}%r0
 	PUSHW %r0
 	PUSHW 12(%fp)
@@ -10112,7 +10437,7 @@ l7d2d:
 l7d36:
 	.byte	0x2b, 0x7f, 0x00, 0x15, 0x00, 0x02	# TSTB $0x2001500
 	BEB l7d57
-	.byte	0xa0, 0x4f, 0x28, 0x11, 0x00, 0x00	# PUSHW &0x1128
+	PUSHW &l1128	# "if CRC error at disk address %08x (%d retries)\n"
 	PUSHW 8(%fp)
 	PUSHW &0x10
 	CALL -12(%sp),*$0x4b0
