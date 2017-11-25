@@ -10,8 +10,129 @@
 ## $ od -Ax -v -t x1 -w4 --endian=big 400_full.bin | awk '{printf "\t.byte\t 0x%s, 0x%s, 0x%s, 0x%s\t# %s\n", $2, $3, $4, $5, $1}' | less > cacb.tmp
 ##
 
+####
+##
+#   cac's notes:
+#
+#     Many instructions are replaced with '.byte ....' due to 'as' generating different code then is in the
+#     ROM.
+#
+#       Several instructions has operands that fit in 16 bits, but the ROM code uses 32 bit operands.
+#       as seems to produce a MOVB instruction for the MULB3 opcode; and a MOVW for a MULW3.
+#       TSTB seems to add a NOP.
+#       Subroutines allocate stack frame space with 'ADDW2  &val,%sp', the ROM code has a 32 bit operand.
+#
+#
+# Memory map
+#    00000000  ROM
+#    00008000
+#    00040000  MMU
+#    00041000  TOD
+#    00042000  TIMER
+#    00043000  NVRAM
+#    00044000  CSR
+#    00045000  DMAID
+#    00046000  DMAIUA
+#    00047000  DMAIUB
+#    00048000  DMAC
+#    00049000  IU
+#    0004A000  ID
+#    0004d000  IF
+#    0004e000  DMAIF
+
+	.set	mmu_base,0x40000
+	.set	mmu_scdl,mmu_base+0x0
+	.set	mmu_scdh,mmu_base+0x1
+	.set	mmu_pdcrl,mmu_base+0x2
+	.set	mmu_pdcrh,mmu_base+0x3
+	.set	mmu_pdcll,mmu_base+0x4
+	.set	mmu_pdclh,mmu_base+0x5
+	.set	mmu_srama,mmu_base+0x6
+	.set	mmu_sramb,mmu_base+0x7
+	.set	mmu_fc,mmu_base+0x8
+	.set	mmu_fa,mmu_base+0x9
+	.set	mmu_conf,mmu_base+0xa
+	.set	mmu_var,mmu_base+0xb
+
+	.set	timer_base,0x42000
+	.set	timer_diva,timer_base+0x3
+	.set	timer_divb,timer_base+0x7
+	.set	timer_divc,timer_base+0xb
+	.set	timer_ctrl,timer_base+0xf
+	.set	timer_latch,timer_base+0x13
+
+	.set	nvram_base,0x43000
+
+	.set	dmaid_base,0x45000
+
+	.set	dmac_base,0x48000
+
+	.set	csr_base,0x44000
+	# Read
+	.set	csr_datal,csr_base+2
+	.set	csr_datah,csr_base+3
+	# Write
+	.set	csr_clr_bto,csr_base+0x3	# clear bus timeout error
+	.set	csr_clr_mpe,csr_base+0x7	# clear memory parity error
+	.set	csr_reset,csr_base+0xb		# system reset request
+	.set	csr_clr_maf,csr_base+0xf	# clear memory alignment fault
+	.set	csr_set_fled,csr_base+0x13	# set failure LED
+	.set	csr_clr_fled,csr_base+0x17	# clear failure LED
+	.set	csr_fm_on,csr_base+0x1b		# floppy motor on
+	.set	csr_fm_off,csr_base+0x1f	# floppy motor off
+	.set	csr_set_inht,csr_base+0x23	# set inhibit timers
+	.set	csr_clr_inht,csr_base+0x27	# clr inhibit timers
+	.set	csr_set_inhf,csr_base+0x2b	# set inhibit faults
+	.set	csr_clr_inhf,csr_base+0x2f	# clr inhibit faults
+	.set	csr_set_pir9,csr_base+0x33	# set pir9
+	.set	csr_clr_pir9,csr_base+0x37	# clr pir9
+	.set	csr_set_pir8,csr_base+0x3b	# set pir8
+	.set	csr_clr_pir8,csr_base+0x3f	# clr pir8
+
+	.set	iu_base,0x49000
+	# Read/Write
+	.set	iu_mr12a,iu_base+0x0
+	.set	iu_mr12b,iu_base+0x8
+	# Read
+	.set	iu_sra,iu_base+1
+	.set	iu_rhra,iu_base+3
+	.set	iu_ipcr,iu_base+4
+	.set	iu_isr,iu_base+5
+	.set	iu_ctu,iu_base+6
+	.set	iu_ctl,iu_base+7
+	.set	iu_srb,iu_base+9
+	.set	iu_rhrb,iu_base+11
+	.set	iu_inprt,iu_base+13
+	.set	iu_start_ctr,iu_base+14
+	.set	iu_stop_ctr,iu_base+15
+	# Write
+	.set	iu_csra,iu_base+1
+	.set	iu_cra,iu_base+2
+	.set	iu_thra,iu_base+3
+	.set	iu_acr,iu_base+4
+	.set	iu_imr,iu_base+5
+	.set	iu_ctur,iu_base+6
+	.set	iu_ctlr,iu_base+7
+	.set	iu_csrb,iu_base+9
+	.set	iu_crb,iu_base+10
+	.set	iu_thrb,iu_base+11
+	.set	iu_ocpr,iu_base+13
+	.set	iu_sopr,iu_base+14
+	.set	iu_ropr,iu_base+15
+
+	.set	id_base,0x4a000
+	.set	id_data,id_base+0x0
+	.set	id_cmd_stat,id_base+0x1
+
+
+	.set	mem_size,0x4c003
+
+
 	.section	.text, "x"
-	.word	0x00000548, 0xffffffff, 0xffffffff, 0xffffffff	# 000000
+l0:
+	.word	0x00000548, 0xffffffff
+
+l8:	.word	0xffffffff, 0xffffffff
 	.word	0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff	# 000010
 	.word	0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff	# 000020
 	.word	0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff	# 000030
@@ -20,6 +141,7 @@ l50:
 	.word	0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff	# 000050
 	.word	0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff	# 000060
 	.word	0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff	# 000070
+l80:
 	.word	0x000005d8, 0x02000b78, 0x02000b78            	# 000080
 
 ### Exception Vector Table
@@ -148,39 +270,109 @@ l50:
 ###    02000e48
 
 	.word	                         0x02000bc8, 0x02000864	# 000480
-	.word	0x02001514, 0x020011f8, 0x020011f4, 0x02000858	# 000490
-	.word	0x02001200, 0x020012a8, 0x0200126c            	# 0004a0
+l490:
+	.word	0x02001514
+
+l494:	.word	0x020011f8
+l498:	.word	0x020011f4, 0x02000858
+	.word	0x02001200, 0x020012a8, 0x0200126c
 
 
 ## Indirect entry points
 
-	.word	0x4dd4	# 4ac: 'getedt' routine
-	.word	printf	# 4b0: 'printf' routine
+	.word	getedt
+	.word	printf
 
-	.word	             0x00004360, 0x00004ae4, 0x00007f68	# 0004b0
-	.word	0x00002af8, 0x02001268, 0x00004484, 0x00005320	# 0004c0
-	.word	0x00005224, 0x000052a0, 0x00007698, 0x00007b2c	# 0004d0
-	.word	0x020011f0, 0x020011ec, 0x02001504, 0x00001168	# 0004e0
-	.word	0x02000a80, 0x02001258, 0x0200125c, 0x020011e8	# 0004f0
-	.word	0x00003d74, 0x02001264, 0x00007ff0, 0x020012d8	# 000500
-	.word	0x020012d0, 0x0200086c, 0x00005438, 0x00005450	# 000510
-	.word	0x000054a1, 0x00004e14                        	# 000520
+l4b4:
+	.word	gets
+	.word	sscanf
+	.word	strcmp
+	.word	excret
 
-	.word	0x5504	# 528 DUART Delay routine
+	.word	0x02001268	# 0004c4
 
-	.word	                                     0x020012dc	# 000520
-	.word	0x020012e0, 0x020012e4, 0x000055ec, 0x00005baa	# 000530
-	.word	0x000051d2, 0x02000a74, 0x0081e100, 0x0000421f	# 000540
-	.word	0x0081e100, 0x00004259, 0x0081e100, 0x0000421f	# 000550
-	.word	0x0081e100, 0x0000421f, 0x0081e100, 0x0000421f	# 000560
-	.word	0x0081e100, 0x0000421f, 0x0081e100, 0x0000421f	# 000570
-	.word	0x0081e100, 0x0000421f, 0x0081e100, 0x0000421f	# 000580
-	.word	0x0081e100, 0x0000421f, 0x0081e100, 0x0000421f	# 000590
-	.word	0x0081e100, 0x0000421f, 0x0081e100, 0x0000421f	# 0005a0
-	.word	0x0081e100, 0x0000421f, 0x0081e100, 0x00004259	# 0005b0
-	.word	0x0081e100, 0x0000421f, 0x2f66696c, 0x6c656474	# 0005c0
-	.word	0x00464435, 0x00000000, 0x0081e180, 0x00001274	# 0005d0
-	.word	0x02000008, 0x00000000, 0x00000000, 0x00000000	# 0005e0
+	.word	l4484	# 4c8
+	.word	chknvram	# 4cc
+	.word	rnvram	# 4d0
+	.word	wnvram	# 4d4
+	.word	hd_acs	# 4d8
+	.word	fd_acs	# 4dc
+	.word	0x020011f0	# 4e0
+	.word	0x020011ec	# 4e4
+	.word	0x02001504	# 4e8
+	.word	0x00001168	# 4ec
+	.word	0x02000a80	# 4f0
+	.word	0x02001258	# 4f4
+	.word	0x0200125c	# 4f8
+	.word	0x020011e8	# 4fc
+	.word	setbaud		# 500
+	.word	0x02001264	# 504
+	.word	serial_s	# 508
+	.word	0x020012d8	# 50c
+l510:
+	.word	0x020012d0	# 510
+	.word	0x0200086c
+	.word	bzero
+	.word	setjmp
+	.word	longjmp
+	.word	l4e14
+
+	.word	hwcntr	# 528 DUART Delay routine
+
+	.word	0x020012dc
+	.word	0x020012e0
+	.word	0x020012e4
+	.word	fw_sysgen
+	.word	ioblk_acs
+	.word	brkinh
+	.word	0x02000a74
+	.word	0x0081e100
+	.word	demon
+	.word	0x0081e100
+	.word	l4259
+	.word	0x0081e100
+	.word	demon
+	.word	0x0081e100
+	.word	demon
+	.word	0x0081e100
+	.word	demon
+	.word	0x0081e100
+	.word	demon
+	.word	0x0081e100
+	.word	demon
+	.word	0x0081e100
+	.word	demon
+	.word	0x0081e100
+	.word	demon
+	.word	0x0081e100
+	.word	demon
+	.word	0x0081e100
+	.word	demon
+	.word	0x0081e100
+	.word	demon
+	.word	0x0081e100
+	.word	demon
+	.word	0x0081e100
+	.word	demon
+	.word	0x0081e100
+	.word	l4259
+	.word	0x0081e100
+	.word	demon
+
+l5c8:
+	.word	0x2f66696c, 0x6c656474
+l5d0:
+	.byte	0x00
+l5d1:
+	.byte	0x46
+	.byte	0x44
+	.byte	0x35
+
+	.word	            0x00000000, 0x0081e180, 0x00001274	# 0005d4
+	.word	0x02000008
+
+l5e4:
+	.word	0x00000000, 0x00000000, 0x00000000
 	.word	0x02000008, 0x02000808, 0x00000000, 0x00000000	# 0005f0
 	.word	0x00000000, 0x00000000, 0x00000000, 0x00000000	# 000600
 	.word	0x00000000, 0x00000000, 0x00000000, 0x00000000	# 000610
@@ -642,8 +834,16 @@ la4c: # "\nSORRY!\n"
 	.byte	0x0a, 0x53, 0x4f, 0x52
 	.byte	0x52, 0x59, 0x21, 0x0a, 0x00
 
-# 0a54:
-	.byte	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+# 0a55:
+	.byte	0x00, 0x00, 0x00
+
+la58:	.byte	0x00, 0x00
+
+la5a:	.byte	0x00
+
+la5b:	.byte	0x00
+
+la5c:	.byte	0x00, 0x00, 0x00, 0x00
 
 	.word	0x00320100, 0x00000000, 0x004b0200, 0x80000000	# 000a60
 	.word	0x006e0311, 0x00000000, 0x00860422, 0x00000000	# 000a70
@@ -1326,14 +1526,14 @@ l1170:
 
 
 # 00001290:
-	MOVB	&0x16,$0x4200f
+	MOVB	&0x16,timer_ctrl
 	#NOP
 
 
 ## Put 0x64 (SITINIT in firmware.h) into Counter 0
  
 # 00001298:
-	MOVB	&0x64,$0x42003
+	MOVB	&0x64,timer_diva
 	#NOP
  
 ## Send 0x94 to the command register of the 8253.
@@ -1342,13 +1542,13 @@ l1170:
 ## and sets mode to "Mode 2" (Rate generator)
 
 # 000012a1:
-	MOVB	&0x94,$0x4200f
+	MOVB	&0x94,timer_ctrl
 	#NOP
  
 ## Puts 0xa into Counter 2
 
 # 000012ab:
-	MOVB	&0xa,$0x4200b
+	MOVB	&0xa,timer_divc
 	#NOP
 
 ## Send 0x74 to the command register of the 8253.
@@ -1357,17 +1557,17 @@ l1170:
 ## then sets mode to "Mode 2" (Rate generator)
 
 # 000012b3:
-	MOVB	&0x74,$0x4200f
+	MOVB	&0x74,timer_ctrl
 	#NOP
  
 ## ... but oddly, we don't seem to do anything with timer 1, we just let it
 ## sit there without loading any data into it, so its period is unknown.
-## Counter 1 (0x42007) is unused in the rest of the ROM!
+## Counter 1 (0x42007 timer_diva) is unused in the rest of the ROM!
 
 ## Unconditional jump to 0x12d5 -- basically we skip the next block
 
 # 000012bc:
-	JMP	$0x12d5
+	JMP	l12d5
 	NOP
 	NOP
  
@@ -1375,9 +1575,11 @@ l1170:
 ## Unknown Entry Point. Who jumps here?
 
 # 000012c4:
+l12c4:
 	SAVE	%r3
-	.byte 	0x9c, 0x4f, 0x08, 0x00, 0x00, 0x00, 0x4c	# ADDW2	&0x8,%sp # 'as' builds with byte immed.
-	MOVB	&0x1,$0x4401b
+	ADDW2	&l8,%sp
+	MOVB	&0x1,csr_fm_on	# turn floppy motor on
+	#NOP
 	#NOP
  
 ################################################################################
@@ -1389,8 +1591,7 @@ l1170:
 ## Set the PSW's NZCV flags to all '0's, leaving the rest of the PSW
 ## unaffected.
 
-# 000012d5:
-	#NOP
+l12d5:
 	MOVW	%psw,%r0
 	ANDW2	&0xffc3ffff,%r0
 	.byte	0x84, 0x40, 0x4b	# MOVW	%r0,%psw # as generates a NOP
@@ -1508,7 +1709,7 @@ l1351:
 	NOP
 	.byte	0x84, 0x4b, 0x40	# MOVW %psw,%r0 # as inserts a NOP
 	ANDW2	&0xffc3ffff,%r0
-	ORW2	&0x40000,%r0
+	ORW2	&mmu_scdl,%r0
 	.byte	0x84, 0x40, 0x4b	# MOVW %r0,%psw # as inserts a NOP
 	BLEUH	l136c
 	BRH	l1923
@@ -1679,7 +1880,7 @@ l14c0:
 	CMPW %r1,%r0
 	BNEB l14f0
 
-	.byte	0x24, 0x7f, 0x6e, 0x15, 0x00, 0x00	# JMP l156e
+	JMP l156e
 l14f0:
  
 	MOVH {uhalf}%r8,{uword}%r0
@@ -1722,7 +1923,7 @@ l156e:
 	BEB l158e
 	CMPW &0x8badf00d,$0x2000864
 	BEB l158e
-	.byte	0x24, 0x7f, 0xbc, 0x16, 0x00, 0x00   # JMP l16bc
+	JMP l16bc
 l158e:
 	CALL (%sp),$0x3b90
 	ADDW3 &0x1,$0x4a0,%r0
@@ -1738,11 +1939,11 @@ l15a9:
 	PUSHW &0x0
 	CALL -4(%sp),$0x798c
 	MOVB $0x4d000,{uword}%r5
-	MOVB &0x1,$0x4401f
+	MOVB &0x1,csr_fm_off	# turn floppy motor off
 	#NOP
-	MOVB &0x10,$0x4900f
+	MOVB &0x10,iu_ropr
 	#NOP
-	MOVB &0x20,$0x4900f
+	MOVB &0x20,iu_ropr
 	#NOP
 	MOVB &0x1,$0x2000868
 	#NOP
@@ -1755,16 +1956,16 @@ l15ff:
 	ADDW3 &0x4,$0x4a4,%r0
 	CMPB &0x1,(%r0)
 	BNEB l1612
-	.byte	0x24, 0x7f, 0xa0, 0x16, 0x00, 0x00	# JMP l16a0
+	JMP l16a0
 l1612:
 	CALL (%sp),$0x5f72
-	PUSHW &0x4300c
+	PUSHW &nvram_base+0x0c
 	ADDW3 &0x1,$0x4a0,%r0
 	PUSHW %r0
 	PUSHW &0x1
 
 ## Read NVRAM
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	TSTW %r0
 	BNEB l165d
 	ADDW3 &0x1,$0x4a0,%r0
@@ -1772,9 +1973,9 @@ l1612:
 	#NOP
 	ADDW3 &0x1,$0x4a0,%r0
 	PUSHW %r0
-	PUSHW &0x4300c
+	PUSHW &nvram_base+0x0c
 	PUSHW &0x1
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 l165d:
 	MOVW $0x2000864,(%fp)
 	#NOP
@@ -1783,7 +1984,7 @@ l165d:
 	ADDW3 &0x2,$0x4a0,%r0
 ## Copy string "/filledt" (to where?)
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0xc8, 0x05, 0x00, 0x00	# PUSHW &0x5c8
+	PUSHW &l5c8
 	CALL -8(%sp),$0x7fb0
 	CALL (%sp),$0x6970
 	CMPW &0xfeedbeef,$0x2000864
@@ -1796,17 +1997,17 @@ l16a0:
 	CALL (%sp),*$0x2000858
 	BRB l16bc
 l16b6:
-	JMP $0x65f0
+	JMP l65f0
 l16bc:
 	CMPW &0x3b02f1d0,$0x200086c
 	BEB l16f1
-	MOVB &0x70,$0x49004
+	MOVB &0x70,iu_acr
 	#NOP
-	MOVB &0x40,$0x49006
+	MOVB &0x40,iu_ctur
 	#NOP
-	CLRB $0x49007
+	CLRB iu_ctlr
 	#NOP
-	MOVB &0x4,$0x4900d
+	MOVB &0x4,iu_ocpr
 	#NOP
 	CLRW $0x200085c
 	#NOP
@@ -1823,19 +2024,19 @@ l1716:
 	#NOP
 	CMPB &0xff,(%r7)
 	BEB l1729
-	.byte	0x24, 0x7f, 0x35, 0x19, 0x00, 0x00	# JMP l1935
+	JMP l1935
 l1729:
 	MOVB &0xaa,(%r7)
 	#NOP
 	CMPB &0xaa,(%r7)
 	BEB l173c
-	JMP $0x1935
+	JMP l1935
 l173c:
 	MOVB &0x55,(%r7)
 	#NOP
 	CMPB &0x55,(%r7)
 	BEB l174d
-	JMP $0x1935
+	JMP l1935
 l174d:
 	CLRB (%r7)
 	#NOP
@@ -1843,7 +2044,7 @@ l174d:
 	INCW %r7
 	.byte	0x2b, 0x50	# TSTB (%r0) # as adds a NOP
 	BEB l175f
-	JMP $0x1935
+	JMP l1935
 l175f:
 	CMPW %r6,%r7
 	BLUB l1716
@@ -1883,7 +2084,7 @@ l17ad:
 	MOVW &0x43800,%r5
  
 # Put $43000 into R7. This is the base of NVRAM.
-	MOVW &0x43000,%r7
+	MOVW &nvram_base+0x00,%r7
  
 
 	BRB l181d
@@ -1938,11 +2139,11 @@ l181d:
 
 ## If R1 != R0, we clear out the NVRAM. Othwerise, jump to 191d
 	BNEB l1865
-	JMP $0x191d
+	JMP l191d
 
 ## Load the NVRAM base address into R7
 l1865:
-	MOVW &0x43000,%r7
+	MOVW &nvram_base+0x00,%r7
 
 	BRB l1874
 
@@ -1964,15 +2165,15 @@ l1874:
 ## Yes, we're done.
 
 ## Store 01 in $43060
-	MOVW &0x1,$0x43060
+	MOVW &0x1,$nvram_base+0x60
 	#NOP
 
 ## Store 00 in $43064
-	CLRW $0x43064
+	CLRW $nvram_base+0x64
 	#NOP
 
 	CLRH %r8
-	MOVW &0x43000,%r7
+	MOVW &nvram_base+0x00,%r7
 
 	BRB l18d1
 l1893:
@@ -2016,8 +2217,8 @@ l18d1:
 	ORW2 &0x20000000,$0x200085c
 	#NOP
 
-##
-	JMP $0x21b1
+l191d:
+	JMP l21b1
 
 ##
 ## Test failure entry points, I think.
@@ -2028,33 +2229,34 @@ l1923:
 
 ## Set %r4 to 2, then jump to 0x1941
 	MOVW &0x2,%r4
-	JMP $0x1941
+	JMP l1941
 
 ## Set %r4 to 3, then jump to 0x1941
 l192c:
 	MOVW &0x3,%r4
-	JMP $0x1941
+	JMP l1941
 
 ## Set %r4 to 4, then jump to 0x1941
 l1935:
 	MOVW &0x4,%r4
-	JMP $0x1941
+	JMP l1941
 
 ## Set %r4 to 5, fall through to 0x1941
 	MOVW &0x5,%r4
 
-## Set 0x4900d to 0. This is 2681 UART.
-	CLRB $0x4900d
+## Set 0x4900d (iu_ocpr) to 0. This is 2681 UART.
+l1941:
+	CLRB iu_ocpr
 	#NOP
-	MOVB &0x8,$0x4900f
-	#NOP
-
-## 0x440?? == System Board Status register
-	MOVB &0x1,$0x44017
-	#NOP
-	MOVB &0x1,$0x44003
+	MOVB &0x8,iu_ropr
 	#NOP
 
+	MOVB &0x1,csr_clr_fled	# Clear failure LED
+	#NOP
+	MOVB &0x1,csr_clr_bto	# Clear bus timeout error
+	#NOP
+
+l1960:
 	CLRW %r5
 	BRB l1994
 l1964:
@@ -2065,7 +2267,7 @@ l1968:
 l196a:
 	CMPW &0xc350,%r3
 	BLEUB l1968
-	MOVB &0x1,$0x44013
+	MOVB &0x1,csr_set_fled	# set failure LED
 	#NOP
 	CLRW %r3
 	BRB l1981
@@ -2076,17 +2278,17 @@ l1981:
 	BLEUB l197f
 
 ## Write to the CSR (what register?)
-	MOVB &0x1,$0x44017
+	MOVB &0x1,csr_clr_fled	# clear failure LED
 	#NOP
 	INCW %r5
 l1994:
 	CMPW %r4,%r5
 	BLUB l1964
-	CMPB &0x1,*$0x510
+	CMPB &0x1,*l510
 	BEB l19cb
-	CMPB &0x64,$0x42003
+	CMPB &0x64,timer_diva
 
-## If *0x42003 == 0x64, jump over the up-coming infinite loop...
+## If *0x42003 (timer_diva) == 0x64, jump over the up-coming infinite loop...
 	BEB l19cb
 
 ## Otherwise, we're terminal. Set some state...
@@ -2094,9 +2296,9 @@ l1994:
 	#NOP
 	CLRW *$0x514
 	#NOP
-	CLRB $0x4900d
+	CLRB iu_ocpr
 	#NOP
-	MOVB &0x4,$0x4900e
+	MOVB &0x4,iu_sopr
 	#NOP
 
 ## ... and then die in an infinite loop (BRB 0)
@@ -2115,13 +2317,14 @@ l19cf:
 
 ## Multiply R4 by 0xC350 (50000d) and store in R0.
 l19d1:
+	# cac: No matter what I do, as generates a MOVW instead of a MULW3
 	.byte	0xe8, 0x4f, 0x50, 0xc3, 0x00, 0x00, 0x44, 0x40	#MULW3 &0xc350,%r4,%r0
 
 ## While R3 < R0, keep incremting R3.
 	CMPW %r0,%r3
 	BLEUB l19cf
 
-	JMP $0x1960
+	JMP l1960
 
 ## OK, I don't actually see how any code can reach this point. The
 ## unconditional jump above catches everything, and I don't see any
@@ -2142,10 +2345,12 @@ l19d1:
 ## Unknown Routine - in fact, nothing calls this code! It looks unreachable.
 ##
 # 000019f8:
+l19f8:
 	SAVE %r3
+## cac: as shortens the 0x0 to 1 byte.
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
-
 ## Jump point from 0x25d3
+l1a01:
 	MOVB &0xd0,$0x4d000
 	#NOP
 	PUSHW &0x1
@@ -2159,32 +2364,32 @@ l19d1:
 	PUSHW &0x2000874
 	PUSHW &0x0
 	PUSHW &0x3
-	CALL -16(%sp),$0x7b2c
+	CALL -16(%sp),fd_acs
 	TSTW %r0
 	BNEB l1a4c
-	JMP $0x1b67
+	JMP l1b67
 l1a4c:
 	ADDW3 &0x3,$0x508,%r0
 	CMPB (%r0),$0x2000874
 	BEB l1a63
-	JMP $0x1b67
+	JMP l1b67
 l1a63:
 	ADDW3 &0x7,$0x508,%r0
 	CMPB (%r0),$0x2000875
 	BEB l1a7a
-	JMP $0x1b67
+	JMP l1b67
 l1a7a:
 	ADDW3 &0xb,$0x508,%r0
 	CMPB (%r0),$0x2000876
 	BEB l1a91
-	JMP $0x1b67
+	JMP l1b67
 l1a91:
 	ADDW3 &0xf,$0x508,%r0
 	CMPB (%r0),$0x2000877
 	BEB l1aa8
-	JMP $0x1b67
+	JMP l1b67
 l1aa8:
-	MOVW &0x43000,%r8
+	MOVW &nvram_base+0x00,%r8
 	BRB l1ab7
 l1ab1:
 	CLRW (%r8)
@@ -2193,12 +2398,12 @@ l1ab1:
 l1ab7:
 	CMPW %r3,%r8
 	BLUB l1ab1
-	MOVW &0x1,$0x43060
+	MOVW &0x1,$nvram_base+0x60
 	#NOP
-	CLRW $0x43064
+	CLRW $nvram_base+0x64
 	#NOP
 	CLRH %r4
-	MOVW &0x43000,%r8
+	MOVW &nvram_base+0x00,%r8
 	BRB l1b14
 l1ad6:
 	MOVH {uhalf}%r4,{uword}%r0
@@ -2239,18 +2444,19 @@ l1b14:
 	ORW2 &0x40000000,$0x200085c
 	#NOP
 	CALL (%sp),$0x5de0
-	PUSHW &0x4300c
+l1b67:
+	PUSHW &nvram_base+0x0c
 	PUSHW &0x2000861
 	PUSHW &0x1
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	TSTW %r0
 	BNEB l1b9f
 	MOVB &0x1,$0x2000861
 	#NOP
 	PUSHW &0x2000861
-	PUSHW &0x4300c
+	PUSHW &nvram_base+0x0c
 	PUSHW &0x1
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 l1b9f:
 	CMPB &0x1,$0x2000861
 	BEB l1bb1
@@ -2273,8 +2479,8 @@ l1bd0:
 	MOVH {uhalf}%r4,{uword}%r0
 	MOVH {uhalf}%r4,{uword}%r1
 # l10ec lookup table?
-	.byte	0x87, 0x81, 0xec, 0x10, 0x00, 0x00, 0x80, 0x74, 0x0a, 0x00, 0x02	# MOVB 0x10ec(%r1),0x2000a74(%r0)
-	NOP
+	MOVB	l10ec(%r1),0x2000a74(%r0)
+	#NOP
 	INCH %r4
 l1be8:
 	MOVH {uhalf}%r4,{uword}%r0
@@ -2311,16 +2517,17 @@ l1c21:
 	ORW2 %r1,%r0
 	PUSHW %r0
 	CALL -4(%sp),$0x61c0
-	MOVB &0x1,$0x44013
+	MOVB &0x1,csr_set_fled	# set failure LED
 	#NOP
 	MOVW &0xfeedbeef,*$0x48c
 	#NOP
-	JMP $0x1e37
+	JMP l1e37
 l1c6a:
+	# cac: as generates a MOVB
 	.byte	0xeb, 0x6f, 0x54, 0x47, 0x40	# MULB3 &0x54,%r7,%r0
 	CMPW &0xca5e600d,0x2000a84(%r0)
 	BEB l1c82
-	JMP $0x1da0
+	JMP l1da0
 l1c82:
 	ADDB3 &0x1,%r7,%r0
 	ORB2 %r0,$0x2000860
@@ -2359,10 +2566,10 @@ l1c82:
 	BEB l1d57
 	MOVB %r7,{uword}%r0
 	LLSW3 &0x17,%r0,%r0
-	ORW2 &0x40002,%r0
+	ORW2 &mmu_pdcrl,%r0
 	PUSHW %r0
 	CALL -4(%sp),$0x61c0
-	MOVB &0x1,$0x44013
+	MOVB &0x1,csr_set_fled	# set failure LED
 	#NOP
 	MOVW &0xfeedbeef,*$0x48c
 	#NOP
@@ -2380,27 +2587,28 @@ l1d57:
 	ORW2 &0x50002,%r0
 	PUSHW %r0
 	CALL -4(%sp),$0x61c0
-	MOVB &0x1,$0x44013
+	MOVB &0x1,csr_set_fled	# set failure LED
 	#NOP
 	MOVW &0xfeedbeef,*$0x48c
 	#NOP
 l1d9a:
-	JMP $0x1e37
+	JMP l1e37
+l1da0:
 	CMPW &0xfeedbeef,$0x2000878
 	BNEB l1e06
 	MOVW &0x3d,$0x2000864
 	#NOP
 	PUSHW &0x2000864
-	PUSHW &0x4300a
+	PUSHW &nvram_base+0x0a
 	PUSHW &0x2
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 	CALL (%sp),$0x3b90
 	MOVB &0x1,$0x2000861
 	#NOP
 	PUSHW &0x2000861
-	PUSHW &0x4300c
+	PUSHW &nvram_base+0x0c
 	PUSHW &0x1
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 	MOVW &0xadebac1e,$0x2000864
 	#NOP
 	ORW2 &0x10,$0x200085c
@@ -2414,25 +2622,25 @@ l1e06:
 	ORW2 &0x20002,%r0
 	PUSHW %r0
 	CALL -4(%sp),$0x61c0
-	MOVB &0x1,$0x44013
+	MOVB &0x1,csr_set_fled	# set failure LED
 	#NOP
 	MOVW &0xfeedbeef,*$0x48c
 	#NOP
 l1e37:
 	XORB3 &0x1,%r7,%r0
 	MOVB %r0,%r6
-	PUSHW &0x4303a
+	PUSHW &nvram_base+0x3a
 	PUSHW &0x2000861
 	PUSHW &0x1
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	TSTW %r0
 	BNEB l1e75
 	CLRB $0x2000861
 	#NOP
 	PUSHW &0x2000861
-	PUSHW &0x4303a
+	PUSHW &nvram_base+0x3a
 	PUSHW &0x1
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 l1e75:
 	CMPB &0x1,$0x2000861
 	BNEB l1e81
@@ -2458,10 +2666,10 @@ l1eac:
 	MOVB &0x1,$0x2000861
 	#NOP
 	PUSHW &0x2000861
-	PUSHW &0x4303a
+	PUSHW &nvram_base+0x3a
 	PUSHW &0x1
-	CALL -12(%sp),$0x52a0
-	JMP $0x20a9
+	CALL -12(%sp),wnvram
+	JMP l20a9
 l1eda:
 	MOVB %r6,{uword}%r0
 	PUSHW %r0
@@ -2474,11 +2682,11 @@ l1eda:
 	ORW2 %r1,%r0
 	PUSHW %r0
 	CALL -4(%sp),$0x61c0
-	MOVB &0x1,$0x44013
+	MOVB &0x1,csr_set_fled	# set failure LED
 	#NOP
 	MOVW &0xfeedbeef,*$0x48c
 	#NOP
-	JMP $0x20a9
+	JMP l20a9
 l1f23:
 	.byte	0xeb, 0x6f, 0x54, 0x46, 0x40	# MULB3 &0x54,%r6,%r0
 	CMPW &0xca5e600d,0x2000a84(%r0)
@@ -2488,11 +2696,11 @@ l1f23:
 	ORW2 &0x20002,%r0
 	PUSHW %r0
 	CALL -4(%sp),$0x61c0
-	MOVB &0x1,$0x44013
+	MOVB &0x1,csr_set_fled	# set failure LED
 	#NOP
 	MOVW &0xfeedbeef,*$0x48c
 	#NOP
-	JMP $0x20a9
+	JMP l20a9
 l1f68:
 	ADDB3 &0x1,%r6,%r0
 	ORB2 %r0,$0x2000860
@@ -2558,10 +2766,10 @@ l2062:
 	BEB l20a9
 	MOVB %r6,{uword}%r0
 	LLSW3 &0x17,%r0,%r0
-	ORW2 &0x40002,%r0
+	ORW2 &mmu_pdcrl,%r0
 	PUSHW %r0
 	CALL -4(%sp),$0x61c0
-	MOVB &0x1,$0x44013
+	MOVB &0x1,csr_set_fled	# set failure LED
 	#NOP
 	MOVW &0xfeedbeef,*$0x48c
 	#NOP
@@ -2577,32 +2785,32 @@ l20c9:
 	MOVB $0x2000860,{uhalf}%r0
 	MOVH %r0,%r4
 l20d4:
-	ADDW3 &0x4,$0x490,%r0
+	ADDW3 &0x4,l490,%r0
 	MOVH {uhalf}%r4,{uword}%r1
 	INCW %r1
 	INSFW &0x3,&0x0,%r1,(%r0)
 	#NOP
-	ADDW3 &0x8,$0x490,%r0
+	ADDW3 &0x8,l490,%r0
 	MOVW *$0x4e8,(%r0)
 	#NOP
-	ADDW3 &0x4,$0x490,%r0
+	ADDW3 &0x4,l490,%r0
 	EXTFW &0x3,&0x0,(%r0),%r0
 	MULW2 &0xc,%r0
 	ADDW2 %r0,*$0x4e8
 	#NOP
-	ADDW3 &0x8,$0x490,%r0
+	ADDW3 &0x8,l490,%r0
 	MOVH &0x1,*0(%r0)
 	#NOP
-	ADDW3 &0x8,$0x490,%r0
+	ADDW3 &0x8,l490,%r0
 	ADDW3 &0x2,(%r0),%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0xd1, 0x05, 0x00, 0x00	# PUSHW &0x5d1
+	PUSHW &l5d1
 	CALL -8(%sp),$0x7fb0
 	BITB $0x2000860,&0x1
 	BEB l2164
 	CMPW &0xca5e600d,$0x2000a84
 	BNEB l2164
-	ADDW3 &0x8,$0x490,%r0
+	ADDW3 &0x8,l490,%r0
 	MOVW (%r0),%r0
 	MOVH $0x2000a82,12(%r0)
 	#NOP
@@ -2611,12 +2819,12 @@ l2164:
 	BEB l218e
 	CMPW &0xca5e600d,$0x2000ad8
 	BNEB l218e
-	ADDW3 &0x8,$0x490,%r0
+	ADDW3 &0x8,l490,%r0
 	MOVW (%r0),%r0
 	MOVH $0x2000ad6,24(%r0)
 	#NOP
 l218e:
-	JMP $0x65f0
+	JMP l65f0
 	MOVAW (%fp),%sp
 	POPW %r8
 	POPW %r7
@@ -2629,11 +2837,15 @@ l218e:
 	NOP
 	NOP
 
+################################################################################
+
+l21a8:
 	SAVE %r5
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
 ## Jump point from 0x191d
-	.byte	0x84, 0x4f, 0x28, 0x0b, 0x00, 0x02, 0x48	# MOVW &0x2000b28,%r8
-	.byte	0x84, 0x4f, 0xe4, 0x05, 0x00, 0x00, 0x47	#MOVW &0x5e4,%r7
+l21b1:
+	MOVW &0x2000b28,%r8
+	MOVW &l5e4,%r7
 	CLRW %r5
 	BRB l21d3
 l21c3:
@@ -2649,17 +2861,17 @@ l21d3:
 	BLUB l21c3
 
 ### Stick initial PSW 0x81e180 into PCB at 0x2000b78
-	.byte	0x84, 0x4f, 0x80, 0xe1, 0x81, 0x00, 0x7f, 0x78, 0x0b, 0x00, 0x02	# MOVW &0x81e180,$0x2000b78
-	NOP
+	MOVW &0x81e180,$0x2000b78
+	#NOP
 ### Stick PC 0x41f8 into PCB at 0x2000b78
-	.byte	0x84, 0x4f, 0xf8, 0x41, 0x00, 0x00, 0x7f, 0x7c, 0x0b, 0x00, 0x02	# MOVW &0x41f8,$0x2000b7c
-	NOP
-	.byte	0x84, 0x4f, 0xe8, 0x0e, 0x00, 0x02, 0x7f, 0x80, 0x0b, 0x00, 0x02	# MOVW &0x2000ee8,$0x2000b80
-	NOP
-	.byte	0x84, 0x4f, 0xe8, 0x0e, 0x00, 0x02, 0x7f, 0x90, 0x0b, 0x00, 0x02	# MOVW &0x2000ee8,$0x2000b90
-	NOP
-	.byte	0x84, 0x4f, 0xe8, 0x10, 0x00, 0x02, 0x7f, 0x94, 0x0b, 0x00, 0x02	# MOVW &0x20010e8,$0x2000b94
-	NOP
+	MOVW &l41f8,$0x2000b7c
+	#NOP
+	MOVW &0x2000ee8,$0x2000b80
+	#NOP
+	MOVW &0x2000ee8,$0x2000b90
+	#NOP
+	MOVW &0x20010e8,$0x2000b94
+	#NOP
 	CLRW $0x2000bc4
 	#NOP
 	CLRW %r5
@@ -2715,60 +2927,60 @@ l2258:
 ###
 
 ### PCBP = 0x2000bc8. Handler = 0x40a0
-	.byte	0x84, 0x4f, 0xa0, 0x40, 0x00, 0x00, 0x7f, 0xcc, 0x0b, 0x00, 0x02	# MOVW &0x40a0,$0x2000bcc
-	NOP
+	MOVW &l40a0,$0x2000bcc
+	#NOP
 
 ### PCBP = 0x2000c18. Handler = 0x40c6
-	.byte	0x84, 0x4f, 0xc6, 0x40, 0x00, 0x00, 0x7f, 0x1c, 0x0c, 0x00, 0x02	# MOVW &0x40c6,$0x2000c1c
-	NOP
+	MOVW &l40c6,$0x2000c1c
+	#NOP
 
 ### PCBP = 0x2000c68. Handler = 0x40ec
-	.byte	0x84, 0x4f, 0xec, 0x40, 0x00, 0x00, 0x7f, 0x6c, 0x0c, 0x00, 0x02	# MOVW &0x40ec,$0x2000c6c
-	NOP
+	MOVW &l40ec,$0x2000c6c
+	#NOP
 
 ### PCBP = 0x2000cb8. Handler = 0x4112
-	.byte	0x84, 0x4f, 0x12, 0x41, 0x00, 0x00, 0x7f, 0xbc, 0x0c, 0x00, 0x02	# MOVW &0x4112,$0x2000cbc
-	NOP
+	MOVW &l4112,$0x2000cbc
+	#NOP
 
 ### PCBP = 0x2000d08. Handler = 0x4138
-	.byte	0x84, 0x4f, 0x38, 0x41, 0x00, 0x00, 0x7f, 0x0c, 0x0d, 0x00, 0x02	# MOVW &0x4138,$0x2000d0c
-	NOP
+	MOVW &l4138,$0x2000d0c
+	#NOP
 
 ### PCBP = 0x2000d58. Handler = 0x415e
-	.byte	0x84, 0x4f, 0x5e, 0x41, 0x00, 0x00, 0x7f, 0x5c, 0x0d, 0x00, 0x02	# MOVW &0x415e,$0x2000d5c
-	NOP
+	MOVW &l415e,$0x2000d5c
+	#NOP
 
 ### PCBP = 0x2000da8. Handler = 0x4184
-	.byte	0x84, 0x4f, 0x84, 0x41, 0x00, 0x00, 0x7f, 0xac, 0x0d, 0x00, 0x02	# MOVW &0x4184,$0x2000dac
-	NOP
+	MOVW &l4184,$0x2000dac
+	#NOP
 
 ### PCBP = 0x2000df8. Handler = 0x41aa
 ### (n.b.: This PCBP doesn't seem to appear in the vector table. Mysterious!)
-	.byte	0x84, 0x4f, 0xaa, 0x41, 0x00, 0x00, 0x7f, 0xfc, 0x0d, 0x00, 0x02	# MOVW &0x41aa,$0x2000dfc
-	NOP
+	MOVW &l41aa,$0x2000dfc
+	#NOP
 
 ### PCBP = 0x2000e48. Handler = 0x41d0
-	.byte	0x84, 0x4f, 0xd0, 0x41, 0x00, 0x00, 0x7f, 0x4c, 0x0e, 0x00, 0x02	# MOVW &0x41d0,$0x2000e4c
-	NOP
+	MOVW &l41d0,$0x2000e4c
+	#NOP
 
 ### PCBP = 0x2000e90. PSW = 0x81e180.
 ### (n.b.: This PCBP doesn't seem to appear in the vector table, either.)
-	.byte	0x84, 0x4f, 0x80, 0xe1, 0x81, 0x00, 0x7f, 0x98, 0x0e, 0x00, 0x02	# MOVW &0x81e180,$0x2000e98
-	NOP
+	MOVW &0x81e180,$0x2000e98
+	#NOP
 
 
-	.byte	0x84, 0x4f, 0x8e, 0x42, 0x00, 0x00, 0x7f, 0x9c, 0x0e, 0x00, 0x02	# MOVW &0x428e,$0x2000e9c
-	NOP
-	.byte	0x84, 0x4f, 0xe8, 0x0e, 0x00, 0x02, 0x7f, 0xa0, 0x0e, 0x00, 0x02	# MOVW &0x2000ee8,$0x2000ea0
-	NOP
-	.byte	0x84, 0x4f, 0xe8, 0x0e, 0x00, 0x02, 0x7f, 0xb0, 0x0e, 0x00, 0x02	# MOVW &0x2000ee8,$0x2000eb0
-	NOP
-	.byte	0x84, 0x4f, 0xe8, 0x10, 0x00, 0x02, 0x7f, 0xb4, 0x0e, 0x00, 0x02	# MOVW &0x20010e8,$0x2000eb4
-	NOP
+	MOVW &l428e,$0x2000e9c
+	#NOP
+	MOVW &0x2000ee8,$0x2000ea0
+	#NOP
+	MOVW &0x2000ee8,$0x2000eb0
+	#NOP
+	MOVW &0x20010e8,$0x2000eb4
+	#NOP
 	CLRW $0x2000ee4
 	#NOP
 	MOVAW $0x2000b28,%pcbp
-	JMP $0x2331
+	JMP l2331
 	MOVAW -8(%fp),%sp
 	POPW %r8
 	POPW %r7
@@ -2778,12 +2990,16 @@ l2258:
 	RET
 
 
+################################################################################
+
 ## Who jumps here?
+l2328:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x08, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x8,%sp
 
 ## Jumped to from $0x2313
-	MOVW &0x49000,$0x20011e8
+l2331:
+	MOVW &iu_base,$0x20011e8
 	#NOP
 	CALL (%sp),$0x3b90
 	CALL (%sp),0x37c(%pc)
@@ -2793,20 +3009,20 @@ l2258:
 	BNEB l2359
 ## If the contents of the address pointed to by %fp are == 0,
 ## jump to a failure point.
-	.byte	0x24, 0x7f, 0x3e, 0x19, 0x00, 0x00	# JMP $0x193e # as adding NOP
+	.byte	0x24, 0x7f, 0x3e, 0x19, 0x00, 0x00	# JMP $l193e # as adding NOP
 	BRB l2364
 l2359:
 	CMPB &0x2,(%fp)
 
 	BNEB l2364
-	JMP $0x12d5
+	JMP l12d5
 
 ## Set the fatal "EXECUTION HALTED" bit in 2000085C
 l2364:
 	ORW2 &0x80000000,$0x200085c
 	#NOP
 	CALL (%sp),$0x5de0
-	CALL (%sp),$0x297c
+	CALL (%sp),l297c
 	MOVW %r0,*$0x4e4
 	#NOP
 	MOVW &0x2001514,*$0x4e8
@@ -2814,48 +3030,48 @@ l2364:
 	ADDW2 &0x20,*$0x4e8
 	#NOP
 	MOVB &0x0,{uword}%r0
-	INSFW &0x3,&0xc,%r0,*$0x490
+	INSFW &0x3,&0xc,%r0,*l490
 	#NOP
 	MOVB &0x1,{uword}%r0
-	INSFW &0xf,&0x10,%r0,*$0x490
+	INSFW &0xf,&0x10,%r0,*l490
 	#NOP
-	ADDW3 &0x4,$0x490,%r0
+	ADDW3 &0x4,l490,%r0
 	MOVB &0x1,{uword}%r1
 	INSFW &0x0,&0x5,%r1,(%r0)
 	#NOP
-	ADDW3 &0x4,$0x490,%r0
+	ADDW3 &0x4,l490,%r0
 	MOVB &0x1,{uword}%r1
 	INSFW &0x0,&0x6,%r1,(%r0)
 	#NOP
-	ADDW3 &0xc,$0x490,%r0
+	ADDW3 &0xc,l490,%r0
 	PUSHW %r0
 	PUSHW &l628	# "SBD"
 	CALL -8(%sp),$0x7fb0
-	ADDW3 &0x4,$0x490,%r0
+	ADDW3 &0x4,l490,%r0
 	MOVB &0x1,{uword}%r1
 	INSFW &0x0,&0x7,%r1,(%r0)
 	#NOP
-	ADDW3 &0x4,$0x490,%r0
+	ADDW3 &0x4,l490,%r0
 	MOVB &0x1,{uword}%r1
 	INSFW &0x0,&0x9,%r1,(%r0)
 	#NOP
-	.byte	0x84, 0x4f, 0xa4, 0x65, 0x00, 0x00, 0xef, 0x98, 0x04, 0x00, 0x00	# MOVW &0x65a4,*$0x498
-	NOP
-	.byte	0x84, 0x4f, 0xa4, 0x65, 0x00, 0x00, 0xef, 0x0c, 0x05, 0x00, 0x00	# MOVW &0x65a4,*$0x50c
-	NOP
+	MOVW &l65a4,*l498
+	#NOP
+	MOVW &l65a4,*$0x50c
+	#NOP
 	CALL (%sp),$0x5f72
-	MOVB &0x1,$0x4401f
+	MOVB &0x1,csr_fm_off	# floppy motor off
 	#NOP
 	MOVB &0x1,*$0x4e0
 	#NOP
 	CLRB $0x20011f1
 	#NOP
-	.byte	0x84, 0x4f, 0xe0, 0x25, 0x00, 0x00, 0xef, 0x98, 0x04, 0x00, 0x00	# MOVW &0x25e0,*$0x498
-	NOP
-	.byte	0x84, 0x4f, 0xe0, 0x25, 0x00, 0x00, 0xef, 0x0c, 0x05, 0x00, 0x00	# MOVW &0x25e0,*$0x50c
-	NOP
+	MOVW &l25e0,*l498
+	#NOP
+	MOVW &l25e0,*$0x50c
+	#NOP
 	CALL (%sp),*$0x4c0
-	JMP $0x253a
+	JMP l253a
 l2471:
 	MOVB $0x20011f1,{uword}%r0
 	LLSW3 &0x15,%r0,%r0
@@ -2865,7 +3081,7 @@ l2471:
 	CALL -4(%sp),*$0x528 # DUART Delay
 	MOVB *$0x4e0,{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	MOVB $0x20011f1,{uword}%r1
 	LLSW3 &0x15,%r1,%r1
 	MOVB 1(%r1),{uword}%r2
@@ -2878,7 +3094,7 @@ l2471:
 	#NOP
 	MOVB %r0,{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	MOVB $0x20011f1,{uword}%r1
 	INSFW &0x3,&0xc,%r1,(%r0)
 	#NOP
@@ -2891,7 +3107,7 @@ l2471:
 	#NOP
 	MOVB *$0x4e0,{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	MOVW %r0,4(%fp)
 	#NOP
 	EXTFW &0xf,&0x10,*4(%fp),%r0
@@ -2902,14 +3118,15 @@ l2471:
 	#NOP
 	INCB *$0x4e0
 	#NOP
+l253a:
 	INCB $0x20011f1
 	#NOP
 	CMPB &0xc,$0x20011f1
 	BLEH l2471
-	.byte	0x84, 0x4f, 0xa4, 0x65, 0x00, 0x00, 0xef, 0x98, 0x04, 0x00, 0x00	# MOVW &0x65a4,*$0x498
-	NOP
-	.byte	0x84, 0x4f, 0xa4, 0x65, 0x00, 0x00, 0xef, 0x0c, 0x05, 0x00, 0x00	# MOVW &0x65a4,*$0x50c
-	NOP
+	MOVW &l65a4,*l498
+	#NOP
+	MOVW &l65a4,*$0x50c
+	#NOP
 	ADDW3 &0x2,$0x4a4,%r0
 	.byte	0x2b, 0x50	# TSTB (%r0) # as adds NOP
 	BEB l2595
@@ -2933,7 +3150,7 @@ l2595:
 	CALL (%sp),$0x5de0
 l25cc:
 	CALL (%sp),$0x5f72
-	JMP $0x1a01
+	JMP l1a01
 	MOVAW -24(%fp),%sp
 	POPW %fp
 	RET
@@ -2944,30 +3161,32 @@ l25cc:
 l25e0:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
-	.byte	0x86, 0xe2, 0x7f, 0x02, 0x40, 0x04, 0x00, 0xe0, 0x40	# MOVH {uhalf}$0x44002,{uword}%r0
+	MOVH {uhalf}csr_datal,{uword}%r0
 	BITW %r0,&0x8000
 	BEB l2605
-	MOVB &0x1,$0x44027
+	MOVB &0x1,csr_clr_inht
 	#NOP
 	BRB l2635
 l2605:
 	MOVW &0xfeedbeef,*$0x48c
 	#NOP
 	CALL (%sp),$0x5f72
-	MOVB &0x1,$0x4401f
+	MOVB &0x1,csr_fm_off # floppy motor off
 	#NOP
 ## This appears to set a flag meaning "Self-config failure" in the
 ## failure flags.
 	ORW2 &0x1,$0x200085c
 	#NOP
 	CALL (%sp),$0x5de0
-	JMP $0x65f0
+	JMP l65f0
 l2635:
 	MOVAW -24(%fp),%sp
 	POPW %fp
 	RET
 
+################################################################################
 
+l263c:
 	SAVE %r7
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
 	MOVW &0x2004000,%r8
@@ -3024,6 +3243,7 @@ l26b5:
 ################################################################################
 ## These look like UART tests, specifically testing the Tx/Rx buffer
 ##
+l26c0:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x04, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x4,%sp
 
@@ -3033,22 +3253,22 @@ l26b5:
 ## 0x10 = Reset MR pointer. Causes channel A MR pointer to point to
 ##        channel 1.
 
-	MOVB &0x20,$0x49002
+	MOVB &0x20,iu_cra
 	#NOP
-	MOVB &0x30,$0x49002
+	MOVB &0x30,iu_cra
 	#NOP
-	MOVB &0x10,$0x49002
+	MOVB &0x10,iu_cra
 	#NOP
 
 ## Now set bit 4 of the MRA (no parity)
-	MOVB $0x49000,{uhalf}%r0
+	MOVB iu_mr12a,{uhalf}%r0
 	MOVH %r0,(%fp)
 	#NOP
-	ORB2 &0x80,$0x49000
+	ORB2 &0x80,iu_mr12a
 	#NOP
 
 ## Now reset chanel a break change interrupt.
-	MOVB &0x5,$0x49002
+	MOVB &0x5,iu_cra
 	#NOP
 
 ## Run the UART delay clock for 14 clock cycles
@@ -3056,7 +3276,7 @@ l26b5:
 	CALL -4(%sp),*$0x528 # DUART Delay
 
 ## Write 0x55 into the UART's buffer.
-	MOVB &0x55,$0x49003
+	MOVB &0x55,iu_thra
 	#NOP
 
 ## Run the UART delay clock for 14 clock cycles
@@ -3065,31 +3285,31 @@ l26b5:
 
 ## Check to see if UART status bit RxRDY is set. If it is, go to next
 ## check. If not, return.
-	BITB $0x49001,&0x1
+	BITB iu_sra,&0x1
 	BNEB l272d
 	CLRW %r0
-	JMP $0x2973
+	JMP l2973
 
 ## Check if 0x55 is in the UART's buffer. If it is, go to next check.
 ## If not, return.
 l272d:
-	CMPB &0x55,$0x49003
+	CMPB &0x55,iu_thra
 	BEB l273f
 	CLRW %r0
-	JMP $0x2973
+	JMP l2973
 
 ## Check to see if UART status bit RxRDY is set. If it is, go to next
 ## check. If not, return.
 l273f:
-	BITB $0x49001,&0x1
+	BITB iu_sra,&0x1
 	BEB l2750
 	CLRW %r0
 
 ## Write 0xAA to the TX buffer
-	JMP $0x2973
+	JMP l2973
 
 l2750:
-	MOVB &0xaa,$0x49003
+	MOVB &0xaa,iu_thra
 	#NOP
 
 ## Call UART delay for 14 clock cycles
@@ -3097,93 +3317,93 @@ l2750:
 	CALL -4(%sp),*$0x528 # DUART Delay
 
 ## Check to see if RxRDY is set again
-	BITB $0x49001,&0x1
+	BITB iu_sra,&0x1
 	BNEB l2775
 	CLRW %r0
-	JMP $0x2973
+	JMP l2973
 l2775:
-	CMPB &0xaa,$0x49003
+	CMPB &0xaa,iu_thra
 	BEB l2788
 	CLRW %r0
-	JMP $0x2973
+	JMP l2973
 l2788:
-	MOVB &0x20,$0x49002
+	MOVB &0x20,iu_cra
 	#NOP
-	MOVB &0x30,$0x49002
+	MOVB &0x30,iu_cra
 	#NOP
-	MOVB &0x10,$0x49002
+	MOVB &0x10,iu_cra
 	#NOP
-	MOVB $0x49000,{uhalf}%r0
+	MOVB iu_base,{uhalf}%r0
 	MOVH %r0,(%fp)
 	#NOP
-	ANDB2 &0x7f,$0x49000
+	ANDB2 &0x7f,iu_base
 	#NOP
-	MOVB &0x5,$0x49002
+	MOVB &0x5,iu_cra
 	#NOP
 	PUSHW &0x14
 	CALL -4(%sp),*$0x528 # DUART Delay
-	MOVB &0x20,$0x4900a
+	MOVB &0x20,iu_crb
 	#NOP
-	MOVB &0x30,$0x4900a
+	MOVB &0x30,iu_crb
 	#NOP
-	MOVB &0x10,$0x4900a
+	MOVB &0x10,iu_crb
 	#NOP
-	MOVB $0x49008,{uhalf}%r0
+	MOVB iu_mr12b,{uhalf}%r0
 	MOVH %r0,(%fp)
 	#NOP
-	ORB2 &0x80,$0x49008
+	ORB2 &0x80,iu_mr12b
 	#NOP
-	MOVB &0x5,$0x4900a
+	MOVB &0x5,iu_crb
 	#NOP
 	PUSHW &0x14
 	CALL -4(%sp),*$0x528 # DUART Delay
-	MOVB &0x55,$0x4900b
+	MOVB &0x55,iu_thrb
 	#NOP
 
 	PUSHW &0x14
 	CALL -4(%sp),*$0x528 # DUART Delay
-	BITB $0x49009,&0x1
+	BITB iu_srb,&0x1
 	BNEB l282b
 	CLRW %r0
-	JMP $0x2973
+	JMP l2973
 
 l282b:
-	CMPB &0x55,$0x4900b
+	CMPB &0x55,iu_thrb
 	BEB l283d
 	CLRW %r0
-	JMP $0x2973
+	JMP l2973
 
 l283d:
-	BITB $0x49009,&0x1
+	BITB iu_srb,&0x1
 	BEB l284e
 	CLRW %r0
-	JMP $0x2973
+	JMP l2973
 
 l284e:
-	MOVB &0xaa,$0x4900b
+	MOVB &0xaa,iu_thrb
 	#NOP
 	PUSHW &0x14
 	CALL -4(%sp),*$0x528 # DUART Delay
-	BITB $0x49009,&0x1
+	BITB iu_srb,&0x1
 	BNEB l2873
 	CLRW %r0
-	JMP $0x2973
+	JMP l2973
 l2873:
-	CMPB &0xaa,$0x4900b
+	CMPB &0xaa,iu_thrb
 	BEB l2886
 	CLRW %r0
-	JMP $0x2973
+	JMP l2973
 l2886:
-	MOVB &0x20,$0x4900a
+	MOVB &0x20,iu_crb
 	#NOP
-	MOVB &0x30,$0x4900a
+	MOVB &0x30,iu_crb
 	#NOP
-	MOVB &0x10,$0x4900a
+	MOVB &0x10,iu_crb
 	#NOP
-	MOVB $0x49008,{uword}%r0
+	MOVB iu_mr12b,{uword}%r0
 	LLSW3 &0x8,%r0,%r0
 	MOVH {uhalf}%r0,{uword}%r0
-	MOVB $0x49008,{uword}%r1
+	MOVB iu_mr12b,{uword}%r1
 	MOVW &0xff7f,%r2
 	MOVH {uhalf}%r2,{uword}%r2
 	ANDW2 %r2,%r1
@@ -3191,42 +3411,42 @@ l2886:
 	ORW2 %r1,%r0
 	MOVH %r0,(%fp)
 	#NOP
-	MOVB &0x10,$0x49002
+	MOVB &0x10,iu_cra
 	#NOP
-	MOVB &0x10,$0x4900a
+	MOVB &0x10,iu_crb
 	#NOP
-	MOVB $0x49000,$0x49008
+	MOVB iu_mr12a,iu_mr12b
 	#NOP
-	MOVB $0x49000,$0x49008
+	MOVB iu_mr12a,iu_mr12b
 	#NOP
-	MOVB &0x5,$0x4900a
-	#NOP
-	PUSHW &0x14
-	CALL -4(%sp),*$0x528 # DUART Delay
-	MOVB &0x20,$0x49003
+	MOVB &0x5,iu_crb
 	#NOP
 	PUSHW &0x14
 	CALL -4(%sp),*$0x528 # DUART Delay
-	BITB $0x49009,&0x1
+	MOVB &0x20,iu_thra
+	#NOP
+	PUSHW &0x14
+	CALL -4(%sp),*$0x528 # DUART Delay
+	BITB iu_srb,&0x1
 	BEB l2935
-	CMPB &0x20,$0x4900b
+	CMPB &0x20,iu_thrb
 	BNEB l2935
 	MOVW &0x2,%r0
 	BRB l2973
 l2935:
-	MOVB &0x20,$0x4900a
+	MOVB &0x20,iu_crb
 	#NOP
-	MOVB &0x30,$0x4900a
+	MOVB &0x30,iu_crb
 	#NOP
-	MOVB &0x10,$0x4900a
+	MOVB &0x10,iu_crb
 	#NOP
 	MOVH {uhalf}(%fp),{uword}%r0
 	LRSW3 &0x8,%r0,%r0
-	MOVB %r0,$0x49008
+	MOVB %r0,iu_mr12b
 	#NOP
-	MOVB 1(%fp),$0x49008
+	MOVB 1(%fp),iu_mr12b
 	#NOP
-	MOVB &0x5,$0x4900a
+	MOVB &0x5,iu_crb
 	#NOP
 	MOVW &0x1,%r0
 	BRB l2973
@@ -3241,34 +3461,36 @@ l2973:
 ################################################################################
 ## Unknown procedure
 ##
+
+l297c:
 	SAVE %r5
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
-	.byte	0x84, 0x4f, 0xc4, 0x2a, 0x00, 0x00, 0x7f, 0xf4, 0x11, 0x00, 0x02	# MOVW &0x2ac4,$0x20011f4
-	NOP
-	.byte	0x84, 0x4f, 0xdc, 0x2a, 0x00, 0x00, 0x7f, 0xf8, 0x11, 0x00, 0x02	# MOVW &0x2adc,$0x20011f8
-	NOP
+	MOVW &l2ac4,$0x20011f4
+	#NOP
+	MOVW &l2adc,$0x20011f8
+	#NOP
 	CLRB *$0x4c4
 	#NOP
 	CLRB $0x20011f2
 	#NOP
 	CLRW %r6
-	BITB $0x4c003,&0x1
+	BITB mem_size,&0x1
 	BEB l29c2
 	MOVW &0x100000,%r8
 	MOVW %r8,%r0
 	BRB l29cc
 l29c2:
-	MOVW &0x40000,%r8
+	MOVW &mmu_scdl,%r8
 	MOVW %r8,%r0
 l29cc:
-	BITB $0x4c003,&0x2
+	BITB mem_size,&0x2
 	BEB l29d9
 	LLSW3 &0x1,%r8,%r8
 l29d9:
 	CALL (%sp),*$0x4c0
 	.byte	0x2b, 0x7f, 0xf2, 0x11, 0x00, 0x02	# TSTB $0x20011f2 # as adds NOP
 	BEB l29ee
-	JMP $0x2a97
+	JMP l2a97
 l29ee:
 	CMPW &0x3b02f1d0,$0x200086c
 	BNEB l2a02
@@ -3284,7 +3506,7 @@ l2a1e:
 	#NOP
 	TSTW %r6
 	BEB l2a97
-	.byte	0x3c, 0x4f, 0x00, 0x00, 0x20, 0x00, 0x48	# CMPW &0x200000,%r8
+	CMPW &0x200000,%r8
 	BNEB l2a97
 	.byte	0xe8, 0x03, 0x48, 0x40	# MULW3 &0x3,%r8,%r0
 	DIVW2 &0x4,%r0
@@ -3310,10 +3532,10 @@ l2a8f:
 	MOVW %r7,0x2000000(%r5)
 	#NOP
 l2a97:
-	.byte	0x84, 0x4f, 0xa4, 0x65, 0x00, 0x00, 0x7f, 0xf4, 0x11, 0x00, 0x02	# MOVW &0x65a4,$0x20011f4
-	NOP
-	.byte	0x84, 0x4f, 0x04, 0x65, 0x00, 0x00, 0x7f, 0xf8, 0x11, 0x00, 0x02	# MOVW &0x6504,$0x20011f8
-	NOP
+	MOVW &l65a4,$0x20011f4
+	#NOP
+	MOVW &l6504,$0x20011f8
+	#NOP
 	LLSW3 %r6,%r8,%r0
 	BRB l2ab5
 l2ab5:
@@ -3325,6 +3547,7 @@ l2ab5:
 	POPW %fp
 	RET
 
+################################################################################
 
 l2ac4:
 	SAVE %fp
@@ -3335,6 +3558,8 @@ l2ac4:
 	POPW %fp
 	RET
 
+
+################################################################################
 
 l2adc:
 	SAVE %fp
@@ -3351,7 +3576,9 @@ l2adc:
 ################################################################################
 ## Exception Return Point Routine (excret)
 ##
-l2af8:
+
+excret:
+#l2af8:
 	MOVW -8(%sp),$0x20011fc
 	#NOP
 	RET
@@ -3365,10 +3592,10 @@ l2b04:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0xb8, 0x01, 0x00, 0x00, 0x4c	# ADDW2 &0x1b8,%sp
 l2b0d:
-	PUSHW &0x4300d
+	PUSHW &nvram_base+0x0d
 	PUSHAW (%fp)
 	PUSHW &0x2d
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 
 ## printf ("\nEnter name of program to execute [ %s ]: ")
 	PUSHW &l62c
@@ -3379,7 +3606,7 @@ l2b0d:
 	CALL -4(%sp),*$0x540
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
-	CALL -4(%sp),$0x4360
+	CALL -4(%sp),gets
 	CMPW &-1,%r0
 	BNEB l2b6e
 	PUSHW &0x1
@@ -3388,17 +3615,17 @@ l2b0d:
 ## printf ("\n")
 	PUSHW &l657
 	CALL -4(%sp),printf
-	JMP $0x3aab
+	JMP l3aab
 l2b6e:
 	PUSHW &0x1
 	CALL -4(%sp),*$0x540
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
 	PUSHW &l659
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BEB l2b9a
-	JMP $0x2c6b
+	JMP l2c6b
 
 
 l2b9a:
@@ -3412,13 +3639,13 @@ l2b9a:
 	BNEB l2bba
 	CALL (%sp),0xf59(%pc)
 l2bba:
-	PUSHW &0x43000
+	PUSHW &nvram_base+0x00
 	PUSHAW 90(%fp)
 	PUSHW &0x9
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	PUSHAW 80(%fp)
 	PUSHAW 90(%fp)
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BEB l2be4
 	CALL (%sp),0xf2f(%pc)
@@ -3447,7 +3674,7 @@ l2c03:
 l2c23:
 	PUSHAW 80(%fp)
 	PUSHAW (%fp)
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BEB l2c39
 	CALL (%sp),0xeda(%pc)
@@ -3458,20 +3685,22 @@ l2c39:
 	CALL -4(%sp),printf
 
 	PUSHAW (%fp)
-	PUSHW &0x43000
+	PUSHW &nvram_base+0x00
 	PUSHAW (%fp)
 	CALL -4(%sp),$0x7f98
 	INCW %r0
 	PUSHW %r0
-	CALL -12(%sp),$0x52a0
-	JMP $0x3aa8
+	CALL -12(%sp),wnvram
+	JMP l3aa8
+
+l2c6b:
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
 	PUSHW &l69e	# "newkey"
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BEB l2c8d
-	JMP $0x2d52
+	JMP l2d52
 
 l2c8d:
 ## printf ("\nCreating a floppy key to enable clearing of saved NVRAM information.\n\n")
@@ -3488,14 +3717,14 @@ l2ca0:
 	CALL -4(%sp),printf
 
 	PUSHAW (%fp)
-	CALL -4(%sp),$0x4360
+	CALL -4(%sp),gets
 	CMPB &0x71,(%fp)
 	BNEB l2cc4
-	JMP $0x3aab
+	JMP l3aab
 l2cc4:
 	PUSHAW (%fp)
 	PUSHW &l6ec	# "go"
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BNEB l2ca0
 	ADDW3 &0x3,$0x508,%r0
@@ -3514,7 +3743,7 @@ l2cc4:
 	PUSHAW 90(%fp)
 	PUSHW &0x1
 	PUSHW &0x3
-	CALL -16(%sp),$0x7b2c
+	CALL -16(%sp),fd_acs
 	TSTW %r0
 	BNEB l2d3e
 	ORW2 &0x20,$0x200085c
@@ -3528,25 +3757,27 @@ l2d3e:
 	PUSHW &l727	
 	CALL -4(%sp),printf
 
-	JMP $0x3aa8
+	JMP l3aa8
+
+l2d52:
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
 	PUSHW &l74a	# "sysdump"
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BNEB l2d89
 	CALL (%sp),$0x2004000
 	PUSHW &0xfeedbeef
 	CALL -4(%sp),$0x6322
-	JMP $0x3aa8
+	JMP l3aa8
 l2d89:
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
 	PUSHW &l752	# "version"
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BEB l2dab
-	.byte	0x24, 0x7f, 0x38, 0x2e, 0x00, 0x00	# JMP l2e38
+	JMP l2e38
 
 l2dab:
 ## printf ("\nCreated: %s\n", "05/31/85")
@@ -3585,47 +3816,47 @@ l2dab:
 
 
 
-	JMP $0x3aa8
+	JMP l3aa8
 l2e38:
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
 	PUSHW &l7a3	# "q"
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BNEB l2e5a
-	JMP $0x3aab
+	JMP l3aab
 l2e5a:
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
 	PUSHW &l7a5	# "edt"
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BNEB l2e83
-	CALL (%sp),$0x4e14
-	JMP $0x3aa8
+	CALL (%sp),l4e14
+	JMP l3aa8
 l2e83:
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
 	PUSHW &l7a9	# ""error info"
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BNEB l2eac
 	CALL (%sp),$0x5fe6
-	JMP $0x3aa8
+	JMP l3aa8
 l2eac:
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
 	PUSHW &l7b4	# "baud"
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BNEB l2ed5
 	CALL (%sp),$0x3fcc
-	JMP $0x3aa8
+	JMP l3aa8
 l2ed5:
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
 	PUSHW &l7b9	# "?"
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BNEB l2f21
 
@@ -3641,7 +3872,7 @@ l2ed5:
 	PUSHW &l824
 	CALL -4(%sp),printf
 
-	JMP $0x3aa8
+	JMP l3aa8
 l2f21:
 	ADDW3 &0x2,$0x4a0,%r0
 	.byte	0x2b, 0x50	# TSTB (%r0) # as adds NOP
@@ -3692,7 +3923,7 @@ l2fa4:
 	ADDW2 %r1,%r0
 	ADDW2 &0x6,%r0
 	PUSHW %r0
-	ADDW3 &0x8,$0x490,%r0
+	ADDW3 &0x8,l490,%r0
 	ADDW3 &0x2,(%r0),%r0
 	PUSHW %r0
 	CALL -8(%sp),$0x7fb0
@@ -3712,7 +3943,7 @@ l2fa4:
 	CLRH (%r0)
 	#NOP
 	MOVB $0x2000860,{uword}%r0
-	JMP $0x31b5
+	JMP l31b5
 l301f:
 	MOVAW 0xb8(%fp),%r0
 	MOVB 0xac(%fp),{uword}%r1
@@ -3720,7 +3951,7 @@ l301f:
 	ADDW2 %r1,%r0
 	ADDW2 &0x6,%r0
 	PUSHW %r0
-	ADDW3 &0x8,$0x490,%r0
+	ADDW3 &0x8,l490,%r0
 	ADDW3 &0xe,(%r0),%r0
 	PUSHW %r0
 	CALL -8(%sp),$0x7fb0
@@ -3739,7 +3970,7 @@ l301f:
 	ADDW2 %r1,%r0
 	MOVH &0x1,(%r0)
 	#NOP
-	JMP $0x31c7
+	JMP l31c7
 l3087:
 	MOVAW 0xb8(%fp),%r0
 	MOVB 0xac(%fp),{uword}%r1
@@ -3747,7 +3978,7 @@ l3087:
 	ADDW2 %r1,%r0
 	ADDW2 &0x6,%r0
 	PUSHW %r0
-	ADDW3 &0x8,$0x490,%r0
+	ADDW3 &0x8,l490,%r0
 	ADDW3 &0x1a,(%r0),%r0
 	PUSHW %r0
 	CALL -8(%sp),$0x7fb0
@@ -3766,7 +3997,7 @@ l3087:
 	ADDW2 %r1,%r0
 	MOVH &0x2,(%r0)
 	#NOP
-	JMP $0x31c7
+	JMP l31c7
 l30ef:
 	MOVAW 0xb8(%fp),%r0
 	MOVB 0xac(%fp),{uword}%r1
@@ -3774,7 +4005,7 @@ l30ef:
 	ADDW2 %r1,%r0
 	ADDW2 &0x6,%r0
 	PUSHW %r0
-	ADDW3 &0x8,$0x490,%r0
+	ADDW3 &0x8,l490,%r0
 	ADDW3 &0xe,(%r0),%r0
 	PUSHW %r0
 	CALL -8(%sp),$0x7fb0
@@ -3799,7 +4030,7 @@ l30ef:
 	ADDW2 %r1,%r0
 	ADDW2 &0x6,%r0
 	PUSHW %r0
-	ADDW3 &0x8,$0x490,%r0
+	ADDW3 &0x8,l490,%r0
 	ADDW3 &0x1a,(%r0),%r0
 	PUSHW %r0
 	CALL -8(%sp),$0x7fb0
@@ -3819,6 +4050,7 @@ l30ef:
 	MOVH &0x2,(%r0)
 	#NOP
 	BRB l31c7
+l31b5:
 	CMPW %r0,&0x1
 	BEH l301f
 	CMPW %r0,&0x2
@@ -3828,15 +4060,15 @@ l30ef:
 l31c7:
 	MOVH &0x1,0xb4(%fp)
 	#NOP
-	JMP $0x3339
+	JMP l3339
 l31d3:
 	MOVH 0xb4(%fp),{word}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	EXTFW &0x0,&0x7,4(%r0),%r0
 	CMPW &0x0,%r0
 	BNEB l31f5
-	JMP $0x3293
+	JMP l3293
 l31f5:
 	MOVAW 0xb8(%fp),%r0
 	MOVB 0xac(%fp),{uword}%r1
@@ -3846,7 +4078,7 @@ l31f5:
 	PUSHW %r0
 	MOVH 0xb4(%fp),{word}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	ADDW2 &0xc,%r0
 	PUSHW %r0
 	CALL -8(%sp),$0x7fb0
@@ -3862,7 +4094,7 @@ l31f5:
 	ADDW2 %r1,%r0
 	MOVH 0xb4(%fp),{word}%r1
 	LLSW3 &0x5,%r1,%r1
-	ADDW2 $0x490,%r1
+	ADDW2 l490,%r1
 	EXTFW &0x3,&0xc,(%r1),%r1
 	MOVH %r1,4(%r0)
 	#NOP
@@ -3875,19 +4107,20 @@ l31f5:
 	ADDW2 %r1,%r0
 	MOVH 0xb4(%fp),(%r0)
 	#NOP
-	JMP $0x3334
+	JMP l3334
+l3293:
 	MOVH 0xb4(%fp),{word}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	.byte	0x2b, 0xc0, 0x0c	# TSTB 12(%r0)
 	BEB l32d1
 	MOVH 0xb4(%fp),{word}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	ADDW2 &0xc,%r0
 	PUSHW %r0
-	.byte	0xa0, 0x4f, 0x66, 0x08, 0x00, 0x00	# PUSHW &l866	# "*VOID*"
-	CALL -8(%sp),$0x7f68
+	PUSHW &l866	# "*VOID*"
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BNEB l3334
 l32d1:
@@ -3903,7 +4136,7 @@ l32d1:
 	ADDW2 %r1,%r0
 	MOVH 0xb4(%fp),{word}%r1
 	LLSW3 &0x5,%r1,%r1
-	ADDW2 $0x490,%r1
+	ADDW2 l490,%r1
 	EXTFW &0x3,&0xc,(%r1),%r1
 	MOVH %r1,4(%r0)
 	#NOP
@@ -3919,6 +4152,7 @@ l32d1:
 l3334:
 	INCH 0xb4(%fp)
 	#NOP
+l3339:
 	MOVH 0xb4(%fp),{word}%r0
 	MOVB *$0x4e0,{uword}%r1
 	CMPW %r1,%r0
@@ -3938,7 +4172,7 @@ l3334:
 
 	CLRH 0xb4(%fp)
 	#NOP
-	JMP $0x3413
+	JMP l3413
 
 l3382:
 
@@ -3961,7 +4195,7 @@ l3382:
 	ADDW2 &0x6,%r0
 	PUSHW %r0
 	PUSHW &l8ea	# "*VOID*"
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BEB l3400
 
@@ -3986,20 +4220,21 @@ l3400:
 
 	INCH 0xb4(%fp)
 	#NOP
+l3413:
 	MOVH 0xb4(%fp),{word}%r0
 	MOVB 0xac(%fp),{uword}%r1
 	CMPW %r1,%r0
 	BLUH l3382
-	PUSHW &0x4300c
+	PUSHW &nvram_base+0x0c
 	ADDW3 &0x1,$0x4a0,%r0
 	PUSHW %r0
 	PUSHW &0x1
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	CLRB 0xaa(%fp)
 	#NOP
 	CLRH 0xb4(%fp)
 	#NOP
-	JMP $0x34d5
+	JMP l34d5
 l344f:
 	MOVAW 0xb8(%fp),%r0
 	MOVH 0xb4(%fp),{word}%r1
@@ -4038,6 +4273,7 @@ l349b:
 l34d0:
 	INCH 0xb4(%fp)
 	#NOP
+l34d5:
 	MOVH 0xb4(%fp),{word}%r0
 	MOVB 0xac(%fp),{uword}%r1
 	CMPW %r1,%r0
@@ -4073,7 +4309,7 @@ l34fc:
 	ADDW2 &0x6,%r0
 	PUSHW %r0
 	PUSHW &l923	# "*VOID*
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BEB l356e
 
@@ -4099,7 +4335,7 @@ l356e:
 	PUSHW &0x0
 	CALL -4(%sp),*$0x540
 	PUSHAW 90(%fp)
-	CALL -4(%sp),$0x4360
+	CALL -4(%sp),gets
 	CMPW &-1,%r0
 	BNEB l35b4
 	PUSHW &0x1
@@ -4109,7 +4345,7 @@ l356e:
 	PUSHW &l934
 	CALL -4(%sp),printf
 
-	JMP $0x3aab
+	JMP l3aab
 l35b4:
 	PUSHW &0x1
 	CALL -4(%sp),*$0x540
@@ -4171,7 +4407,7 @@ l362d:
 	ADDW2 %r2,%r1
 	MOVB 1(%r1),(%r0)
 	#NOP
-	JMP $0x3a78
+	JMP l3a78
 l366c:
 	CMPB 0xaf(%fp),0xae(%fp)
 	BNEB l3689
@@ -4236,7 +4472,7 @@ l3731:
 	#NOP
 	MOVH 0xb4(%fp),{word}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	EXTFW &0x3,&0x0,4(%r0),%r0
 	MOVB %r0,0xac(%fp)
 	#NOP
@@ -4259,7 +4495,7 @@ l3773:
 	PUSHW %r0
 	MOVH 0xb4(%fp),{word}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	.byte	0xea, 0x0c, 0xa9, 0xb6, 0x00, 0x41  	# MULH3 &0xc,0xb6(%fp),%r1
 	ADDW3 %r1,8(%r0),%r0
 	ADDW2 &0x2,%r0
@@ -4293,7 +4529,7 @@ l37d1:
 	CALL -4(%sp),printf
 	CLRH 0xb6(%fp)
 	#NOP
-	JMP $0x38ae
+	JMP l38ae
 l3817:
 
 ## printf ("      %2d         %2d")
@@ -4319,7 +4555,7 @@ l3817:
 	ADDW2 &0x6,%r0
 	PUSHW %r0
 	PUSHW &l9dc	# "*VOID*"
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BEB l389b
 	.byte	0x2b, 0xa9, 0xab, 0x00	# TSTB 0xab(%fp)
@@ -4347,6 +4583,7 @@ l389b:
 
 	INCH 0xb6(%fp)
 	#NOP
+l38ae:
 	MOVH 0xb6(%fp),{word}%r0
 	MOVB 0xac(%fp),{uword}%r1
 	CMPW %r1,%r0
@@ -4407,7 +4644,7 @@ l3922:
 	ADDW2 &0x6,%r0
 	PUSHW %r0
 	PUSHW &la17	# "*VOID*"
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BEB l399a
 	.byte	0x2b, 0xa9, 0xab, 0x00	# TSTB 0xab(%fp) # as adds NOP
@@ -4430,7 +4667,7 @@ l399a:
 	PUSHW &0x0
 	CALL -4(%sp),*$0x540
 	PUSHAW 90(%fp)
-	CALL -4(%sp),$0x4360
+	CALL -4(%sp),gets
 	CMPW &-1,%r0
 	BNEB l39e0
 	PUSHW &0x1
@@ -4440,7 +4677,7 @@ l399a:
 	PUSHW &la27
 	CALL -4(%sp),printf
 
-	JMP $0x3aab
+	JMP l3aab
 l39e0:
 	PUSHW &0x1
 	CALL -4(%sp),*$0x540
@@ -4492,6 +4729,7 @@ l3a59:
 	ADDW2 %r2,%r1
 	ORB2 5(%r1),(%r0)
 	#NOP
+l3a78:
 	MOVB &0x1,*$0x4a0
 	#NOP
 	CALL (%sp),$0x6970
@@ -4505,6 +4743,7 @@ l3a59:
 	CALL -4(%sp),$0x6322
 l3aa8:
 	BRH l2b0d
+l3aab:
 	MOVAW -24(%fp),%sp
 	POPW %fp
 	RET
@@ -4516,6 +4755,7 @@ l3aa8:
 ## Unknown Routine - maybe get input of some kind? It calls 0x4484,
 ## which checks to see if a character is available as input.
 
+l3ab4:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x04, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x4,%sp
 	CLRH (%fp)
@@ -4524,7 +4764,7 @@ l3aa8:
 l3ac2:
 	BRB l3ac4
 l3ac4:
-	CALL (%sp),$0x4484
+	CALL (%sp),l4484
 	MOVB %r0,*0(%ap)
 	#NOP
 	TSTB %r0
@@ -4563,6 +4803,8 @@ l3b05:
 	NOP
 
 
+################################################################################
+
 l3b0e:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
@@ -4598,10 +4840,10 @@ l3b63:
 l3b68:
 	.byte	0xea, 0x0a, 0x62, 0x40	# MULH3 &0xa,2(%fp),%r0
 	ADDH2 4(%fp),%r0
-	.byte	0x86, 0x40, 0x62	# MOVH %r0,2(%fp)
-	NOP
+	MOVH %r0,2(%fp)
+	#NOP
 l3b73:
-	.byte	0x84, 0x5a, 0x40	# MOVW (%ap),%r0
+	MOVW (%ap),%r0
 	INCW (%ap)
 	#NOP
 	MOVB (%r0),(%fp)
@@ -4627,12 +4869,12 @@ l3b90:
 	ADDW3 &0x4,$0x4a4,%r0
 	CLRB (%r0)
 	#NOP
-	PUSHW &0x43009
+	PUSHW &nvram_base+0x09
 	ADDW3 &0x3,$0x4a4,%r0
 	PUSHW %r0
 	PUSHW &0x1
 ## Call 'rnvram'
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	CMPW &0x1,%r0
 	BNEB l3c12
 	ADDW3 &0x2,$0x4a4,%r0
@@ -4662,10 +4904,10 @@ l3c12:
 	CLRB (%r0)
 	#NOP
 l3c28:
-	PUSHW &0x43080
+	PUSHW &nvram_base+0x80
 	PUSHAW (%fp)
 	PUSHW &0x2
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	TSTW %r0
 	BEB l3c45
 	MOVH {uhalf}(%fp),{uword}%r0
@@ -4674,9 +4916,9 @@ l3c45:
 	MOVH &0x4bd,(%fp)
 	#NOP
 	PUSHAW (%fp)
-	PUSHW &0x43080
+	PUSHW &nvram_base+0x80
 	PUSHW &0x2
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 l3c5d:
 	MOVH (%fp),*$0x4a4
 	#NOP
@@ -4688,8 +4930,8 @@ l3c5d:
 l3c77:
 	MOVH {uhalf}(%fp),{uword}%r0
 	PUSHW %r0
-	PUSHW &0x49000
-	CALL -8(%sp),$0x3e84
+	PUSHW &iu_mr12a
+	CALL -8(%sp),l3e84
 	ADDW3 &0x2,$0x4a4,%r0
 	.byte	0x2b, 0x50	# TSTB (%r0) # as adds NOP
 	BNEB l3caf
@@ -4700,10 +4942,10 @@ l3c77:
 	#NOP
 	BRB l3ce2
 l3caf:
-	PUSHW &0x4300a
+	PUSHW &nvram_base+0x0a
 	PUSHAW (%fp)
 	PUSHW &0x2
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	TSTW %r0
 	BEB l3ccc
 	MOVH {uhalf}(%fp),{uword}%r0
@@ -4712,28 +4954,28 @@ l3ccc:
 	MOVH &0x3d,(%fp)
 	#NOP
 	PUSHAW (%fp)
-	PUSHW &0x4300a
+	PUSHW &nvram_base+0x0a
 	PUSHW &0x2
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 l3ce2:
 	MOVH {uhalf}(%fp),{uword}%r0
 	PUSHW %r0
-	PUSHW &0x49008
-	CALL -8(%sp),$0x3e84
+	PUSHW &iu_mr12b
+	CALL -8(%sp),l3e84
 	ADDW3 &0x2,$0x4a4,%r0
 	.byte	0x2b, 0x50	# TSTB (%r0) # as adds NOP
 	BNEB l3d6c
 	ADDW3 &0x3,$0x4a4,%r0
 	.byte	0x2b, 0x50	# TSTB (%r0) # as adds NOP
 	BNEB l3d1b
-	MCOMB $0x4900d,%r0
+	MCOMB iu_inprt,%r0
 	BITW %r0,&0x1
 	BNEB l3d34
 l3d1b:
 	ADDW3 &0x3,$0x4a4,%r0
 	CMPB &0x1,(%r0)
 	BNEB l3d6c
-	MCOMB $0x4900d,%r0
+	MCOMB iu_inprt,%r0
 	BITW %r0,&0x2
 	BEB l3d6c
 l3d34:
@@ -4743,12 +4985,12 @@ l3d34:
 	ADDW3 &0x3,$0x4a4,%r0
 	.byte	0x2b, 0x50	# TSTB (%r0) # as adds NOP
 	BEB l3d5d
-	MOVW &0x49008,%r0
+	MOVW &iu_mr12b,%r0
 	MOVW %r0,*$0x4fc
 	#NOP
 	BRB l3d6c
 l3d5d:
-	MOVW &0x49000,%r0
+	MOVW &iu_mr12a,%r0
 	MOVW %r0,*$0x4fc
 	#NOP
 l3d6c:
@@ -4763,6 +5005,8 @@ l3d6c:
 ## exception handler? If so, who calls it? It doesn't appear in any
 ## interrupt vector tables.
 
+setbaud:
+#l3d74:
 	SAVE %r8
 	.byte	0x9c, 0x4f, 0x04, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x4,%sp
 	MOVH &0x1,%r8
@@ -4780,32 +5024,32 @@ l3d82:
 	CALL -8(%sp),printf
 
 
-	.byte	0x24, 0x7f, 0x7a, 0x3e, 0x00, 0x00	# JMP l3e7a
+	JMP l3e7a
 l3da1:
 	INCH %r8
 l3da3:
 	MOVH %r8,{word}%r0
 	LLSW3 &0x3,%r0,%r0
-	.byte	0x3e, 0x72, 0x80, 0x58, 0x0a, 0x00, 0x00	# CMPH 2(%ap),0xa58(%r0)
+	CMPH 2(%ap),la58(%r0)
 	BNEB l3d82
-	CMPW &0x49008,4(%ap)
+	CMPW &iu_mr12b,4(%ap)
 	BNEB l3dec
 	MOVH %r8,{word}%r0
 	LLSW3 &0x3,%r0,%r0
-	.byte	0x87, 0x80, 0x5a, 0x0a, 0x00, 0x00, 0xe2, 0x40	# MOVB 0xa5a(%r0),{uhalf}%r0
+	MOVB la5a(%r0),{uhalf}%r0
 	ORH2 &0x30,%r0
 	MOVH %r0,(%fp)
 	#NOP
 	PUSHAW (%fp)
-	PUSHW &0x4300a
+	PUSHW &nvram_base+0x0a
 	PUSHW &0x2
-	CALL -12(%sp),$0x52a0
-	JMP $0x3e6b
+	CALL -12(%sp),wnvram
+	JMP l3e6b
 l3dec:
-	PUSHW &0x43080
+	PUSHW &nvram_base+0x80
 	PUSHAW (%fp)
 	PUSHW &0x2
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	MOVH {uhalf}(%fp),{uword}%r0
 	BEB l3e3b
 	MOVH {uhalf}(%fp),{uword}%r0
@@ -4817,7 +5061,7 @@ l3dec:
 	MOVH {uhalf}(%fp),{uword}%r0
 	MOVH %r8,{word}%r1
 	LLSW3 &0x3,%r1,%r1
-	.byte	0x87, 0x81, 0x5a, 0x0a, 0x00, 0x00, 0xe0, 0x41	# MOVB 0xa5a(%r1),{uword}%r1
+	MOVB la5a(%r1),{uword}%r1
 	ORW2 %r1,%r0
 	MOVH %r0,(%fp)
 	#NOP
@@ -4825,16 +5069,17 @@ l3dec:
 l3e3b:
 	MOVH %r8,{word}%r0
 	LLSW3 &0x3,%r0,%r0
-	.byte	0x87, 0x80, 0x5a, 0x0a, 0x00, 0x00, 0xe2, 0x40	# MOVB 0xa5a(%r0),{uhalf}%r0
+	MOVB la5a(%r0),{uhalf}%r0
 	ORH2 &0x430,%r0
 	ORH2 &0x80,%r0
 	MOVH %r0,(%fp)
 	#NOP
 l3e59:
 	PUSHAW (%fp)
-	PUSHW &0x43080
+	PUSHW &nvram_base+0x80
 	PUSHW &0x2
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
+l3e6b:
 	MOVH {uhalf}(%fp),{uword}%r0
 	PUSHW %r0
 	PUSHW 4(%ap)
@@ -4845,6 +5090,10 @@ l3e7a:
 	POPW %fp
 	RET
 	NOP
+
+################################################################################
+
+l3e84:
 	SAVE %r7
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
 	MOVH &0x1,%r8
@@ -4862,7 +5111,7 @@ l3ea5:
 l3ea7:
 	MOVH {uhalf}%r8,{uword}%r0
 	LLSW3 &0x3,%r0,%r0
-	.byte	0x87, 0x80, 0x5a, 0x0a, 0x00, 0x00, 0xe0, 0x40	# MOVB 0xa5a(%r0),{uword}%r0
+	MOVB la5a(%r0),{uword}%r0
 	MOVH {uhalf}2(%ap),{uword}%r1
 	ANDW2 &0xf,%r1
 	CMPW %r1,%r0
@@ -4940,19 +5189,19 @@ l3f60:
 	ADDW3 &0x1,4(%ap),%r0
 	MOVH {uhalf}%r8,{uword}%r1
 	LLSW3 &0x3,%r1,%r1
-	.byte	0x87, 0x81, 0x5b, 0x0a, 0x00, 0x00, 0x50	# MOVB 0xa5b(%r1),(%r0)
-	NOP
+	MOVB la5b(%r1),(%r0)
+	#NOP
 	MOVH {uhalf}%r8,{uword}%r0
 	LLSW3 &0x3,%r0,%r0
-	.byte	0x87, 0x80, 0x5c, 0x0a, 0x00, 0x00, 0x7f, 0x54, 0x12, 0x00, 0x02	# MOVB 0xa5c(%r0),$0x2001254
-	NOP
+	MOVB la5c(%r0),$0x2001254
+	#NOP
 	ADDW3 &0x4,4(%ap),%r0
 	MOVB $0x2001254,(%r0)
 	#NOP
 	ADDW3 &0x2,4(%ap),%r0
 	MOVB &0x15,(%r0)
 	#NOP
-	MOVB &0x3,$0x4900e
+	MOVB &0x3,iu_sopr
 	#NOP
 	PUSHW &0x1
 	CALL -4(%sp),*$0x528 # DUART Delay
@@ -4965,12 +5214,16 @@ l3f60:
 	POPW %fp
 	RET
 	NOP
+
+################################################################################
+
+l3fcc:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x54, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x54,%sp
-	PUSHW &0x43080
+	PUSHW &nvram_base+0x80
 	PUSHAW (%fp)
 	PUSHW &0x2
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 
 ## printf ("Enter new rate [%d]: ")
 	PUSHW &laf3
@@ -4978,20 +5231,20 @@ l3f60:
 	MOVH {uhalf}(%fp),{uword}%r0
 	ANDW2 &0xf,%r0
 	LLSW3 &0x3,%r0,%r0
-	.byte	0x86, 0x80, 0x58, 0x0a, 0x00, 0x00, 0xe4, 0x40	# MOVH 0xa58(%r0),{word}%r0
+	MOVH la58(%r0),{word}%r0
 	PUSHW %r0
 
 	CALL -8(%sp),printf
 
 
 	PUSHAW 2(%fp)
-	.byte	0x2c, 0xcc, 0xfc, 0xef, 0xb4, 0x04, 0x00, 0x00	# CALL -4(%sp),*$0x4b4
+	CALL -4(%sp),*l4b4
 	.byte	0x2b, 0x62	# TSTB 2(%fp) # as adds NOP
 	BEB l4053
 	PUSHAW 2(%fp)
 	PUSHW &lb09	# "%d"
 	PUSHAW (%fp)
-	CALL -12(%sp),$0x4ae4
+	CALL -12(%sp),sscanf
 
 ## printf (# "Change baud rate to %d\n")
 	PUSHW &lb0c
@@ -5004,7 +5257,7 @@ l3f60:
 
 	MOVH {uhalf}(%fp),{uword}%r0
 	PUSHW %r0
-	PUSHW &0x49000
+	PUSHW &iu_mr12a
 	.byte	0x2c, 0xcc, 0xf8, 0xaf, 0x27, 0xfd	# CALL -8(%sp),0xfd27(%pc)
 l4053:
 	MOVAW -24(%fp),%sp
@@ -5012,15 +5265,22 @@ l4053:
 	RET
 	NOP
 	NOP
+
+################################################################################
+
+l405c:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
 	MOVAW -24(%fp),%sp
 	POPW %fp
 	RET
+
+################################################################################
+
 l406c:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x04, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x4,%sp
-	MOVB $0x42013,(%fp)
+	MOVB timer_latch,(%fp)
 	#NOP
 	MOVAW -24(%fp),%sp
 	POPW %fp
@@ -5030,6 +5290,10 @@ l406c:
 	NOP
 	NOP
 	NOP
+
+################################################################################
+
+l408a:
 	SAVE %fp
 	MOVW (%ap),%r2
 	MOVW 4(%ap),%r1
@@ -5049,6 +5313,8 @@ l406c:
 ## The clever part of this is the call to 0x64ec, which will then call
 ## whatever function is currently registered at 0x494.
 ##
+
+l40a0:
 	MOVW -4(%isp),%r0
 	MOVW (%r0),$0x2001258
 	#NOP
@@ -5062,6 +5328,8 @@ l406c:
 
 
 ## Interrupt handler 40c6
+
+l40c6:
 	MOVW -4(%isp),%r0
 	MOVW (%r0),$0x2001258
 	#NOP
@@ -5073,6 +5341,8 @@ l406c:
 	RETPS
 
 ## Interrupt handler 40ec
+
+l40ec:
 	MOVW -4(%isp),%r0
 	MOVW (%r0),$0x2001258
 	#NOP
@@ -5083,7 +5353,7 @@ l406c:
 	CALL (%sp),$0x64ec
 	RETPS
 
-##
+l4112:
 	MOVW -4(%isp),%r0
 	MOVW (%r0),$0x2001258
 	#NOP
@@ -5094,6 +5364,7 @@ l406c:
 	CALL (%sp),$0x64ec
 	RETPS
 
+l4138:
 	MOVW -4(%isp),%r0
 	MOVW (%r0),$0x2001258
 	#NOP
@@ -5104,6 +5375,7 @@ l406c:
 	CALL (%sp),$0x64ec
 	RETPS
 
+l415e:
 	MOVW -4(%isp),%r0
 	MOVW (%r0),$0x2001258
 	#NOP
@@ -5114,6 +5386,7 @@ l406c:
 	CALL (%sp),$0x64ec
 	RETPS
 
+l4184:
 	MOVW -4(%isp),%r0
 	MOVW (%r0),$0x2001258
 	#NOP
@@ -5123,6 +5396,8 @@ l406c:
 	#NOP
 	CALL (%sp),$0x64ec
 	RETPS
+
+l41aa:
 	MOVW -4(%isp),%r0
 	MOVW (%r0),$0x2001258
 	#NOP
@@ -5132,6 +5407,8 @@ l406c:
 	#NOP
 	CALL (%sp),$0x64ec
 	RETPS
+
+l41d0:
 	MOVW -4(%isp),%r0
 	MOVW (%r0),$0x2001258
 	#NOP
@@ -5143,6 +5420,8 @@ l406c:
 	RETPS
 	NOP
 	NOP
+
+l41f8:
 	MOVW -4(%isp),%r0
 	MOVW (%r0),$0x2001258
 	#NOP
@@ -5159,6 +5438,7 @@ l406c:
 ## This appears to be an interrupt handler, but what?
 ## It calls 0x6550, which is currently an unknown procedure.
 
+demon:
 	MOVW -4(%sp),$0x2001258
 	#NOP
 	MOVW -8(%sp),$0x200125c
@@ -5168,7 +5448,7 @@ l406c:
 ## Load the PSW with 81E100
 	.byte	0x84, 0x4f, 0x00, 0xe1, 0x81, 0x00, 0x4b	# MOVW &0x81e100,%psw # as adds NOP
 ## Call unknown procedure at 0x6550
-	.byte	0x2c, 0x5c, 0x7f, 0x50, 0x65, 0x00, 0x00	# CALL (%sp),$0x6550
+	CALL (%sp),l6550
 	MOVW $0x20011fc,-8(%sp)
 	#NOP
 	.byte	0x84, 0x7f, 0x58, 0x12, 0x00, 0x02, 0x4b	# MOVW $0x2001258,%psw # as adds NOP
@@ -5178,6 +5458,7 @@ l406c:
 ## Unknown Interrupt Handler
 ##
 
+l4259:
 	MOVW %r0,$0x2001264
 	#NOP
 	MOVW -4(%sp),$0x2001258
@@ -5191,12 +5472,16 @@ l406c:
 	.byte	0x84, 0x7f, 0x58, 0x12, 0x00, 0x02, 0x4b	# MOVW $0x2001258,%psw # as adds NOP
 	RETG
 
-
+l428e:
 	.byte	0x84, 0x4f, 0x00, 0xe1, 0x81, 0x00, 0x4b	# MOVW &0x81e100,%psw # as adds NOP
 	CALL (%sp),$0x6550
 	RETPS
 	NOP
 	NOP
+
+################################################################################
+
+l42a0:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x04, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x4,%sp
 	ADDW3 &0x2,$0x4a4,%r0
@@ -5205,7 +5490,7 @@ l406c:
 	ADDW3 &0x4,$0x4a4,%r0
 	CMPB &0x1,(%r0)
 	BNEB l42c8
-	JMP $0x4348
+	JMP l4348
 l42c8:
 	BRB l42d1
 l42ca:
@@ -5253,6 +5538,7 @@ l433a:
 	#NOP
 	MOVB (%fp),{uword}%r0
 	BRB l4358
+l4348:
 	PUSHW &0x0
 	CALL -4(%sp),$0x56f8
 	MOVH %r0,{word}%r0
@@ -5267,25 +5553,26 @@ l4358:
 ## 'gets' Routine
 ##
 
-l4360:
+gets:
+#l4360:
 	SAVE %r7
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
 	.byte	0x2b, 0xef, 0xc4, 0x04, 0x00, 0x00	# TSTB *$0x4c4
 	BNEB l4380
 	CALL (%sp),$0x62de
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x78, 0x44, 0x00, 0x00	# JMP l4478
+	JMP l4478
 l4380:
 	MOVW (%ap),%r8
 l4383:
-	JMP $0x4455
+	JMP l4455
 l4389:
 	PUSHW $0x20011e8
-	CALL -4(%sp),$0x42a0
+	CALL -4(%sp),l42a0
 	MOVW %r0,%r7
 	BGEB l43a5
 	MOVW &-1,%r0
-	.byte	0x24, 0x7f, 0x78, 0x44, 0x00, 0x00	# JMP l4478
+	JMP l4478
 l43a5:
 	ANDW3 &0xff,%r7,{ubyte}%r0
 	MOVB %r0,*0(%ap)
@@ -5303,10 +5590,10 @@ l43bd:
 	TSTW %r0
 	BGEB l43de
 	MOVW &-1,%r0
-	.byte	0x24, 0x7f, 0x78, 0x44, 0x00, 0x00	# JMP l4478
+	JMP l4478
 l43de:
 	MOVW &0x1,%r0
-	.byte	0x24, 0x7f, 0x78, 0x44, 0x00, 0x00	# JMP l4478
+	JMP l4478
 l43e7:
 	MOVB *0(%ap),{uword}%r0
 	PUSHW %r0
@@ -5377,6 +5664,7 @@ l4478:
 ## 'getstat' - Routine to check console for character present
 ##
 
+l4484:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
 
@@ -5389,7 +5677,7 @@ l4478:
 	CMPB &0x1,(%r0)
 	BEB l44cc
  
-## R0 = 0x49001 (UART port A status)
+## R0 = 0x49001 (iu_sra, UART port A status)
 l44ad:
 	ADDW3 &0x1,$0x20011e8,%r0
 ## If BIT 1 (RxRDY) is set, jump to 44C8
@@ -5397,7 +5685,7 @@ l44ad:
 	BEB l44c8
 
 ## If not, grab the data in 49003
-## R0 = 0x49004 (UART port A data)
+## R0 = 0x49004 (iu_sra, UART port A data)
 	ADDW3 &0x3,$0x20011e8,%r0
 	MOVB (%r0),{uword}%r0
 	BRB l44dc
@@ -5429,7 +5717,7 @@ printf:
 	BNEB l4504
 	CALL (%sp),$0x62de
 	CLRW %r0
-	JMP $0x48ae
+	JMP l48ae
 l4504:
 	ADDW3 &0x2,$0x20011e8,%r0
 	MOVB &0x15,(%r0)
@@ -5438,11 +5726,11 @@ l4504:
 	#NOP
 	MOVAW 4(%ap),(%fp)
 	#NOP
-	JMP $0x4888
+	JMP l4888
 l451e:
 	CMPB &0x25,*0(%ap)
 	BEB l452a
-	JMP $0x4867
+	JMP l4867
 l452a:
 	MOVW &0x20,8(%fp)
 	#NOP
@@ -5495,7 +5783,7 @@ l458b:
 	#NOP
 l458e:
 	MOVB *0(%ap),{uword}%r0
-	JMP $0x4812
+	JMP l4812
 l4599:
 	ADDW3 &0x3,(%fp),%r0
 	MOVB (%r0),16(%fp)
@@ -5513,7 +5801,7 @@ l4599:
 	MOVW &0x1,40(%fp)
 	#NOP
 l45c9:
-	JMP $0x4865
+	JMP l4865
 l45cf:
 	MOVW *0(%fp),20(%fp)
 	#NOP
@@ -5559,7 +5847,7 @@ l4634:
 	#NOP
 	CMPW 28(%fp),%r0
 	BLB l461b
-	JMP $0x4865
+	JMP l4865
 l4646:
 	MOVW &0x10,36(%fp)
 	#NOP
@@ -5632,7 +5920,7 @@ l46ce:
 	MOVW &0x1,40(%fp)
 	#NOP
 l46ec:
-	JMP $0x4865
+	JMP l4865
 l46f2:
 	.byte	0x28, 0x64	# TSTW 4(%fp) # as adds NOP
 	BNEB l476c
@@ -5741,6 +6029,7 @@ l47f2:
 	#NOP
 l4810:
 	BRB l4865
+l4812:
 	CMPW &0x6f,%r0
 	BEH l4659
 	BGB l4848
@@ -5772,9 +6061,10 @@ l485a:
 	CMPW &0x78,%r0
 	BEH l4646
 	BRB l47f2
-	BRB l47f2  # .byte	0
+	BRB l47f2
 l4865:
 	BRB l4885
+l4867:
 	MOVB *0(%ap),{uword}%r0
 	PUSHW %r0
 	PUSHW $0x20011e8
@@ -5786,6 +6076,7 @@ l4865:
 l4885:
 	INCW (%ap)
 	#NOP
+l4888:
 	.byte	0x2b, 0xda, 0x00	# TSTB *0(%ap) # as adds NOP
 	BNEH l451e
 	CMPW &0x1,40(%fp)
@@ -5820,23 +6111,23 @@ l48b8:
 	ADDW3 &0x4,$0x4a4,%r0
 	CMPB &0x1,(%r0)
 	BNEB l48e7
-	JMP $0x4a63
+	JMP l4a63
 l48e7:
 	MOVB 3(%ap),{uhalf}%r0
 	MOVH %r0,2(%fp)
 	#NOP
 	CMPW $0x20011e8,4(%ap)
 	BEB l48fe
-	.byte	0x24, 0x7f, 0xf0, 0x49, 0x00, 0x00	# JMP l49f0
+	JMP l49f0
 l48fe:
 	.byte	0x2b, 0x7f, 0x68, 0x08, 0x00, 0x02	# TSTB $0x2000868 # as adds NOP
 	BEB l490c
-	.byte	0x24, 0x7f, 0xf0, 0x49, 0x00, 0x00	# JMP l49f0
+	JMP l49f0
 l490c:
 	ADDW3 &0x1,4(%ap),%r0
 	BITB (%r0),&0x1
 	BNEB l491b
-	.byte	0x24, 0x7f, 0xf0, 0x49, 0x00, 0x00	# JMP l49f0
+	JMP l49f0
 l491b:
 	ADDW3 &0x1,4(%ap),%r0
 	BITB (%r0),&0x80
@@ -5869,7 +6160,7 @@ l4964:
 	BNEB l4946
 	MOVH &-1,2(%fp)
 	#NOP
-	.byte	0x7b, 0x7f	#BRB l49f0  XXX out of range
+	BRB l49f0
 l4973:
 	ADDW3 &0x3,4(%ap),%r0
 	CMPB &0x13,(%r0)
@@ -5968,6 +6259,7 @@ l4a54:
 	BEB l4a4d
 	MOVH 2(%fp),{word}%r0
 	BRB l4adc
+l4a63:
 	MOVB 3(%ap),{uword}%r0
 	PUSHW %r0
 	CALL -4(%sp),$0x586a
@@ -6017,19 +6309,19 @@ l4adc:
 	MOVAW -24(%fp),%sp
 	POPW %fp
 	RET
+	NOP
 
 ##############################################################################
 ## 'sscanf' Routine
 ##
- 
-l4ae3:
-	NOP
-l4ae4:
+
+sscanf:
+#l4ae4:
 	SAVE %r5
 	.byte	0x9c, 0x4f, 0x1c, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x1c,%sp
 	MOVAW 8(%ap),8(%fp)
 	#NOP
-	JMP $0x4cc4
+	JMP l4cc4
 l4af7:
 	CLRW %r6
 	BRB l4b08
@@ -6047,7 +6339,7 @@ l4b08:
 l4b0e:
 	TSTW %r6
 	BEB l4b18
-	JMP $0x4cca
+	JMP l4cca
 l4b18:
 	BRB l4b1d
 l4b1a:
@@ -6105,7 +6397,7 @@ l4b71:
 	INCW 4(%ap)
 	#NOP
 	MOVB *4(%ap),{uword}%r0
-	JMP $0x4c96
+	JMP l4c96
 l4b91:
 	MOVW (%ap),%r8
 	PUSHAW (%ap)
@@ -6126,14 +6418,14 @@ l4bb0:
 	MOVW *8(%fp),%r0
 	CLRB (%r0)
 	#NOP
-	.byte	0x24, 0x7f, 0xc0, 0x4c, 0x00, 0x00 # JMP l4cc0
+	JMP l4cc0
 l4bc2:
 	MOVW *8(%fp),%r0
 	MOVB *0(%ap),(%r0)
 	#NOP
 	INCW (%ap)
 	#NOP
-	.byte	0x24, 0x7f, 0xc0, 0x4c, 0x00, 0x00 # JMP l4cc0
+	JMP l4cc0
 l4bd4:
 	MOVW &0x7,%r6
 	BRB l4be5
@@ -6216,6 +6508,7 @@ l4c8c:
 	.byte	0x2c, 0xcc, 0xfc, 0xaf, 0x4e, 0x00 	# CALL -4(%sp),0x4e(%pc)
 l4c94:
 	BRB l4cc0
+l4c96:
 	CMPW %r0,&0x44
 	BEB l4c5f
 	CMPW %r0,&0x58
@@ -6232,8 +6525,10 @@ l4c94:
 l4cc0:
 	ADDW2 &0x4,8(%fp)
 	#NOP
+l4cc4:
 	.byte	0x2b, 0xda, 0x04	# TSTB *4(%ap) # as adds NOP
 	BNEH l4af7
+l4cca:
 	MOVAW -8(%fp),%sp
 	POPW %r8
 	POPW %r7
@@ -6371,12 +6666,13 @@ l4dcb:
 ## 'getedt' Routine
 ## 
  
-l4dd4:
+getedt:
+#l4dd4:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x08, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x8,%sp
 	MOVB 7(%ap),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	MOVW %r0,4(%fp)
 	#NOP
 	CLRW (%fp)
@@ -6407,11 +6703,14 @@ l4e14:
 	.byte	0x9c, 0x4f, 0x08, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x8,%sp
 	PUSHW &0x0
 	CALL -4(%sp),0x3b3(%pc)
-	.byte	0xa0, 0x4f, 0x80, 0x0b, 0x00, 0x00	# PUSHW &0l80
+
+## printf ("\n\nCurrent System Configuration\n\n")
+	PUSHW &lb80
 	CALL -4(%sp),printf
+
 	TSTW %r0
 	BGEB l4e3d
-	JMP $0x51c0
+	JMP l51c0
 l4e3d:
 	MOVW *$0x4e4,4(%fp)
 	#NOP
@@ -6421,7 +6720,7 @@ l4e3d:
 	CALL -4(%sp),printf
 	TSTW %r0
 	BGEB l4e5d
-	JMP $0x51c0
+	JMP l51c0
 l4e5d:
 	CMPW &0x100000,4(%fp)
 	BLB l4e8a
@@ -6438,7 +6737,7 @@ l4e5d:
 
 	TSTW %r0
 	BGEB l4e88
-	JMP $0x51c0
+	JMP l51c0
 l4e88:
 	BRB l4eac
 l4e8a:
@@ -6454,11 +6753,11 @@ l4e8a:
 
 	TSTW %r0
 	BGEB l4eac
-	JMP $0x51c0
+	JMP l51c0
 l4eac:
 	CLRB (%fp)
 	#NOP
-	JMP $0x51a8
+	JMP l51a8
 l4eb5:
 
 ## printf ("\n\n%02d - device name = %-9s, ")
@@ -6469,7 +6768,7 @@ l4eb5:
 
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	.byte	0x9c, 0x7f, 0x90, 0x04, 0x00, 0x00, 0x40	# ADDW2 $0x490,%r0
+	ADDW2 $l490,%r0
 	ADDW2 &0xc,%r0
 	PUSHW %r0
 
@@ -6478,7 +6777,7 @@ l4eb5:
 
 	TSTW %r0
 	BGEB l4ee7
-	JMP $0x51c0
+	JMP l51c0
 l4ee7:
 
 ## printf ("occurrence = %2d, slot = %02d, ID code = 0x%02x\n")
@@ -6486,19 +6785,19 @@ l4ee7:
 
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	EXTFW &0x3,&0x8,(%r0),%r0
 	PUSHW %r0
 
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	EXTFW &0x3,&0xc,(%r0),%r0
 	PUSHW %r0
 
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	EXTFW &0xf,&0x10,(%r0),%r0
 	PUSHW %r0
 
@@ -6508,7 +6807,7 @@ l4ee7:
 
 	TSTW %r0
 	BGEB l4f41
-	JMP $0x51c0
+	JMP l51c0
 l4f41:
 
 ## printf ("     boot device = %c, board width = %s, word width = %d byte(s),\n")
@@ -6516,7 +6815,7 @@ l4f41:
 
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	EXTFW &0x0,&0x7,4(%r0),%r0
 	CMPW &0x0,%r0
 	BEB l4f67
@@ -6529,7 +6828,7 @@ l4f6b:
 
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	EXTFW &0x0,&0x5,4(%r0),%r0
 	CMPW &0x0,%r0
 	BEB l4f90
@@ -6542,7 +6841,7 @@ l4f97:
 
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	EXTFW &0x0,&0x6,4(%r0),%r0
 	ADDW2 &0x1,%r0
 	PUSHW %r0
@@ -6553,7 +6852,7 @@ l4f97:
 
 	TSTW %r0
 	BGEB l4fc5
-	JMP $0x51c0
+	JMP l51c0
 l4fc5:
 
 ## printf ("     req Q size = 0x%02x, comp Q size = 0x%02x, ")
@@ -6561,13 +6860,13 @@ l4fc5:
 
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	EXTFW &0x7,&0x0,(%r0),%r0
 	PUSHW %r0
 
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	EXTFW &0x7,&0x18,4(%r0),%r0
 	PUSHW %r0
 
@@ -6577,14 +6876,14 @@ l4fc5:
 
 	TSTW %r0
 	BGEB l500a
-	JMP $0x51c0
+	JMP l51c0
 l500a:
 
 ## printf ("console ability = %c")
 	PUSHW &lca9
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	EXTFW &0x0,&0x9,4(%r0),%r0
 	CMPW &0x0,%r0
 	BEB l5030
@@ -6597,18 +6896,18 @@ l5034:
 	CALL -8(%sp),printf
 	TSTW %r0
 	BGEB l5048
-	JMP $0x51c0
+	JMP l51c0
 l5048:
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	EXTFW &0x0,&0x9,4(%r0),%r0
 	CMPW &0x0,%r0
 	BEB l50a2
 	PUSHW &lcbe	# ", pump file = %c"
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	EXTFW &0x0,&0x8,4(%r0),%r0
 	CMPW &0x0,%r0
 	BEB l5088
@@ -6621,7 +6920,7 @@ l508c:
 	CALL -8(%sp),printf
 	TSTW %r0
 	BGEB l50a0
-	JMP $0x51c0
+	JMP l51c0
 l50a0:
 	BRB l50ba
 l50a2:
@@ -6631,11 +6930,11 @@ l50a2:
 	CALL -4(%sp),printf
 	TSTW %r0
 	BGEB l50ba
-	JMP $0x51c0
+	JMP l51c0
 l50ba:
 	CLRB 1(%fp)
 	#NOP
-	JMP $0x5154
+	JMP l5154
 l50c3:
 	.byte	0x2b, 0x61	# TSTB 1(%fp) as adds NOP
 	BNEB l50df
@@ -6647,7 +6946,7 @@ l50c3:
 
 	TSTW %r0
 	BGEB l50df
-	JMP $0x51c0
+	JMP l51c0
 l50df:
 
 
@@ -6668,7 +6967,7 @@ l50ff:
 	PUSHW %r0
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	.byte	0xeb, 0x0c, 0x61, 0x41	# MULB3 &0xc,1(%fp),%r1
 	ADDW3 %r1,8(%r0),%r0
 	ADDW2 &0x2,%r0
@@ -6676,7 +6975,7 @@ l50ff:
 
 	MOVB (%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	.byte	0xeb, 0x0c, 0x61, 0x41	# MULB3 &0xc,1(%fp),%r1
 	ADDW3 %r1,8(%r0),%r0
 	MOVH {uhalf}(%r0),{uword}%r0
@@ -6692,10 +6991,11 @@ l50ff:
 l5151:
 	INCB 1(%fp)
 	#NOP
+l5154:
 	MOVB 1(%fp),{uword}%r0
 	MOVB (%fp),{uword}%r1
 	LLSW3 &0x5,%r1,%r1
-	ADDW2 $0x490,%r1
+	ADDW2 l490,%r1
 	EXTFW &0x3,&0x0,4(%r1),%r1
 	CMPW %r1,%r0
 	BLUH l50c3
@@ -6720,6 +7020,7 @@ l519a:
 l51a5:
 	INCB (%fp)
 	#NOP
+l51a8:
 	CMPB *$0x4e0,(%fp)
 	BLUH l4eb5
 
@@ -6743,7 +7044,8 @@ l51c0:
 ## 'brkinh' - Break Inhibit routine
 ##
 
-l51d2:
+brkinh:
+#l51d2:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x04, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x4,%sp
 	MOVB 3(%ap),$0x2000868
@@ -6778,7 +7080,8 @@ l521c:
 ## 4(%ap) = Address to write to
 ## 8(%ap) = Length
  
-l5224:
+rnvram:
+#l5224:
 	SAVE %r8
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
 	.byte	0xf8, 0x5f, 0x00, 0xf0, 0x5a, 0x40	# ANDW3 &0xf000,(%ap),%r0
@@ -6818,7 +7121,7 @@ l528b:
 	PUSHW %ap
 	SUBW3 &0xc,%sp,%ap
 ## Call "chknvram"
-	BRH l5320
+	BRH chknvram
 l5294:
 	BRB l5296
 l5296:
@@ -6831,7 +7134,9 @@ l5296:
 ################################################################################
 ## 'wnvram' - Routine to write NVRAM
 ##
-l52a0:
+
+wnvram:
+#l52a0:
 	SAVE %r8
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
 	.byte	0xf8, 0x5f, 0x00, 0xf0, 0x74, 0x40	# ANDW3 &0xf000,4(%ap),%r0
@@ -6869,7 +7174,7 @@ l52ea:
 l5309:
 	PUSHW %ap
 	SUBW3 &0xc,%sp,%ap
-	BRH l5320
+	BRH chknvram
 l5312:
 	BRB l5314
 l5314:
@@ -6887,11 +7192,12 @@ l5314:
 ## This appears to be called only from 'rnvram' and 'wnvram'
 ##
  
-l5320:
+chknvram:
+#l5320:
 	SAVE %r7
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
 	CLRH %r8
-	MOVW &0x43000,%r7
+	MOVW &nvram_base+0x00,%r7
 	BRB l5372
 l5334:
 	MOVH {uhalf}%r8,{uword}%r0
@@ -6974,6 +7280,8 @@ l542d:
 ## 'bzero' - Routine to zero memory
 ##
 
+bzero:
+#l5438
 	MOVW (%ap),%r0
 	MOVW 4(%ap),%r2
 	ARSW3 &0x2,%r2,%r2
@@ -6990,6 +7298,8 @@ l544f:
 ## 'setjmp' Routine
 ##
 
+setjmp:
+#l5450:
 	MOVW (%ap),%r0
 	#NOP
 	TSTW %r0
@@ -7027,6 +7337,8 @@ l545f:
 ## 'longjmp' Routine
 ##
 
+longjmp:
+#l54a1:
 	MOVW (%ap),%r0
 	#NOP
 	TSTW %r0
@@ -7071,12 +7383,13 @@ l54ec:
 ## 'hwcntr' - DUART Delay Routine
 ##
 
-l5504:
+hwcntr:
+#l5504:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
 	MOVH {uhalf}2(%ap),{uword}%r0
 	PUSHW %r0
-	.byte	0xa0, 0x5f, 0xff, 0x08	# PUSHW &0x8ff
+	PUSHW &0x8ff
 	.byte	0x2c, 0xcc, 0xf8, 0xaf, 0x14, 0x00	# CALL -8(%sp),0x14(%pc)
 	MOVH {uhalf}%r0,{uword}%r0
 	BRB l5525
@@ -7089,7 +7402,7 @@ l5525:
 ## Run the UART counter for a specific delay, waiting for an interrupt.
 ##
 ## On interrupt, transfer control to the routine pointed at by the
-## pointer held in 0x494 (i.e., 0x494 is a pointer-to-a-pointer)
+## pointer held in l494 (i.e., l494 is a pointer-to-a-pointer)
 ##
  
 l552c:
@@ -7100,11 +7413,11 @@ l552c:
 	CLRB $0x20012a4
 	#NOP
 ## Move current interrupt handler to fp + 1 word
-	MOVW *$0x494,4(%fp)
+	MOVW *l494,4(%fp)
 	#NOP
 ## Set interrupt handler to 0x54ec
-	.byte	0x84, 0x4f, 0xec, 0x54, 0x00, 0x00, 0xef, 0x94, 0x04, 0x00, 0x00	# MOVW &0x54ec,*$0x494
-	NOP
+	MOVW &l54ec,*l494
+	#NOP
 
 ## 2001254
 ## R0 = (*0x2001254 | 0x30) (setting bits 5 & 6)
@@ -7114,14 +7427,14 @@ l552c:
 ## Assuming this value is 0x30, that means we're asking the
 ## counter/timer to be a counter with an external source,
 ## divided by 16.
-	MOVB %r0,$0x49004
+	MOVB %r0,iu_acr
 	#NOP
 
 ##
 	BRB l55c2
 ## Stop the UART timer (read from reg 15 = "Stop Counter"
 l5562:
-	MOVB $0x4900f,(%fp)
+	MOVB iu_stop_ctr,(%fp)
 	#NOP
 
 ##
@@ -7133,15 +7446,15 @@ l5562:
 ## Shift it right by 8 bits (get the high byte)
 	LRSW3 &0x8,%r0,%r0
 ## Write it to the upper-value of the timer (it gets 0x8)
-	MOVB %r0,$0x49006
+	MOVB %r0,iu_ctur
 	#NOP
 ## Mask the lower byte of the timer (0xff)
 	ANDB3 &0xff,7(%ap),%r0
 ## Write it to the lower-value of the timer
-	MOVB %r0,$0x49007
+	MOVB %r0,iu_ctlr
 	#NOP
 ## Start the timer again (write to register 14 = "Start Counter")
-	MOVB $0x4900e,(%fp)
+	MOVB iu_start_ctr,(%fp)
 	#NOP
 ## Go off to check the timer interrupt status
 	BRB l55b9
@@ -7154,10 +7467,10 @@ l5593:
 ## If 20012a4 == 0, jump to 0x55b9
 	BEB l55b9
 ## On the other hand, if it's not 0, start the counter
-	MOVB $0x4900f,(%fp)
+	MOVB iu_stop_ctr,(%fp)
 	#NOP
 ## Write the new interrupt handler
-	MOVW 4(%fp),*$0x494
+	MOVW 4(%fp),*l494
 	#NOP
 ## Store the argument into R0
 	MOVH {uhalf}2(%ap),{uword}%r0
@@ -7167,7 +7480,7 @@ l5593:
 ## See if bit 3 ("Counter Ready") is set in the UART's interrupt
 ## status register.
 l55b9:
-	BITB $0x49005,&0x8
+	BITB iu_isr,&0x8
 
 ## If it isn't, jump back to 0x5593
 	BEB l5593
@@ -7182,9 +7495,9 @@ l55c2:
 ## If R0 != 0, jump back to 5562
 	BNEB l5562
 ## On the other hand, if R0 == 0, we return.
-	MOVB $0x4900f,(%fp)
+	MOVB iu_stop_ctr,(%fp)
 	#NOP
-	MOVW 4(%fp),*$0x494
+	MOVW 4(%fp),*l494
 	#NOP
 	CLRW %r0
 	BRB l55e3
@@ -7199,15 +7512,16 @@ l55e3:
 ## 'fw_sysgen' - Generic 'sysgen' routine
 ##
  
-l55ec:
+fw_sysgen:
+#l55ec:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x08, 0x00, 0x00, 0x00, 0x4c # ADDW2 &0x8,%sp
 	CLRB 4(%fp)
 	#NOP
-	MOVW *$0x494,$0x20012c8
+	MOVW *l494,$0x20012c8
 	#NOP
-	.byte	0x84, 0x4f, 0x00, 0x5d, 0x00, 0x00, 0xef, 0x94, 0x04, 0x00, 0x00	# MOVW &0x5d00,*$0x494
-	NOP
+	MOVW &l5d00,*l494
+	#NOP
 	#NOP
 	EXTFW &0x3,&0xd,%psw,$0x20012c4
 	#NOP
@@ -7286,10 +7600,10 @@ l56ef:
 l56f8:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x04, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x4,%sp
-	MOVW *$0x494,$0x20012c8
+	MOVW *l494,$0x20012c8
 	#NOP
-	.byte	0x84, 0x4f, 0x00, 0x5d, 0x00, 0x00, 0xef, 0x94, 0x04, 0x00, 0x00	# MOVW &0x5d00,*$0x494
-	NOP
+	MOVW &l5d00,*l494
+	#NOP
 	#NOP
 	EXTFW &0x3,&0xd,%psw,$0x20012c4
 	#NOP
@@ -7321,7 +7635,7 @@ l5763:
 	#NOP
 	CLRH (%fp)
 	#NOP
-	JMP $0x5856
+	JMP l5856
 l579c:
 	PUSHW &0x1
 	PUSHW &0xe6
@@ -7335,10 +7649,12 @@ l579c:
 	BEB l57dd
 	MOVW &0xfeedbeef,*$0x48c
 	#NOP
-	MOVB &0x1,$0x4400b
+	MOVB &0x1,csr_reset	# system reset request
+# Should not execute past reset
 	#NOP
-l57db:
-	BRB l57db
+	BRB .	# loop on reset
+
+
 l57dd:
 	MOVH {uhalf}$0x20037ec,{uword}%r0
 	ANDH2 &0xff,%r0
@@ -7356,10 +7672,12 @@ l5805:
 l5807:
 	MOVW &0xfeedbeef,*$0x48c
 	#NOP
-	MOVB &0x1,$0x4400b
+	MOVB &0x1,csr_reset	# system reset request
+# Should not execute past reset
 	#NOP
-l581b:
-	BRB l581b
+	BRB .	# loop on reset
+
+
 l581d:
 	MOVH {uhalf}(%fp),{uword}%r0
 	CMPW &0x64,%r0
@@ -7367,10 +7685,10 @@ l581d:
 	CALL (%sp),$0x62de
 	MOVW &0xfeedbeef,*$0x48c
 	#NOP
-	MOVB &0x1,$0x4400b
+	MOVB &0x1,csr_reset	# system reset request
+# Should not execute past reset
 	#NOP
-l5843:
-	BRB l5843
+	BRB .	# loop on reset
 l5845:
 	CMPB &0x1,3(%ap)
 	BNEB l584f
@@ -7394,10 +7712,10 @@ l5862:
 l586a:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x04, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x4,%sp
-	MOVW *$0x494,$0x20012c8
+	MOVW *l494,$0x20012c8
 	#NOP
-	.byte	0x84, 0x4f, 0x00, 0x5d, 0x00, 0x00, 0xef, 0x94, 0x04, 0x00, 0x00	# MOVW &0x5d00,*$0x494
-	NOP
+	MOVW &l5d00,*l494
+	#NOP
 	#NOP
 	EXTFW &0x3,&0xd,%psw,$0x20012c4
 	#NOP
@@ -7422,7 +7740,7 @@ l586a:
 	#NOP
 	CLRH (%fp)
 	#NOP
-	JMP $0x59b2
+	JMP l59b2
 l58f8:
 	PUSHW &0x1
 	PUSHW &0xe6
@@ -7437,10 +7755,13 @@ l58f8:
 	CALL (%sp),$0x62de
 	MOVW &0xfeedbeef,*$0x48c
 	#NOP
-	MOVB &0x1,$0x4400b
+	MOVB &0x1,csr_reset	# system reset request
+# Should not execute past reset
 	#NOP
-l593e:
-	BRB l593e
+	BRB .	# loop on reset
+
+
+
 l5940:
 	MOVH {uhalf}$0x20037ec,{uword}%r0
 	ANDH2 &0xff,%r0
@@ -7459,10 +7780,13 @@ l596a:
 	CALL (%sp),$0x62de
 	MOVW &0xfeedbeef,*$0x48c
 	#NOP
-	MOVB &0x1,$0x4400b
+	MOVB &0x1,csr_reset	# system reset request
+# Should not execute past reset
 	#NOP
-l5985:
-	BRB l5985
+	BRB .	# loop on reset
+
+
+
 l5987:
 	MOVH {uhalf}(%fp),{uword}%r0
 	CMPW &0x64,%r0
@@ -7470,13 +7794,18 @@ l5987:
 	CALL (%sp),$0x62de
 	MOVW &0xfeedbeef,*$0x48c
 	#NOP
-	MOVB &0x1,$0x4400b
+	MOVB &0x1,csr_reset	# system reset request
+# Should not execute past reset
 	#NOP
-l59ad:
-	BRB l59ad
+	BRB .	# loop on reset
+
+
+
+
 l59af:
 	INCH (%fp)
 	#NOP
+l59b2:
 	MOVH {uhalf}(%fp),{uword}%r0
 	CMPW &0x64,%r0
 	BLUH l58f8
@@ -7493,10 +7822,10 @@ l59c6:
 	.byte	0x9c, 0x4f, 0x10, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x10,%sp
 	CLRB 4(%fp)
 	#NOP
-	MOVW *$0x494,$0x20012c8
+	MOVW *l494,$0x20012c8
 	#NOP
-	.byte	0x84, 0x4f, 0x00, 0x5d, 0x00, 0x00, 0xef, 0x94, 0x04, 0x00, 0x00	# MOVW &0x5d00,*$0x494
-	NOP
+	MOVW &l5d00,*l494
+	#NOP
 	#NOP
 	EXTFW &0x3,&0xd,%psw,$0x20012c4
 	#NOP
@@ -7592,12 +7921,12 @@ l5ace:
 	TSTW %r0
 	BNEB l5b06
 	CLRW %r0
-	JMP $0x5ba3
+	JMP l5ba3
 l5b06:
-	MOVW *$0x494,$0x20012c8
+	MOVW *l494,$0x20012c8
 	#NOP
-	.byte	0x84, 0x4f, 0x00, 0x5d, 0x00, 0x00, 0xef, 0x94, 0x04, 0x00, 0x00	# MOVW &0x5d00,*$0x494
-	NOP
+	MOVW &l5d00,*l494
+	#NOP
 	#NOP
 	EXTFW &0x3,&0xd,%psw,$0x20012c4
 	#NOP
@@ -7653,17 +7982,18 @@ l5ba3:
 ## 'ioblk_acs' Routine
 ##
  
-l5baa:
+ioblk_acs:
+#l5baa:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x08, 0x00, 0x00, 0x00, 0x4c # ADDW2 &0x8,%sp
 	#NOP
 	EXTFW &0x3,&0xd,%psw,$0x20012c4
 	#NOP
 	.byte	0xc8, 0x03, 0x0d, 0x0f, 0x4b	# INSFW &0x3,&0xd,&0xf,%psw # as adds NOP
-	MOVW *$0x494,$0x20012c8
+	MOVW *l494,$0x20012c8
 	#NOP
-	.byte	0x84, 0x4f, 0x00, 0x5d, 0x00, 0x00, 0xef, 0x94, 0x04, 0x00, 0x00	# MOVW &0x5d00,*$0x494
-	NOP
+	MOVW &l5d00,*l494
+	#NOP
 	CLRB (%fp)
 	#NOP
 	MOVW 4(%ap),$0x20012b0
@@ -7682,11 +8012,11 @@ l5bfe:
 	#NOP
 	BRB l5c2b
 l5c0d:
-	MOVW $0x20012c8,*$0x494
+	MOVW $0x20012c8,*l494
 	#NOP
 	.byte	0xc8, 0x03, 0x0d, 0x7f, 0xc4, 0x12, 0x00, 0x02, 0x4b	# INSFW &0x3,&0xd,$0x20012c4,%psw # as adds NOP
 	MOVW &0x0,%r0
-	JMP $0x5cf9
+	JMP l5cf9
 l5c2b:
 	ANDB3 &0xf0,3(%ap),%r0
 	LRSW3 &0x4,%r0,%r0
@@ -7695,7 +8025,7 @@ l5c2b:
 	.byte	0x2b, 0x62	# TSTB 2(%fp) # as adds NOP
 	BNEB l5c45
 	CLRW %r0
-	.byte	0x24, 0x7f, 0xf9, 0x5c, 0x00, 0x00	# JMP $0x5cf9
+	JMP l5cf9
 l5c45:
 	ANDB3 &0xf,3(%ap),%r0
 	MOVB %r0,1(%fp)
@@ -7787,7 +8117,7 @@ l5d00:
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
 	.byte	0xc8, 0x03, 0x0d, 0x0f, 0x4b	# INSFW &0x3,&0xd,&0xf,%psw # as adds NOP
 	CALL (%sp),$0x62de
-	MOVH {uhalf}$0x44002,{uword}%r0
+	MOVH {uhalf}csr_datal,{uword}%r0
 	BITW %r0,&0x7e
 	BEB l5d2e
 	MOVH &0x1,$0x20012ce
@@ -7825,7 +8155,7 @@ l5d59:
 	.byte	0xc8, 0x03, 0x0d, 0x0f, 0x4b	# INSFW &0x3,&0xd,&0xf,%psw # as adds NOP
 	MOVH {uhalf}$0x20012cc,{uword}%r0
 	BNEB l5d8c
-	MOVW $0x20012c8,*$0x494
+	MOVW $0x20012c8,*l494
 	#NOP
 	.byte	0xc8, 0x03, 0x0d, 0x7f, 0xc4, 0x12, 0x00, 0x02, 0x4b	# INSFW &0x3,&0xd,$0x20012c4,%psw # as adds NOP
 	MOVW &0x1,%r0
@@ -7833,7 +8163,7 @@ l5d59:
 l5d8c:
 	CMPW &0xff,(%fp)
 	BLEB l5dad
-	MOVW $0x20012c8,*$0x494
+	MOVW $0x20012c8,*l494
 	#NOP
 	.byte	0xc8, 0x03, 0x0d, 0x7f, 0xc4, 0x12, 0x00, 0x02, 0x4b	# INSFW &0x3,&0xd,$0x20012c4,%psw # as adds NOP
 	MOVW &0x0,%r0
@@ -7841,7 +8171,7 @@ l5d8c:
 l5dad:
 	MOVH {uhalf}$0x20012ce,{uword}%r0
 	BEB l5dd2
-	MOVW $0x20012c8,*$0x494
+	MOVW $0x20012c8,*l494
 	#NOP
 	.byte	0xc8, 0x03, 0x0d, 0x7f, 0xc4, 0x12, 0x00, 0x02, 0x4b	# INSFW &0x3,&0xd,$0x20012c4,%psw # as adds NOP
 	MOVW &0x0,%r0
@@ -7849,7 +8179,7 @@ l5dad:
 l5dd2:
 	INCW (%fp)
 	#NOP
-	.byte	0x7b, 0x84	# BRB l5d59 XXX out of range
+	BRB l5d59
 l5dd7:
 	MOVAW -24(%fp),%sp
 	POPW %fp
@@ -7991,30 +8321,18 @@ l5f5f:
 l5f72:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x04, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x4,%sp
-	MOVB &0x1,$0x44003
-	#NOP
-	MOVB &0x1,$0x44007
-	#NOP
-	MOVB &0x1,$0x4400f
-	#NOP
-	MOVB &0x1,$0x4403f
-	#NOP
-	MOVB &0x1,$0x44037
-	#NOP
-	MOVB &0x1,$0x4800d
-	#NOP
-	MOVB $0x49011,(%fp)
-	#NOP
+	MOVB &0x1,csr_clr_bto
+	MOVB &0x1,csr_clr_mpe
+	MOVB &0x1,csr_clr_maf
+	MOVB &0x1,csr_clr_pir8
+	MOVB &0x1,csr_clr_pir9
+	MOVB &0x1,$dmac_base+0x0d
+	MOVB $0x49011,(%fp)	# iu_base + 0x11	??? 
 	MOVB $0x4d000,(%fp)
-	#NOP
-	MOVB &0x56,$0x4200f
-	#NOP
-	MOVB $0x42013,(%fp)
-	#NOP
-	MOVB &0x1,$0x44027
-	#NOP
-	MOVB &0x1,$0x4402f
-	#NOP
+	MOVB &0x56,timer_ctrl
+	MOVB timer_latch,(%fp)
+	MOVB &0x1,csr_clr_inht
+	MOVB &0x1,csr_clr_inhf
 	MOVAW -24(%fp),%sp
 	POPW %fp
 	RET
@@ -8032,15 +8350,15 @@ l5fe6:
 	PUSHW &0x431ec
 	PUSHAW (%fp)
 	PUSHW &0x4
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	CMPW &0x600dbeef,(%fp)
 	BEB l6010
-	.byte	0x24, 0x7f, 0x4e, 0x61, 0x00, 0x00	# JMP $0x614e
+	JMP l614e
 l6010:
 	PUSHW &0x431f0
 	PUSHAW (%fp)
 	PUSHW &0x4
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	.byte	0x28, 0x59	# TSTW (%fp) # as adds NOP
 	BNEB l603a
 
@@ -8048,26 +8366,26 @@ l6010:
 	PUSHW &lf14
 	CALL -4(%sp),printf
 
-	.byte	0x24, 0x7f, 0xb9, 0x61, 0x00, 0x00	# JMP $0x61b9
+	JMP l61b9
 l603a:
 	BITW (%fp),&0x40
 	BNEB l604d
 	BITW (%fp),&0x80
 	BNEB l604d
-	.byte	0x24, 0x7f, 0xd0, 0x60, 0x00, 0x00	# JMP $0x60d0
+	JMP l60d0
 l604d:
 	PUSHW &0x431f4
 	PUSHAW 8(%fp)
 	PUSHW &0x4
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	PUSHW &0x431f8
 	PUSHAW 4(%fp)
 	PUSHW &0x4
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	PUSHW &0x431fc
 	PUSHAW 12(%fp)
 	PUSHW &0x4
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	BITW (%fp),&0x40
 	BEB l60a7
 
@@ -8108,6 +8426,7 @@ l60a7:
 
 l60ce:
 	BRB l614c
+l60d0:
 	BITW (%fp),&0x2
 	BEB l614c
 
@@ -8130,7 +8449,7 @@ l60ce:
 	PUSHW &0x431fc
 	PUSHAW 12(%fp)
 	PUSHW &0x4
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	.byte	0x28, 0x6c	# TSTW 12(%fp) # as adds NOP
 	BEB l613e
 
@@ -8165,6 +8484,7 @@ l614c:
 	BRB l615c
 
 ## printf ("\n\nNONE\n\n")
+l614e:
 	PUSHW &l1002
 	CALL -4(%sp),printf
 
@@ -8174,23 +8494,24 @@ l615c:
 	PUSHAW (%fp)
 	PUSHW &0x431f0
 	PUSHW &0x4
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 	PUSHAW (%fp)
 	PUSHW &0x431f4
 	PUSHW &0x4
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 	PUSHAW (%fp)
 	PUSHW &0x431f8
 	PUSHW &0x4
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 	PUSHAW (%fp)
 	PUSHW &0x431fc
 	PUSHW &0x4
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 	PUSHAW (%fp)
 	PUSHW &0x431ec
 	PUSHW &0x4
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
+l61b9:
 	MOVAW -24(%fp),%sp
 	POPW %fp
 	RET
@@ -8209,13 +8530,13 @@ l61c0:
 	PUSHW &0x431ec
 	PUSHAW 4(%fp)
 	PUSHW &0x4
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	CMPW &0x600dbeef,4(%fp)
 	BNEB l61f8
 	PUSHW &0x431f0
 	PUSHAW (%fp)
 	PUSHW &0x4
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	BRB l6200
 l61f8:
 	MOVW $0x200085c,(%fp)
@@ -8226,7 +8547,7 @@ l6200:
 	PUSHAW 4(%fp)
 	PUSHW &0x431ec
 	PUSHW &0x4
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 	ORW2 (%ap),(%fp)
 	#NOP
 	MOVW (%fp),$0x200085c
@@ -8234,7 +8555,7 @@ l6200:
 	PUSHAW (%fp)
 	PUSHW &0x431f0
 	PUSHW &0x4
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 	BITW (%ap),&0x40
 	BNEB l6240
 	BITW (%ap),&0x80
@@ -8243,12 +8564,12 @@ l6240:
 	PUSHW &0x2001258
 	PUSHW &0x431f4
 	PUSHW &0x4
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 	PUSHW &0x200125c
 	PUSHW &0x431f8
 	PUSHW &0x4
-	CALL -12(%sp),$0x52a0
-	MOVH {uhalf}$0x44002,{uword}8(%fp)
+	CALL -12(%sp),wnvram
+	MOVH {uhalf}csr_datal,{uword}8(%fp)
 	#NOP
 	BITW (%ap),&0x80
 	BEB l628d
@@ -8260,7 +8581,7 @@ l628d:
 	PUSHAW 8(%fp)
 	PUSHW &0x431fc
 	PUSHW &0x4
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 	BRB l62bc
 l62a1:
 	BITW (%ap),&0x2
@@ -8268,14 +8589,14 @@ l62a1:
 	PUSHW &0x20012d4
 	PUSHW &0x431fc
 	PUSHW &0x4
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 l62bc:
 	MOVW &0x600dbeef,4(%fp)
 	#NOP
 	PUSHAW 4(%fp)
 	PUSHW &0x431ec
 	PUSHW &0x4
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 	MOVAW -24(%fp),%sp
 	POPW %fp
 	RET
@@ -8295,7 +8616,7 @@ l62de:
 	BEB l6319
  
 ## Check programmable interval timer (8253)
-	CMPB &0x64,$0x42003
+	CMPB &0x64,timer_diva
 ## Interval timer is OK, skip terminal condition and return.
 	BEB l6319
  
@@ -8304,9 +8625,9 @@ l62de:
 	#NOP
 	CLRW *$0x514
 	#NOP
-	CLRB $0x4900d
+	CLRB iu_ocpr
 	#NOP
-	MOVB &0x4,$0x4900e
+	MOVB &0x4,iu_sopr
 	#NOP
 ## Terminal condition - infinite loop
 l6317:
@@ -8330,10 +8651,14 @@ l6322:
 	CALL (%sp),-77(%pc)
 	MOVW (%ap),*$0x48c
 	#NOP
-	MOVB &0x1,$0x4400b
+	MOVB &0x1,csr_reset	# system reset request
+# Should not execute past reset
 	#NOP
-l633f:
-	BRB l633f
+	BRB .	# loop on reset
+
+
+
+
 	MOVAW -24(%fp),%sp
 	POPW %fp
 	RET
@@ -8350,10 +8675,11 @@ l634a:
 	MOVW &0xfeedbeef,*$0x48c
 	#NOP
 	.byte	0x2c, 0x5c, 0xaf, 0x81, 0xfa	# CALL (%sp),0xfa81(%pc)
-	MOVB &0x1,$0x4400b
+	MOVB &0x1,csr_reset	# system reset request
+# Should not execute past reset
 	#NOP
-l636c:
-	BRB l636c
+	BRB . # loop on reset
+
 	MOVAW -24(%fp),%sp
 	POPW %fp
 	RET
@@ -8370,7 +8696,7 @@ l6378:
 	.byte	0x2b, 0x50	# TSTB (%r0) # as adds NOP
 	BNEB l6396
 	MOVW &0x1,%r0
-	.byte	0x24, 0x7f, 0xe5, 0x64, 0x00, 0x00	# JMP $0x64e5
+	JMP l64e5
 l6396:
 	MOVH &0x1,(%fp)
 	#NOP
@@ -8378,7 +8704,7 @@ l6396:
 l639c:
 	MOVH {uhalf}(%fp),{uword}%r0
 	LLSW3 &0x5,%r0,%r0
-	ADDW2 $0x490,%r0
+	ADDW2 l490,%r0
 	EXTFW &0x3,&0xc,(%r0),%r0
 	ADDW3 &0x2,$0x4a4,%r1
 	MOVB (%r1),{uword}%r1
@@ -8407,7 +8733,7 @@ l63d9:
 	MOVH &0x4bd,*$0x4a4
 	#NOP
 	CLRW %r0
-	.byte	0x24, 0x7f, 0xe5, 0x64, 0x00, 0x00	# JMP $0x64e5
+	JMP l64e5
 l6413:
 	ADDW3 &0x2,$0x4a4,%r0
 	MOVB (%r0),{uword}%r0
@@ -8419,10 +8745,10 @@ l6413:
 	ADDW3 &0x2,$0x4a4,%r0
 	MOVB (%r0),{uword}%r0
 	PUSHW %r0
-	CALL -4(%sp),$0x55ec
+	CALL -4(%sp),fw_sysgen
 	CMPW &0x1,%r0
 	BEB l6453
-	.byte	0x24, 0x7f, 0xe1, 0x64, 0x00, 0x00	# JMP $0x64e1
+	JMP l64e1
 l6453:
 	ADDW3 &0x2,$0x4a4,%r0
 	MOVB (%r0),{uword}%r0
@@ -8439,9 +8765,9 @@ l6453:
 	MOVH *$0x4a4,(%fp)
 	#NOP
 	PUSHAW (%fp)
-	PUSHW &0x43080
+	PUSHW &nvram_base+0x80
 	PUSHW &0x2
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 	ADDW3 &0x2,$0x4a4,%r0
 	MOVB (%r0),{uword}%r0
 	LLSW3 &0x4,%r0,%r0
@@ -8452,9 +8778,9 @@ l6453:
 	MOVB %r0,2(%fp)
 	#NOP
 	PUSHAW 2(%fp)
-	PUSHW &0x43009
+	PUSHW &nvram_base+0x09
 	PUSHW &0x1
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 	MOVW &0x1,%r0
 	BRB l64e5
 l64e1:
@@ -8568,10 +8894,10 @@ l65f0:
 	.byte	0x9c, 0x4f, 0x74, 0x00, 0x00, 0x00, 0x4c 	# ADDW2 &0x74,%sp
 	MOVB &0x1,*$0x4c4
 	#NOP
-	.byte	0x84, 0x4f, 0x04, 0x65, 0x00, 0x00, 0x7f, 0xf8, 0x11, 0x00, 0x02	# MOVW &0x6504,$0x20011f8
-	NOP
-	.byte	0x84, 0x4f, 0xa4, 0x65, 0x00, 0x00, 0x7f, 0xf4, 0x11, 0x00, 0x02	# MOVW &0x65a4,$0x20011f4
-	NOP
+	MOVW &l6504,$0x20011f8
+	#NOP
+	MOVW &l65a4,$0x20011f4
+	#NOP
 	MOVW $0x20011f4,$0x20012d8
 	#NOP
 	CMPW &0xfeedbeef,$0x2000864
@@ -8583,15 +8909,15 @@ l6639:
 	BEB l6660
 	CMPW &0xadebac1e,$0x2000864
 	BEB l6660
-	.byte	0x24, 0x7f, 0x38, 0x68, 0x00, 0x00	# JMP $0x6838
+	JMP l6838
 l6660:
 	MOVW &0x3b02f1d0,$0x2000864
 	#NOP
-	PUSHW &0x43000
+	PUSHW &nvram_base+0x00
 	PUSHAW 100(%fp)
 	PUSHW &0x9
 ## Call 'rnvram'
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	.byte	0x2b, 0xc9, 0x64	# TSTB 100(%fp) # as adds NOP
 	BNEB l66a8
 	PUSHAW 100(%fp)
@@ -8599,32 +8925,32 @@ l6660:
 	PUSHW &l1040	# "mcp"
 	CALL -8(%sp),$0x7fb0
 	PUSHAW 100(%fp)
-	PUSHW &0x43000
+	PUSHW &nvram_base+0x00
 	PUSHW &0x9
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 ## Jumped back to this point from 0x6835
 l66a8:
 	CMPW &0x8badf00d,%r8
 	BNEB l66b7
-	.byte	0x24, 0x7f, 0x3c, 0x67, 0x00, 0x00	# JMP $0x673c
+	JMP l673c
 l66b7:
 	CMPW &0xfeedbeef,%r8
-	.byte	0x7f, 0x7e	# BEB l673c XXX out of range
+	BEB l673c
 	ADDW3 &0x4,$0x4a4,%r0
 	.byte	0x2b, 0x50	# TSTB (%r0) # as adds NOP
 	BNEB l673c
-	PUSHW &0x4300c
+	PUSHW &nvram_base+0x0c
 	PUSHAW 110(%fp)
 	PUSHW &0x1
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	TSTW %r0
 	BNEB l6709
 	MOVB &0x1,110(%fp)
 	#NOP
 	PUSHAW 110(%fp)
-	PUSHW &0x4300c
+	PUSHW &nvram_base+0x0c
 	PUSHW &0x1
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 	ADDW3 &0x1,$0x4a0,%r0
 	MOVB &0x1,(%r0)
 	#NOP
@@ -8650,7 +8976,7 @@ l673e:
 	ADDW3 &0x3,$0x4a4,%r0
 	CLRB (%r0)
 	#NOP
-	MOVB &0x1,$0x44013
+	MOVB &0x1,csr_set_fled	# set failure LED
 	#NOP
 	CLRW 112(%fp)
 	#NOP
@@ -8661,7 +8987,7 @@ l6762:
 l6766:
 	CMPW &0xc350,112(%fp)
 	BLB l6762
-	MOVB &0x1,$0x44017
+	MOVB &0x1,csr_clr_fled	# clear failure LED
 	#NOP
 	CLRW 112(%fp)
 	#NOP
@@ -8677,7 +9003,7 @@ l6793:
 	ADDW3 &0x4,$0x4a4,%r0
 	CMPB &0x1,(%r0)
 	BEB l67af
-	MCOMB $0x4900d,%r0
+	MCOMB iu_inprt,%r0
 	ANDW2 &0x1,%r0
 	CMPW &0x1,%r0
 	BNEB l673e
@@ -8685,7 +9011,7 @@ l67af:
 	CALL (%sp),$0x5de0
 	CMPW &0xfeedbeef,%r8
 	BNEB l67d7
-	MOVB &0x1,$0x44013
+	MOVB &0x1,csr_set_fled	# set failure LED
 	#NOP
 
 ## printf ("\nSYSTEM FAILURE: CONSULT YOUR SYSTEM ADMINISTRATION UTILITIES GUIDE\n\n")
@@ -8695,7 +9021,7 @@ l67af:
 
 	BRB l67ed
 l67d7:
-	MOVB &0x1,$0x44017
+	MOVB &0x1,csr_clr_fled	# clear failure LED
 	#NOP
 
 ## printf ("\nFIRMWARE MODE\n\n")
@@ -8708,32 +9034,33 @@ l67ed:
 	CALL -4(%sp),$0x3ab4
 	PUSHAW (%fp)
 	PUSHAW 100(%fp)
-	CALL -8(%sp),$0x7f68
+	CALL -8(%sp),strcmp
 	TSTW %r0
 	BNEB l6835
 	MOVW &0xfeedbeef,$0x2000864
 	#NOP
 	CALL (%sp),$0x2b04
 	MOVW $0x2000864,%r8
-	PUSHW &0x43000
+	PUSHW &nvram_base+0x00
 	PUSHAW 100(%fp)
 	PUSHW &0x9
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 ## Jump back to 0x66A8
 l6835:
 	BRH l66a8
-	PUSHW &0x4300c
+l6838:
+	PUSHW &nvram_base+0x0c
 	PUSHAW 110(%fp)
 	PUSHW &0x1
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	TSTW %r0
 	BNEB l6875
 	MOVB &0x1,110(%fp)
 	#NOP
 	PUSHAW 110(%fp)
-	PUSHW &0x4300c
+	PUSHW &nvram_base+0x0c
 	PUSHW &0x1
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 	ADDW3 &0x1,$0x4a0,%r0
 	MOVB &0x1,(%r0)
 	#NOP
@@ -8767,14 +9094,14 @@ l68bc:
 l68e6:
 	CMPW &0xfeedbeef,$0x2000864
 	BEB l68fb
-	MOVB &0x1,$0x44017
+	MOVB &0x1,csr_clr_fled	# clear failure LED
 	#NOP
 l68fb:
-	PUSHW &0x4300d
+	PUSHW &nvram_base+0x0d
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
 	PUSHW &0x2d
-	CALL -12(%sp),$0x5224
+	CALL -12(%sp),rnvram
 	TSTW %r0
 	BNEB l694b
 	ADDW3 &0x2,$0x4a0,%r0
@@ -8783,9 +9110,9 @@ l68fb:
 	CALL -8(%sp),$0x7fb0
 	ADDW3 &0x2,$0x4a0,%r0
 	PUSHW %r0
-	PUSHW &0x4300d
+	PUSHW &nvram_base+0x0d
 	PUSHW &0x2d
-	CALL -12(%sp),$0x52a0
+	CALL -12(%sp),wnvram
 l694b:
 	MOVB &0x2,*$0x4a0
 	#NOP
@@ -8813,10 +9140,10 @@ l6970:
 	CMPW &0xfff0,$0x508
 	BEB l69b3
 l698f:
-	.byte	0x84, 0x4f, 0x52, 0x6c, 0x00, 0x00, 0x7f, 0xf8, 0x11, 0x00, 0x02	# MOVW &0x6c52,$0x20011f8
-	NOP
-	.byte	0x84, 0x4f, 0x9e, 0x6c, 0x00, 0x00, 0x7f, 0xd8, 0x12, 0x00, 0x02	# MOVW &0x6c9e,$0x20012d8
-	NOP
+	MOVW &l6c52,$0x20011f8
+	#NOP
+	MOVW &l6c9e,$0x20012d8
+	#NOP
 	MOVW $0x20012d8,$0x20011f4
 	#NOP
 l69b3:
@@ -8840,9 +9167,9 @@ l69b3:
 	PUSHW *$0x4e8
 	CALL -12(%sp),$0x4084
 l6a13:
-	CLRB $0x4900d
+	CLRB iu_ocpr
 	#NOP
-	MOVB &0x8,$0x4900f
+	MOVB &0x8,iu_ropr
 	#NOP
 	CALL (%sp),$0x5f72
 	PUSHW &0x0
@@ -8869,48 +9196,48 @@ l6a62:
 	ADDW3 &0x1,$0x4a0,%r0
 	CMPB &0x1,(%r0)
 	BNEB l6ad3
-	MOVB &0x1,$0x4401f
+	MOVB &0x1,csr_fm_off # floppy motor off
 	#NOP
 	PUSHW &0x0
 	CALL -4(%sp),$0x732c
 	TSTW %r0
 	BNEB l6aa9
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x4b, 0x6c, 0x00, 0x00	# JMP $0x6c4b
+	JMP l6c4b
 l6aa9:
 	PUSHW &0x0
 	PUSHW $0x2000aa8
 	PUSHW &0x2004000
 	PUSHW &0x0
-	CALL -16(%sp),$0x7698
+	CALL -16(%sp),hd_acs
 	TSTW %r0
 	BNEB l6acd
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x4b, 0x6c, 0x00, 0x00	# JMP $0x6c4b
+	JMP l6c4b
 l6acd:
-	.byte	0x24, 0x7f, 0x99, 0x6b, 0x00, 0x00	# JMP $0x6b99
+	JMP l6b99
 l6ad3:
 	ADDW3 &0x1,$0x4a0,%r0
 	CMPB &0x2,(%r0)
 	BNEB l6b24
-	MOVB &0x1,$0x4401f
+	MOVB &0x1,csr_fm_off # floppy motor off
 	#NOP
 	PUSHW &0x1
 	CALL -4(%sp),$0x732c
 	TSTW %r0
 	BNEB l6afe
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x4b, 0x6c, 0x00, 0x00	# JMP $0x6c4b
+	JMP l6c4b
 l6afe:
 	PUSHW &0x1
 	PUSHW $0x2000afc
 	PUSHW &0x2004000
 	PUSHW &0x0
-	CALL -16(%sp),$0x7698
+	CALL -16(%sp),hd_acs
 	TSTW %r0
 	BNEB l6b22
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x4b, 0x6c, 0x00, 0x00	# JMP $0x6c4b
+	JMP l6c4b
 l6b22:
 	BRB l6b99
 l6b24:
@@ -8921,12 +9248,12 @@ l6b24:
 	PUSHW &0x2004000
 	PUSHW &0x0
 	PUSHW &0x0
-	CALL -16(%sp),$0x7b2c
+	CALL -16(%sp),fd_acs
 	TSTW %r0
 	BNEB l6b57
 	CALL (%sp),$0x7a34
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x4b, 0x6c, 0x00, 0x00	# JMP $0x6c4b
+	JMP l6c4b
 l6b57:
 	BRB l6b99
 l6b59:
@@ -8948,7 +9275,7 @@ l6b59:
 	CLRB 5(%r0)
 	#NOP
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x4b, 0x6c, 0x00, 0x00	# JMP $0x6c4b
+	JMP l6c4b
 l6b99:
 	PUSHW &0x0
 	CALL -4(%sp),*$0x51c
@@ -9076,19 +9403,19 @@ l6cec:
 	CMPW %r1,%r0
 	BGEUB l6d1d
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x1f, 0x6e, 0x00, 0x00	# JMP $0x6e1f
+	JMP l6e1f
 l6d1d:
-	CLRB $0x4800d
+	CLRB $dmac_base+0x0d
 	#NOP
-	CLRB $0x48008
+	CLRB $dmac_base+0x08
 	#NOP
-	CLRB $0x4800c
+	CLRB $dmac_base+0x0c
 	#NOP
 	BITB 7(%ap),&0x1
 	BEB l6d6a
-	MOVB 3(%ap),$0x48002
+	MOVB 3(%ap),$dmac_base+0x02
 	#NOP
-	MOVB 2(%ap),$0x48002
+	MOVB 2(%ap),$dmac_base+0x02
 	#NOP
 	BITB 7(%ap),&0x8
 	BEB l6d5c
@@ -9103,55 +9430,55 @@ l6d5c:
 l6d68:
 	BRB l6d9b
 l6d6a:
-	MOVB 3(%ap),$0x48000
+	MOVB 3(%ap),$dmac_base+0x00
 	#NOP
-	MOVB 2(%ap),$0x48000
+	MOVB 2(%ap),$dmac_base+0x00
 	#NOP
 	BITB 7(%ap),&0x8
 	BEB l6d8f
 	ORB3 &0x80,1(%ap),%r0
-	MOVB %r0,$0x45003
+	MOVB %r0,$dmaid_base+0x03
 	#NOP
 	BRB l6d9b
 l6d8f:
 	ORB3 &0x0,1(%ap),%r0
-	MOVB %r0,$0x45003
+	MOVB %r0,$dmaid_base+0x03
 	#NOP
 l6d9b:
-	CLRB $0x4800c
+	CLRB $dmac_base+0x0c
 	#NOP
 	BITB 7(%ap),&0x1
 	BEB l6dd3
 	SUBB3 &0x1,11(%ap),%r0
 	ANDB2 &0xff,%r0
-	MOVB %r0,$0x48003
+	MOVB %r0,$dmac_base+0x03
 	#NOP
 	MOVH {uhalf}10(%ap),{uword}%r0
 	SUBW2 &0x1,%r0
 	LRSW3 &0x8,%r0,%r0
 	ANDB2 &0xff,%r0
-	MOVB %r0,$0x48003
+	MOVB %r0,$dmac_base+0x03
 	#NOP
 	BRB l6dfd
 l6dd3:
 	SUBB3 &0x1,11(%ap),%r0
 	ANDB2 &0xff,%r0
-	MOVB %r0,$0x48001
+	MOVB %r0,$dmac_base+0x01
 	#NOP
 	MOVH {uhalf}10(%ap),{uword}%r0
 	SUBW2 &0x1,%r0
 	LRSW3 &0x8,%r0,%r0
 	ANDB2 &0xff,%r0
-	MOVB %r0,$0x48001
+	MOVB %r0,$dmac_base+0x01
 	#NOP
 l6dfd:
-	MOVB 7(%ap),$0x4800b
+	MOVB 7(%ap),$dmac_base+0x0b
 	#NOP
 	ANDB3 &0x3,7(%ap),%r0
 	ADDB2 &0x1,%r0
 	MCOMB %r0,%r0
 	ANDB2 &0xf,%r0
-	MOVB %r0,$0x4800f
+	MOVB %r0,$dmac_base+0x0f
 	#NOP
 	MOVW &0x1,%r0
 	BRB l6e1f
@@ -9189,21 +9516,21 @@ l6c28:
 	PUSHW &0x2000874
 	PUSHW &0x0
 ## Access the hard drive.
-	CALL -16(%sp),$0x7698
+	CALL -16(%sp),hd_acs
 ## If %r0
 	TSTW %r0
 	BNEB l6ea7
 	MOVW &0x10000,$0x2000a7c
 	#NOP
 	CLRW %r0
-	.byte	0x24, 0x7f, 0xec, 0x70, 0x00, 0x00	# JMP $0x70ec
+	JMP l70ec
 l6ea7:
 	CMPW &0xca5e600d,$0x2000878
 	BEB l6ec8
 	MOVW &0x20000,$0x2000a7c
 	#NOP
 	CLRW %r0
-	.byte	0x24, 0x7f, 0xec, 0x70, 0x00, 0x00	# JMP $0x70ec
+	JMP l70ec
 l6ec8:
 	.byte	0xeb, 0x6f, 0x54, 0x73, 0x40	# MULB3 &0x54,3(%ap),%r0
 	ADDW2 &0x2000a80,%r0
@@ -9254,7 +9581,7 @@ l6f44:
 	LLSW3 &0x1,%r0,%r0
 	CLRH 0x20014ec(%r0)
 	#NOP
-	.byte	0x24, 0x7f, 0x8b, 0x70, 0x00, 0x00	# JMP $0x708b
+	JMP l708b
 l6f80:
 	MOVB 3(%ap),{uword}%r0
 	PUSHW %r0
@@ -9266,7 +9593,7 @@ l6f80:
 	PUSHW %r0
 	PUSHW &0x2000874
 	PUSHW &0x0
-	CALL -16(%sp),$0x7698
+	CALL -16(%sp),hd_acs
 	TSTW %r0
 	BNEB l6fe2
 	MOVB 3(%ap),{uword}%r0
@@ -9277,7 +9604,7 @@ l6f80:
 	MOVW %r0,$0x2000a7c
 	#NOP
 	CLRW %r0
-	.byte	0x24, 0x7f, 0xec, 0x70, 0x00, 0x00	# JMP $0x70ec
+	JMP l70ec
 l6fe2:
 	CLRH %r5
 	BRB l705b
@@ -9326,6 +9653,7 @@ l707c:
 	LLSW3 &0x1,%r0,%r0
 	INCH 0x20014ec(%r0)
 	#NOP
+l708b:
 	MOVB 3(%ap),{uword}%r0
 	LLSW3 &0x1,%r0,%r0
 	MOVH {uhalf}0x20014ec(%r0),{uword}%r0
@@ -9370,13 +9698,13 @@ l7100:
 	.byte	0x2b, 0x7f, 0xf0, 0x14, 0x00, 0x02	# TSTB $0x20014f0 # as adds NOP
 	BNEB l711a
 	MOVW &0x1,%r0
-	.byte	0x24, 0x7f, 0x22, 0x73, 0x00, 0x00	# JMP $0x7322
+	JMP l7322
 l711a:
 	.byte	0xeb, 0x6f, 0x54, 0x73, 0x40	# MULB3 &0x54,3(%ap),%r0
 	CMPW &0xca5e600d,0x2000a84(%r0)
 	BEB l7134
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x22, 0x73, 0x00, 0x00	# JMP $0x7322
+	JMP l7322
 l7134:
 	MOVB *4(%ap),{uword}%r0
 	LLSW3 &0x8,%r0,%r0
@@ -9397,7 +9725,7 @@ l7134:
 	BITW %r0,%r1
 	BNEB l7181
 	MOVW &0x1,%r0
-	.byte	0x24, 0x7f, 0x22, 0x73, 0x00, 0x00	# JMP $0x7322
+	JMP l7322
 l7181:
 	CMPB 3(%ap),$0x2000871
 	BEB l71ce
@@ -9407,11 +9735,11 @@ l7181:
 	PUSHW 0x2000abc(%r0)
 	PUSHW &0x2000874
 	PUSHW &0x0
-	CALL -16(%sp),$0x7698
+	CALL -16(%sp),hd_acs
 	TSTW %r0
 	BNEB l71b7
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x22, 0x73, 0x00, 0x00	# JMP $0x7322
+	JMP l7322
 l71b7:
 	MOVB 3(%ap),{uword}%r0
 	LLSW3 &0x1,%r0,%r0
@@ -9422,7 +9750,7 @@ l71b7:
 l71ce:
 	CMPW *4(%ap),$0x2000874
 	BGUB l71de
-	.byte	0x24, 0x7f, 0x70, 0x72, 0x00, 0x00	# JMP $0x7270
+	JMP l7270
 l71de:
 	BRB l724d
 l71e0:
@@ -9431,7 +9759,7 @@ l71e0:
 	MOVH {uhalf}0x20014ec(%r0),{uword}%r0
 	BNEB l71fc
 	MOVW &0x1,%r0
-	.byte	0x24, 0x7f, 0x22, 0x73, 0x00, 0x00	# JMP $0x7322
+	JMP l7322
 l71fc:
 	MOVB 3(%ap),{uword}%r0
 	LLSW3 &0x1,%r0,%r0
@@ -9447,11 +9775,11 @@ l71fc:
 	PUSHW %r0
 	PUSHW &0x2000874
 	PUSHW &0x0
-	CALL -16(%sp),$0x7698
+	CALL -16(%sp),hd_acs
 	TSTW %r0
 	BNEB l724d
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x22, 0x73, 0x00, 0x00	# JMP $0x7322
+	JMP l7322
 l724d:
 	CMPW *4(%ap),$0x2000874
 	BGUB l71e0
@@ -9459,14 +9787,16 @@ l724d:
 	PUSHW &0x2000874
 	CALL -8(%sp),$0x7dd6
 	MOVW &0x1,%r0
-	.byte	0x24, 0x7f, 0x22, 0x73, 0x00, 0x00	# JMP $0x7322
+	JMP l7322
+
+l7270:
 	PUSHW 4(%ap)
 	PUSHW &0x2000874
 	CALL -8(%sp),$0x7dd6
 	TSTW %r0
 	BEB l728d
 	MOVW &0x1,%r0
-	.byte	0x24, 0x7f, 0x22, 0x73, 0x00, 0x00	# JMP $0x7322
+	JMP l7322
 l728d:
 	BRB l72f5
 l728f:
@@ -9480,7 +9810,7 @@ l728f:
 	PUSHW %r0
 	PUSHW &0x2000874
 	PUSHW &0x0
-	CALL -16(%sp),$0x7698
+	CALL -16(%sp),hd_acs
 	TSTW %r0
 	BNEB l72cd
 	CLRW %r0
@@ -9523,7 +9853,7 @@ l7322:
 l732c:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
-	MOVB &0x1,$0x4a001
+	MOVB &0x1,id_cmd_stat
 	#NOP
 	PUSHW &0x1
 	CALL -4(%sp),*$0x528 # DUART Delay
@@ -9606,7 +9936,7 @@ l73d4:
 	.byte 0xb0, 0x4f, 0x00, 0xe1, 0x01, 0x00, 0x4b	# ORW2 &0x1e100,%psw # as adds NOP
 
 ## Read the disk controller status.
-	MOVB $0x4a001,{uword}%r0
+	MOVB id_cmd_stat,{uword}%r0
 	MOVW %r0,$0x20012d4
 	#NOP
 
@@ -9623,19 +9953,19 @@ l73d4:
 	#NOP
 
 ##
-	MOVB &0x8,$0x4a001
+	MOVB &0x8,id_cmd_stat
 	#NOP
 	.byte	0x84, 0x7f, 0xfc, 0x14, 0x00, 0x02, 0x4b	# MOVW $0x20014fc,%psw # as adds NOP
 	MOVW &0x0,%r0
-	.byte	0x24, 0x7f, 0x26, 0x76, 0x00, 0x00	# JMP $0x7626
+	JMP l7626
 
 
 ## Send a CLEAR BUFFER
 l742d:
-	MOVB &0x2,$0x4a001
+	MOVB &0x2,id_cmd_stat
 	#NOP
 ## Send a CLEAR CE BITS
-	MOVB &0x8,$0x4a001
+	MOVB &0x8,id_cmd_stat
 	#NOP
 ## GOTO 0x7450
 	BRB l7450
@@ -9648,7 +9978,7 @@ l743f:
 
 ## Write to data buffer
 ## (e.g., write 00 then 48
-	MOVB (%r0),$0x4a000
+	MOVB (%r0),id_data
 	#NOP
 	DECB 11(%ap)
 	#NOP
@@ -9659,7 +9989,7 @@ l7450:
 	BNEB l743f
 
 ## Disk Command
-	MOVB 3(%ap),$0x4a001
+	MOVB 3(%ap),id_cmd_stat
 	#NOP
 	CLRH (%fp)
 	#NOP
@@ -9673,10 +10003,10 @@ l746e:
 	MOVH {uhalf}(%fp),{uword}%r0
 	CMPW &0xc8,%r0
 	BGEUB l7485
-	BITB $0x4a001,&0x80
+	BITB id_cmd_stat,&0x80
 	BNEB l7461
 l7485:
-	MOVB $0x4a001,{uword}%r0
+	MOVB id_cmd_stat,{uword}%r0
 	MOVW %r0,$0x20012d4
 	#NOP
 ## Is the controller busy? If so jump to 74c4
@@ -9687,12 +10017,12 @@ l7485:
 	LLSW3 &0x18,%r0,%r0
 	ORW2 %r0,$0x20012d4
 	#NOP
-	MOVB &0x8,$0x4a001
+	MOVB &0x8,id_cmd_stat
 	#NOP
 	.byte	0x84, 0x7f, 0xfc, 0x14, 0x00, 0x02, 0x4b	# MOVW $0x20014fc,%psw # as adds NOP
 	MOVW &0x0,%r0
 ## Just return.
-	.byte	0x24, 0x7f, 0x26, 0x76, 0x00, 0x00	# JMP $0x7626
+	JMP l7626
 
 ## Are any of the top bits set in our argument?
 l74c4:
@@ -9710,20 +10040,20 @@ l74dd:
 	MOVH {uhalf}(%fp),{uword}%r0
 	CMPW &0x5,%r0
 	BGEUB l74f1
-	BITB $0x4a001,&0x60
+	BITB id_cmd_stat,&0x60
 	BEB l74d0
 l74f1:
 	BRB l7512
 l74f3:
 	CLRW $0x20012d4
 	#NOP
-	MOVB &0x8,$0x4a001
+	MOVB &0x8,id_cmd_stat
 	#NOP
 	.byte	0x84, 0x7f, 0xfc, 0x14, 0x00, 0x02, 0x4b	# MOVW $0x20014fc,%psw
 	MOVW &0x1,%r0
-	.byte	0x24, 0x7f, 0x26, 0x76, 0x00, 0x00	# JMP $0x7626
+	JMP l7626
 l7512:
-	MOVB $0x4a001,{uword}%r0
+	MOVB id_cmd_stat,{uword}%r0
 	MOVW %r0,$0x20012d4
 	#NOP
 
@@ -9734,11 +10064,11 @@ l7512:
 	BNEB l7532
 
 ## GOTO 0x75b7
-	.byte	0x24, 0x7f, 0xb7, 0x75, 0x00, 0x00	# JMP $0x75b7
+	JMP l75b7
 l7532:
 	MOVB 3(%ap),{uword}%r0
 	LLSW3 &0x18,%r0,%r0
-	MOVB $0x4a000,{uword}%r1
+	MOVB id_data,{uword}%r1
 	LLSW3 &0x8,%r1,%r1
 	ORW2 %r1,%r0
 	ORW2 %r0,$0x20012d4
@@ -9767,13 +10097,13 @@ l759b:
 	MOVW 4(%fp),$0x20012d4
 	#NOP
 l75a3:
-	MOVB &0x8,$0x4a001
+	MOVB &0x8,id_cmd_stat
 	#NOP
 	.byte	0x84, 0x7f, 0xfc, 0x14, 0x00, 0x02, 0x4b	# MOVW $0x20014fc,%psw # as adds NOP
 	MOVW &0x0,%r0
 	BRB l7626
 
-
+l75b7:
 	BITW $0x20012d4,&0x8
 	BEB l760b
 	MOVB 3(%ap),{uword}%r0
@@ -9798,7 +10128,7 @@ l75f7:
 	MOVW &0x0,%r0
 	BRB l7626
 l760b:
-	MOVB &0x8,$0x4a001
+	MOVB &0x8,id_cmd_stat
 	#NOP
 	CLRW $0x20012d4
 	#NOP
@@ -9833,7 +10163,7 @@ l7630:
 	CLRW %r0
 	BRB l768f
 l7651:
-	MOVB $0x4a000,{uword}%r0
+	MOVB id_data,{uword}%r0
 	MOVW %r0,$0x20012d4
 	#NOP
 	BITW %r0,&0x2
@@ -9863,7 +10193,8 @@ l768f:
 ## Here, argument 1 seems to get some kind of failure code if we can't
 ## access the hard drive -- I'm trying to figure out what that is.
 
-l7698:
+hd_acs:
+#l7698:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x14, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x14,%sp
 	.byte	0xeb, 0x6f, 0x54, 0x73, 0x40	# MULB3 &0x54,3(%ap),%r0
@@ -9876,7 +10207,7 @@ l7698:
 	CMPW 0x2000a98(%r1),%r0
 	BLUB l76d6
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x79, 0x78, 0x00, 0x00	# JMP $0x7879
+	JMP l7879
 l76d6:
 	LRSW3 &0x8,4(%fp),%r0
 	ANDB2 &0xff,%r0
@@ -9907,7 +10238,7 @@ l76d6:
 	TSTW %r0
 	BNEB l774d
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x79, 0x78, 0x00, 0x00	# JMP $0x7879
+	JMP l7879
 l774d:
 	CMPB &0x7,14(%fp)
 	BLEUB l775d
@@ -9921,7 +10252,7 @@ l775d:
 l7762:
 	CLRH 8(%fp)
 	#NOP
-	.byte	0x24, 0x7f, 0x43, 0x78, 0x00, 0x00	# JMP $0x7843
+	JMP l7843
 l776b:
 	MOVH {uhalf}8(%fp),{uword}%r0
 	BEB l7780
@@ -9937,7 +10268,7 @@ l7780:
 	CALL -8(%sp),0xf8(%pc)
 	TSTW %r0
 	BNEB l7798
-	.byte	0x24, 0x7f, 0x40, 0x78, 0x00, 0x00	# JMP $0x7840
+	JMP l7840
 l7798:
 	MOVB 14(%fp),$0x20014f4
 	#NOP
@@ -9996,6 +10327,7 @@ l781d:
 l7840:
 	INCH 8(%fp)
 	#NOP
+l7843:
 	MOVH {uhalf}8(%fp),{uword}%r0
 	CMPW &0x10,%r0
 	BLUH l776b
@@ -10068,7 +10400,7 @@ l78d4:
 	PUSHW %r0
 	PUSHW 8(%fp)
 	PUSHW &0x0
-	CALL -16(%sp),$0x7698
+	CALL -16(%sp),hd_acs
 	TSTW %r0
 	BNEB l7930
 	CLRW %r0
@@ -10126,15 +10458,15 @@ l7982:
 l798c:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x04, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x4,%sp
-	MOVB &0x10,$0x4900e
+	MOVB &0x10,iu_sopr
 	#NOP
-	MOVB &0x20,$0x4900e
+	MOVB &0x20,iu_sopr
 	#NOP
-	MOVH {uhalf}$0x44002,{uword}%r0
+	MOVH {uhalf}csr_datal,{uword}%r0
 	ANDW2 &0x400,%r0
 	CMPW &0x400,%r0
 	BEB l79ce
-	MOVB &0x1,$0x4401b
+	MOVB &0x1,csr_fm_on	# turn floppy motor on
 	#NOP
 	PUSHW &0x12c
 	CALL -4(%sp),*$0x528 # DUART Delay
@@ -10180,11 +10512,11 @@ l7a2d:
 l7a34:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0x0,%sp
-	MOVB &0x1,$0x4401f
+	MOVB &0x1,csr_fm_off # floppy motor off
 	#NOP
-	MOVB &0x10,$0x4900f
+	MOVB &0x10,iu_ropr
 	#NOP
-	MOVB &0x20,$0x4900f
+	MOVB &0x20,iu_ropr
 	#NOP
 	MOVAW -24(%fp),%sp
 	POPW %fp
@@ -10198,7 +10530,7 @@ l7a5c:
 	BITB $0x4d000,&0x1
 	BEB l7a76
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x24, 0x7b, 0x00, 0x00	# JMP $0x7b24
+	JMP l7b24
 l7a76:
 	NOP
 	.byte	0x84, 0x4b, 0x7f, 0xfc, 0x14, 0x00, 0x02	# MOVW %psw,$0x20014fc
@@ -10263,14 +10595,15 @@ l7b24:
 ## 'fd_acs' - Routine to access floppy disk
 ##
 
-l7b2c:
+fd_acs:
+#l7b2c:
 	SAVE %fp
 	.byte	0x9c, 0x4f, 0x0c, 0x00, 0x00, 0x00, 0x4c	# ADDW2 &0xc,%sp
 	.byte	0xec, 0xe0, 0x12, 0x5a, 0x40	# DIVW3 {uword}&0x12,(%ap),%r0
 	CMPW &0x50,%r0
 	BLUB l7b48
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x94, 0x7d, 0x00, 0x00	# JMP $0x7d94
+	JMP l7d94
 l7b48:
 	.byte	0x2b, 0xca, 0x0f	# TSTB 15(%ap) # as adds NOP
 	BEB l7b53
@@ -10282,7 +10615,7 @@ l7b53:
 	TSTW %r0
 	BNEB l7b69
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x94, 0x7d, 0x00, 0x00	# JMP $0x7d94
+	JMP l7d94
 l7b69:
 	MOVB &0xff,$0x2000871
 	#NOP
@@ -10296,7 +10629,7 @@ l7b69:
 	TSTW %r0
 	BNEB l7b99
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x94, 0x7d, 0x00, 0x00	# JMP $0x7d94
+	JMP l7d94
 l7b99:
 	CMPW &0xca5e600d,$0x2000878
 	BNEB l7bbc
@@ -10340,7 +10673,7 @@ l7bca:
 	TSTW %r0
 	BNEB l7c34
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x94, 0x7d, 0x00, 0x00	# JMP $0x7d94
+	JMP l7d94
 l7c34:
 	MOVB &0x2,$0x2000871
 	#NOP
@@ -10377,7 +10710,7 @@ l7c7a:
 	#NOP
 	CLRH (%fp)
 	#NOP
-	JMP $0x7d30
+	JMP l7d30
 l7c95:
 	MOVB 9(%fp),{uword}%r0
 	PUSHW %r0
@@ -10389,7 +10722,7 @@ l7c95:
 	TSTW %r0
 	BNEB l7cbb
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x94, 0x7d, 0x00, 0x00	# JMP $0x7d94
+	JMP l7d94
 l7cbb:
 	BRB l7d2d
 l7cbd:
@@ -10404,7 +10737,7 @@ l7cbd:
 	TSTW %r0
 	BNEB l7ce9
 	CLRW %r0
-	.byte	0x24, 0x7f, 0x94, 0x7d, 0x00, 0x00	# JMP $0x7d94
+	JMP l7d94
 l7ce9:
 	CLRB $0x2001500
 	#NOP
@@ -10432,6 +10765,7 @@ l7d1b:
 l7d2d:
 	INCH (%fp)
 	#NOP
+l7d30:
 	CMPH &0x10,(%fp)
 	BLH l7c95
 l7d36:
@@ -10675,7 +11009,8 @@ l7f5a:
 ## 'strcmp' Routine
 ##
 
-l7f68:
+strcmp:
+#l7f68:
 	SAVE %fp
 	MOVW (%ap),%r0
 	MOVW 4(%ap),%r1
@@ -10781,10 +11116,8 @@ l7fb0:
 
 ## Serial Number Structure
 
-# 00007ff0: 22 22 22 22
-# 00007ff4: 03 02 01 30
-# 00007ff8: 03 02 01 0e
-# 00007ffc: 03 02 01 0b
+serial_s:
+#l7ff0:
 	.byte	0x22, 0x22, 0x22, 0x22
 	.byte	0x03, 0x02, 0x01, 0x30
 	.byte	0x03, 0x02, 0x01, 0x0e
