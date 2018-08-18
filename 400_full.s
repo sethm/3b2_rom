@@ -410,15 +410,14 @@
 
 00001475: 7a ae 04                                       BRH &0x4ae <0x1923>
 
+;;; Here is where we checksum the ROM
 00001478: 82 48                                          CLRH %r8
+;;; We're going to read 7FEE bytes
 0000147a: 84 5f ee 7f 45                                 MOVW &0x7fee,%r5
 0000147f: 80 47                                          CLRW %r7
 
-;; Tests for the carry bit (I think)
-
 ;; First jump to 14c0 to start the test...
 00001481: 7b 3f                                          BRB &0x3f <0x14c0>
-
 
 ;; While r5 < r7...
 00001483: 86 e2 48 e0 40                                 MOVH {uhalf}%r8,{uword}%r0
@@ -450,8 +449,10 @@
 000014e5: 3c 41 40                                       CMPW %r1,%r0
 000014e8: 77 08                                          BNEB &0x8 <0x14f0>
 
+;;; Skip additional tests
 000014ea: 24 7f 6e 15 00 00                              JMP $0x156e
 
+;;; Some sort of additional ROM tests
 000014f0: 86 e2 48 e0 40                                 MOVH {uhalf}%r8,{uword}%r0
 000014f5: 88 40 40                                       MCOMW %r0,%r0
 000014f8: 86 40 48                                       MOVH %r0,%r8
@@ -484,7 +485,9 @@
 00001563: b0 42 41                                       ORW2 %r2,%r1
 00001566: 3c 41 40                                       CMPW %r1,%r0
 00001569: 7f 05                                          BEB &0x5 <0x156e>
+;;; Checksum failure (?)
 0000156b: 7a c1 03                                       BRH &0x3c1 <0x192c>
+;;; Checksum success (?)
 0000156e: 3c 4f ed 0d 1c a1 7f 64 08 00 02               CMPW &0xa11c0ded,$0x2000864
 00001579: 7f 15                                          BEB &0x15 <0x158e>
 0000157b: 3c 4f 0d f0 ad 8b 7f 64 08 00 02               CMPW &0x8badf00d,$0x2000864
@@ -1890,8 +1893,17 @@
 0000297b: 70                                             NOP
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Unknown procedure
-;;
+;;; Set up RAM size. This procedure tests two bits at 0x4C003, and uses
+;;; them to determine how much RAM is installed in the system.
+;;; The mapping is essentially:
+;;;
+;;;  0x4C003         Installed RAM
+;;; ---------        -------------
+;;;    00b               512KB
+;;;    01b               2MB
+;;;    10b               1MB
+;;;    11b               4MB
+;;;
 0000297c: 10 45                                          SAVE %r5
 0000297e: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00002985: 84 4f c4 2a 00 00 7f f4 11 00 02               MOVW &0x2ac4,$0x20011f4
