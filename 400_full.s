@@ -5125,6 +5125,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 'hwcntr' - DUART Delay Routine
+;; Vector address for this is *$0x528
 ;;
 
 00005504: 10 49                                          SAVE %fp
@@ -5251,16 +5252,29 @@
 000055ee: 9c 4f 08 00 00 00 4c                           ADDW2 &0x8,%sp
 000055f5: 83 64                                          CLRB 4(%fp)
 000055f7: 70                                             NOP
+;; Store the current interrupt handling routine in $0x20012c8
 000055f8: 84 ef 94 04 00 00 7f c8 12 00 02               MOVW *$0x494,$0x20012c8
 00005603: 70                                             NOP
+;; Install a new interrupt handling routine (0x5d00)
 00005604: 84 4f 00 5d 00 00 ef 94 04 00 00               MOVW &0x5d00,*$0x494
 0000560f: 70                                             NOP
 00005610: 70                                             NOP
+;; Save the current IPL in 0x20012c4
 00005611: cc 03 0d 4b 7f c4 12 00 02                     EXTFW &0x3,&0xd,%psw,$0x20012c4
 0000561a: 70                                             NOP
+;; Set our IPL to 15 (NO INTERRUPTS)
 0000561b: c8 03 0d 0f 4b                                 INSFW &0x3,&0xd,&0xf,%psw
+
+;; Set the sysgen block pointer to 0x20012b8
 00005620: 84 4f b8 12 00 02 7f 00 00 00 02               MOVW &0x20012b8,$0x2000000
 0000562b: 70                                             NOP
+
+;; We create a sysgen block with:
+;;   1. Request Queue at 0x20037f4
+;;   2. Completion Queue at 0x20037ec
+;;   3. Request Queue size of 2
+;;   4. Completion Queue size of 2
+;;   5. Interrupt Vector of 1
 0000562c: 84 4f f4 37 00 02 7f b8 12 00 02               MOVW &0x20037f4,$0x20012b8
 00005637: 70                                             NOP
 00005638: 84 4f ec 37 00 02 7f bc 12 00 02               MOVW &0x20037ec,$0x20012bc
@@ -5271,14 +5285,21 @@
 00005653: 70                                             NOP
 00005654: 87 01 7f c3 12 00 02                           MOVB &0x1,$0x20012c3
 0000565b: 70                                             NOP
+
+;; Call 'bzero' to zero 0x814 bytes of RAM starting at 0x20037ec (completion queue)
 0000565c: a0 4f ec 37 00 02                              PUSHW &0x20037ec
 00005662: a0 5f 14 08                                    PUSHW &0x814
 00005666: 2c cc f8 ef 18 05 00 00                        CALL -8(%sp),*$0x518
+
+;; Call 'hwcntr' with a delay of 0x14.
 0000566e: a0 14                                          PUSHW &0x14
 00005670: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+
+
 00005678: d0 15 5a 40                                    LLSW3 &0x15,(%ap),%r0
 0000567c: 87 c0 01 e0 59                                 MOVB 1(%r0),{uword}(%fp)
 00005681: 70                                             NOP
+;; Call hwcntr with a delay of 0x14. 
 00005682: a0 14                                          PUSHW &0x14
 00005684: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
 0000568c: d0 15 5a 40                                    LLSW3 &0x15,(%ap),%r0
@@ -5292,6 +5313,7 @@
 000056a4: 87 01 64                                       MOVB &0x1,4(%fp)
 000056a7: 70                                             NOP
 000056a8: 7b 15                                          BRB &0x15 <0x56bd>
+;; Call hwcntr with a delay of 0x1 
 000056aa: a0 01                                          PUSHW &0x1
 000056ac: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
 000056b4: 90 59                                          INCW (%fp)
@@ -5303,11 +5325,12 @@
 000056c3: d0 15 5a 40                                    LLSW3 &0x15,(%ap),%r0
 000056c7: 87 01 c0 05                                    MOVB &0x1,5(%r0)
 000056cb: 70                                             NOP
+;; Call hwcntr with a delay of 0x14
 000056cc: a0 14                                          PUSHW &0x14
 000056ce: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
 000056d6: 87 64 e0 40                                    MOVB 4(%fp),{uword}%r0
 000056da: 7b 15                                          BRB &0x15 <0x56ef>
-;; Call 0x5D3E
+;; Call the error printing routine.
 000056dc: 2c 5c af 62 06                                 CALL (%sp),0x662(%pc)
 000056e1: 3c 01 40                                       CMPW &0x1,%r0
 000056e4: 7f 05                                          BEB &0x5 <0x56e9>
@@ -5742,13 +5765,16 @@
 00005cff: 08                                             RET
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Unknown Routine
+;; Interrupt handler used during sysgen
+;; 
 ;;
 00005d00: 10 49                                          SAVE %fp
 00005d02: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00005d09: c8 03 0d 0f 4b                                 INSFW &0x3,&0xd,&0xf,%psw
 00005d0e: 2c 5c 7f de 62 00 00                           CALL (%sp),$0x62de
+;; Read the CSR
 00005d15: 86 e2 7f 02 40 04 00 e0 40                     MOVH {uhalf}$0x44002,{uword}%r0
+;; Mask bits 0x8000 and 0x0001 (check for CSRTIMO and CSRIOF)
 00005d1e: 38 40 6f 7e                                    BITW %r0,&0x7e
 00005d22: 7f 0c                                          BEB &0xc <0x5d2e>
 00005d24: 86 01 7f ce 12 00 02                           MOVH &0x1,$0x20012ce
@@ -6243,11 +6269,17 @@
 0000641f: d0 15 40 40                                    LLSW3 &0x15,%r0,%r0
 00006423: 87 01 c0 05                                    MOVB &0x1,5(%r0)
 00006427: 70                                             NOP
+
+;; Hardware delay of 0x14
 00006428: a0 14                                          PUSHW &0x14
 0000642a: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+
+;; Sysgen the system board.
 00006432: dc 02 7f a4 04 00 00 40                        ADDW3 &0x2,$0x4a4,%r0
 0000643a: 87 50 e0 40                                    MOVB (%r0),{uword}%r0
 0000643e: a0 40                                          PUSHW %r0
+
+;; call fw_sysgen
 00006440: 2c cc fc 7f ec 55 00 00                        CALL -4(%sp),$0x55ec
 00006448: 3c 01 40                                       CMPW &0x1,%r0
 0000644b: 7f 08                                          BEB &0x8 <0x6453>

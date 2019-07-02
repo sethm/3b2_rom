@@ -1,32 +1,72 @@
+
+;; Set up Stack, Frame, Argument, and Interrupt stack pointers
 00001310: 04 7f 44 04 00 02 4c                           MOVAW $0x2000444,%sp
 00001317: 04 7f 44 04 00 02 49                           MOVAW $0x2000444,%fp
 0000131e: 04 7f 44 04 00 02 4a                           MOVAW $0x2000444,%ap
 00001325: 04 7f 44 0c 00 02 4e                           MOVAW $0x2000c44,%isp
+
+;; Immediately jump to 133d
 0000132c: 24 7f 3d 13 00 00                              JMP $0x133d
 00001332: 70                                             NOP 
 00001333: 70                                             NOP 
+
+
 00001334: 10 43                                          SAVE %r3
 00001336: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
+
+
+;; Clear the CSR
 0000133d: 80 7f 04 40 04 00                              CLRW $0x44004
+
+;; Set up the System Interval timers
 00001343: 87 38 7f 0f 10 04 00                           MOVB &0x38,$0x4100f
 0000134a: 87 6f 74 7f 0f 10 04 00                        MOVB &0x74,$0x4100f
 00001352: 87 5f b4 00 7f 0f 10 04 00                     MOVB &0xb4,$0x4100f
 0000135b: 87 5f f4 00 7f 0b 10 04 00                     MOVB &0xf4,$0x4100b
 00001364: 87 01 7f 0b 10 04 00                           MOVB &0x1,$0x4100b
+
+;; Inhibit the UBUS Timer
 0000136b: 80 7f 24 40 04 00                              CLRW $0x44024
+
+;; Clear the Floppy Control Status Register
 00001371: 83 7f 03 00 04 00                              CLRB $0x40003
+
+;; Turn on the FAILURE (status) LED
 00001377: 84 01 7f 40 40 04 00                           MOVW &0x1,$0x44040
+
+;; Is memory location 0x20003A0 == 0xA11C0DED?
 0000137e: 3c 4f ed 0d 1c a1 7f a0 03 00 02               CMPW &0xa11c0ded,$0x20003a0
+
+;; If it is, go to 0x13B2
 00001389: 7f 29                                          BEB &0x29 <0x13b2>
+
+;; Is memory location 0x20003A0 == 0x5DA6B205?
 0000138b: 3c 4f 05 b2 a6 5d 7f a0 03 00 02               CMPW &0x5da6b205,$0x20003a0
+
+;; If it is, go to 0x13B2
 00001396: 7f 1c                                          BEB &0x1c <0x13b2>
+
+;; Is memory location 0x20003A0 == 0x8BADF00D?
 00001398: 3c 4f 0d f0 ad 8b 7f a0 03 00 02               CMPW &0x8badf00d,$0x20003a0
+
+;; If it is, go to 0x13B2
 000013a3: 7f 0f                                          BEB &0xf <0x13b2>
+
+;; Is memory location 0x20003A0 == 0xDEDICA7E?
 000013a5: 3c 4f 7e ca d1 de 7f a0 03 00 02               CMPW &0xded1ca7e,$0x20003a0
+
+;; If it is NOT, branch to 0x13B8
 000013b0: 77 08                                          BNEB &0x8 <0x13b8>
+
+;; Jump to failure routine.
 000013b2: 24 7f a1 19 00 00                              JMP $0x19a1
+
+
+;; ... Come here from above if nothing is in 0x20003A0.
 000013b8: 80 7f 50 40 04 00                              CLRW $0x44050
 000013be: 70                                             NOP 
+
+;; 
 000013bf: 84 4b 40                                       MOVW %psw,%r0
 000013c2: b8 4f ff ff c3 ff 40                           ANDW2 &0xffc3ffff,%r0
 000013c9: 84 40 4b                                       MOVW %r0,%psw
