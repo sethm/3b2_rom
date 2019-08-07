@@ -39,6 +39,22 @@ few bytes. They are included for completeness.
 
 This is a canonical HEX+ASCII dump of the `400_full.bin` file.
 
+3B2 Debug Monitor (DEMON)
+-------------------------
+
+- 400_DEMON_0.bin
+- 400_DEMON_1.bin
+- 400_DEMON_2.bin
+- 400_DEMON_3.bin
+- 400_DEMON_full.bin
+
+These are binary images of 16KB Intel D27128A EPROMs containing the
+AT&T 3B2 Computer Debug Monitor.
+
+- 400_DEMON.jpg
+
+Photograph of DEMON EPROMs installed in a 3B2/400.
+
 3B2 Model 500
 -------------
 
