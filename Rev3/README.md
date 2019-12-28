@@ -4,7 +4,7 @@ AT&T 3B2 Revision 3 ROM images
 Standard ROMs
 -------------
 
-These images are /ROMs used on Revision 3 System Boards, including the
+These images are ROMs used on Revision 3 System Boards, including the
 3B2/500, 3B2/600, and 3B2/1000.
 
   - ABTRT.bin
