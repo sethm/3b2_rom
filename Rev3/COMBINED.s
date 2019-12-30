@@ -1,27 +1,168 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  Embedded Strings
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;  650 \nEnter name of program to execute [ %s ]: \n
+;;  67d passwd\n
+;;  684 \nenter old password: \n
+;;  69a \nenter new password: \n
+;;  6b0 \nconfirmation: \n
+;;  6c2 newkey\n
+;;  6c9 \nCreating a floppy key to enable clearing of saved NVRAM information\n\n\n
+;;  713 Insert a formatted floppy, then type 'go' (q to quit): \n
+;;  74b \nCreation of floppy key complete\n\n\n
+;;  76e sysdump\n
+;;  776 version\n
+;;  77e \nCreated: %s\n\n
+;;  78c Issue: %08lx\n\n
+;;  79a Release: %s\nLoad: %s\n\n
+;;  7b0 Serial Number: %08lx\n\n\n
+;;  7c9 express\n
+;;  7d5 errorinfo\n
+;;  7df baud\n
+;;  7e6 \nEnter an executable or system file, a directory name,\nor one of the possible firmware program names:\n\nbaud\nedt\nerrorinfo\nexpress\nnewkey\npasswd\nsysdump\nversion\n(q to quit)\n\n\n
+;;  894 *VOID*\n
+;;  89b 	Possible load devices are:\n\n\n
+;;  8b9 Option Number    Slot     Type         Name\n\n
+;;  8e6 -------------------------------------------\n\n
+;;  913       %2d         %2d\n
+;;  929      I/O BUS \n
+;;  937       BUBUS  \n
+;;  945      INTEGRAL\n
+;;  953              \n
+;;  961 *VOID*\n
+;;  968      %10s\n
+;;  974 \nEnter Load Device Option Number \n
+;;  99a *VOID*\n
+;;  9a1  (%s)\n
+;;  9b0 \n%s is not a valid option number.\n\n
+;;  9d3 Possible subdevices are:\n\n\n
+;;  9ee Option Number   Subdevice    Name\n\n
+;;  a11 --------------------------------------------\n\n
+;;  a3f       %2d          %2d\n
+;;  a56 *VOID*\n
+;;  a5d          %10s\n
+;;  a6d \nEnter Subdevice Option Number \n
+;;  a91 *VOID*\n
+;;  a98  (%s)\n
+;;  aa7 \n%s is not a valid option number.\n\n
+;;  aca \nSORRY!\n\n
+;;  b54 Unsupported Baud Rate: %d\n\n
+;;  b6f Enter new rate [%d]: \n
+;;  b88 Unsupported Baud Rate: %s\n\n
+;;  ba3 Change baud rate to %d\n\n
+;;  bbf \nmax input of %d characters, re-enter entire line\n\n
+;;  bf4 0123456789abcdef\n
+;;  c08 (null pointer)\n
+;;  c26 Fw\n\nCurrent System Configuration\n\n\n
+;;  c49 System Board memory size: \n
+;;  c64 %d megabyte(s)\n\n
+;;  c74 #%d - %d megabyte(s), \n
+;;  c8b \n\n%02d - device name = %-9s, \n
+;;  ca9 occurrence = %2d, slot = %02d, ID code = 0x%02x\n\n
+;;  cda integral i/o bus\n
+;;  ceb co-processor\n
+;;  cf8 microbus\n
+;;  d01 buffered microbus\n
+;;  d15      type = %s\n\n
+;;  d25      boot device = %c, board width = %s, word width = %d byte(s)\n\n
+;;  d67 double\n
+;;  d6e single\n
+;;  d75      req Q size = 0x%02x, comp Q size = 0x%02x\n
+;;  da4 , indirect edt\n
+;;  db3 \n     subdevice(s)\n
+;;  dc6 %s#%02d = %-9s, ID code = 0x%02x\n
+;;  de7 \n     \n
+;;  df1 \n\nPress any key to continue\n\n
+;;  e0e \nDONE\n\n\n
+;;  e18 PERIPHERAL I/O %s ERROR AT BLOCK %d, SUBDEVICE %d, SLOT %d\n\n
+;;  e54 READ\n
+;;  e59 WRITE\n
+;;  e5f 04: UNEXPECTED INTERRUPT\n\n
+;;  e7c \nFW ERROR 2-%s\n\n
+;;  e8c                EXECUTION HALTED\n\n
+;;  eb0 01: NVRAM SANITY FAILURE\n
+;;  ec9                DEFAULT VALUES ASSUMED\n               IF REPEATED, CHECK THE BATTERY\n\n
+;;  f1e \nFW WARNING: NVRAM DEFAULT VALUES ASSUMED\n\n\n
+;;  f4a 05: SELF-CONFIGURATION FAILURE\n
+;;  f69 06: BOOT FAILURE\n
+;;  f7a 07: FLOPPY KEY CREATE FAILURE\n
+;;  f98 08: MEMORY TEST FAILURE\n
+;;  fb3 \n\nSELF-CHECK\n\n
+;;  fc1 \nNONE\n\n\n
+;;  fc9 \nTHERMAL SHUTDOWN\n\n
+;;  fdc \nINTERRUPT   LVL = %d\n\n
+;;  ff3 \nEXCEPTION\n\n
+;;  fff \nABORT\n\n
+;; 1007 PC = 0x%08x\nPSW = 0x%08x\nCSER = 0x%08x\n\n
+;; 102f FL1 = 0x%08x\nFL2 = 0x%08x\n\n\n
+;; 104b \nNONE\n\n\n
+;; 1053 \nAutomatic diagnostics are %sabled\n	toggle? (n) \n
+;; 1090 \nFW ERROR 2-11: MEMORY CONFIGURATION OF %d MEGABYTES UNSUPPORTED\nMAXIMUM IS %d MEGABYTES\n\n
+;; 10ea \nFW ERROR 2-13: MEMORY BOARD NOT SUPPORTED ON THIS SYSTEM\n\n
+;; 1125 \nFW ERROR 2-12: MEMORY GAP IN SLOT %d\n\n
+;; 114c \nFW ERROR 2-02: NO LOAD DEVICE IN %s SLOT %d\n\n
+;; 117a I/O BUS\n
+;; 1182 BUBUS\n
+;; 1188 04:  UNEXPECTED INTERRUPT\n
+;; 11a2 03:  UNEXPECTED FAULT\n
+;; 11b8 if CRC error at disk address %08x (%d retries)\n\n
+;; 11f0 \nSYSTEM FAILURE: CONSULT YOUR SYSTEM ADMINISTRATION DOCUMENTATION\n\n\n
+;; 1234 \nFIRMWARE MODE\n\n\n
+;; 1245 /filledt\n
+;; 124e /dgmon\n
+;; 1255 /unix\n
+;; 125c 04: UNEXPECTED INTERRUPT\n\n
+;; 1276 \nTHERMAL SHUTDOWN\n\n
+;; 1289 09: UNEXPECTED SANITY TIME-OUT\n\n
+;; 12a9 10: UNEXPECTED ABORT\n\n
+;; 12c0 03: UNEXPECTED FAULT\n\n
+;; 12d8 05/06/88\n
+;; 12e4 3FP13\n
+;; 12ec 3.2.1\n
+;; 12f4 (c) 1984, 1987, 1988 AT&T\n
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Main Entry Point
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Set up Stack, Frame, Argument, and Interrupt stack pointers
 00001310: 04 7f 44 04 00 02 4c                           MOVAW $0x2000444,%sp
 00001317: 04 7f 44 04 00 02 49                           MOVAW $0x2000444,%fp
 0000131e: 04 7f 44 04 00 02 4a                           MOVAW $0x2000444,%ap
 00001325: 04 7f 44 0c 00 02 4e                           MOVAW $0x2000c44,%isp
-
 ;; Immediately jump to 133d
 0000132c: 24 7f 3d 13 00 00                              JMP $0x133d
 00001332: 70                                             NOP 
 00001333: 70                                             NOP 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
 
 00001334: 10 43                                          SAVE %r3
 00001336: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 
-
-;; Clear the CSR
+;; Be sure that the Power Down Request bit in the CSER is cleared.
 0000133d: 80 7f 04 40 04 00                              CLRW $0x44004
 
+;;
 ;; Set up the System Interval timers
+;;
+
+;; Timer 0 (UNIX Interval Timer)
+;; R/W is LSB/MSB, Mode 4, 16-bit Binary Counter
 00001343: 87 38 7f 0f 10 04 00                           MOVB &0x38,$0x4100f
+
+;; Timer 1 (Sanity Countdown Timer)
+;; R/W is LSB/MSB, Mode 2, 16-bit Binary Counter
 0000134a: 87 6f 74 7f 0f 10 04 00                        MOVB &0x74,$0x4100f
+
+;; Timer 2 (Bus Timeout Countdown Timer)
+;; R/W is LSB/MSB, Mode 2, 16-bit Binary Counter
 00001352: 87 5f b4 00 7f 0f 10 04 00                     MOVB &0xb4,$0x4100f
+
+;; Timer 2 (Bus Timeout Timer)
+;; Set speed to 500KHz (timeout of 2 us)
 0000135b: 87 5f f4 00 7f 0b 10 04 00                     MOVB &0xf4,$0x4100b
 00001364: 87 01 7f 0b 10 04 00                           MOVB &0x1,$0x4100b
 
@@ -61,16 +202,22 @@
 ;; Jump to failure routine.
 000013b2: 24 7f a1 19 00 00                              JMP $0x19a1
 
-
+;;
 ;; ... Come here from above if nothing is in 0x20003A0.
+;;
+
+;; Turn on the floppy drive motor by clearing bit 20 in the CSER
 000013b8: 80 7f 50 40 04 00                              CLRW $0x44050
 000013be: 70                                             NOP 
 
-;; 
+;; Clear CVZN flags in PSW
 000013bf: 84 4b 40                                       MOVW %psw,%r0
 000013c2: b8 4f ff ff c3 ff 40                           ANDW2 &0xffc3ffff,%r0
 000013c9: 84 40 4b                                       MOVW %r0,%psw
 000013cc: 70                                             NOP 
+
+;; These tests ensure that branches on clear CVZN flags work.
+;; If any fail, jump to 0x190A
 000013cd: 77 05                                          BNEB &0x5 <0x13d2>
 000013cf: 7a 3b 05                                       BRH &0x53b <0x190a>
 000013d2: 47 05                                          BGB &0x5 <0x13d7>
@@ -86,10 +233,15 @@
 000013eb: 63 05                                          BVCB &0x5 <0x13f0>
 000013ed: 7a 1d 05                                       BRH &0x51d <0x190a>
 000013f0: 70                                             NOP 
+
+;; Set all four CVZN flags in the PSW
 000013f1: 84 4b 40                                       MOVW %psw,%r0
 000013f4: b0 4f 00 00 3c 00 40                           ORW2 &0x3c0000,%r0
 000013fb: 84 40 4b                                       MOVW %r0,%psw
 000013fe: 70                                             NOP 
+
+;; These tests ensure that branches on set CVZN flags work.
+;; If any fail, jump to 0x190A
 000013ff: 7f 05                                          BEB &0x5 <0x1404>
 00001401: 7a 09 05                                       BRH &0x509 <0x190a>
 00001404: 4f 05                                          BLEB &0x5 <0x1409>
@@ -105,30 +257,46 @@
 0000141d: 6b 05                                          BVSB &0x5 <0x1422>
 0000141f: 7a eb 04                                       BRH &0x4eb <0x190a>
 00001422: 70                                             NOP 
+
+;; Turn on only the Z flag in the PSW
 00001423: 84 4b 40                                       MOVW %psw,%r0
 00001426: b8 4f ff ff c3 ff 40                           ANDW2 &0xffc3ffff,%r0
 0000142d: b0 4f 00 00 10 00 40                           ORW2 &0x100000,%r0
 00001434: 84 40 4b                                       MOVW %r0,%psw
 00001437: 70                                             NOP 
+;; Test the Z flag
 00001438: 43 05                                          BGEB &0x5 <0x143d>
+;; On failure, jump to 0x190A
 0000143a: 7a d0 04                                       BRH &0x4d0 <0x190a>
 0000143d: 70                                             NOP 
+
+;; Turn on only the C flag in the PSW
 0000143e: 84 4b 40                                       MOVW %psw,%r0
 00001441: b8 4f ff ff c3 ff 40                           ANDW2 &0xffc3ffff,%r0
 00001448: b0 4f 00 00 04 00 40                           ORW2 &0x40000,%r0
 0000144f: 84 40 4b                                       MOVW %r0,%psw
 00001452: 70                                             NOP 
+;; Test the C flag
 00001453: 5e 06 00                                       BLEUH &0x6 <0x1459>
+;; On failure, jump to 0x190A
 00001456: 7a b4 04                                       BRH &0x4b4 <0x190a>
 00001459: 70                                             NOP 
+
+;; Turn on only the N flag in the PSW
 0000145a: 84 4b 40                                       MOVW %psw,%r0
 0000145d: b8 4f ff ff c3 ff 40                           ANDW2 &0xffc3ffff,%r0
 00001464: b0 4f 00 00 20 00 40                           ORW2 &0x200000,%r0
 0000146b: 84 40 4b                                       MOVW %r0,%psw
 0000146e: 70                                             NOP 
+;; Test the N flag
 0000146f: 4b 05                                          BLB &0x5 <0x1474>
+;; On failure, jump to 0x190A
 00001471: 7a 99 04                                       BRH &0x499 <0x190a>
+
+;; Move the pattern 0xffffffff through all of the registers
 00001474: 84 ff 40                                       MOVW &-1,%r0
+
+;; Enter a testing loop...
 00001477: 84 40 41                                       MOVW %r0,%r1
 0000147a: 84 41 42                                       MOVW %r1,%r2
 0000147d: 84 42 43                                       MOVW %r2,%r3
@@ -138,11 +306,21 @@
 00001489: 84 46 47                                       MOVW %r6,%r7
 0000148c: 84 47 48                                       MOVW %r7,%r8
 0000148f: 3c 40 48                                       CMPW %r0,%r8
+;; If any of the moves failed, jump to 0x190A
 00001492: 76 78 04                                       BNEH &0x478 <0x190a>
+;;  Shift R0 left by one (e.g. 0xffffffff -> 0xfffffffe)
 00001495: d0 01 40 40                                    LLSW3 &0x1,%r0,%r0
+;; While %r0 is != 0 (high bit is set, which it always will be until == 0)
+;; keep jumping back to 0x1477 and testing moves from %r0 through %r8.
 00001499: 43 04                                          BGEB &0x4 <0x149d>
 0000149b: 7b dc                                          BRB &0xdc <0x1477>
+
+;; Once %r0 becomes 0, start a new test.
+
+;; Move the pattern 0xfffffffe into %r0
 0000149d: 84 fe 40                                       MOVW &-2,%r0
+
+;; Start a testing loop...
 000014a0: 88 40 41                                       MCOMW %r0,%r1
 000014a3: 88 41 42                                       MCOMW %r1,%r2
 000014a6: 88 42 43                                       MCOMW %r2,%r3
@@ -163,9 +341,14 @@
 000014d3: 3c 40 48                                       CMPW %r0,%r8
 000014d6: 76 34 04                                       BNEH &0x434 <0x190a>
 000014d9: d0 01 40 40                                    LLSW3 &0x1,%r0,%r0
+
+;; While %r0 is > 0, keep going back to 0x14a0
+
 000014dd: 4b 07                                          BLB &0x7 <0x14e4>
 000014df: 88 40 40                                       MCOMW %r0,%r0
 000014e2: 7b be                                          BRB &0xbe <0x14a0>
+
+;; When the high bit of %r0 gets set, go on.
 000014e4: 84 49 41                                       MOVW %fp,%r1
 000014e7: 84 4a 42                                       MOVW %ap,%r2
 000014ea: 84 4c 43                                       MOVW %sp,%r3
@@ -432,6 +615,10 @@
 00001994: 18 43                                          RESTORE %r3
 00001996: 08                                             RET 
 00001997: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00001998: 10 45                                          SAVE %r5
 0000199a: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 000019a1: 84 4f a0 0e 00 02 48                           MOVW &0x2000ea0,%r8
@@ -492,6 +679,10 @@
 00001b2d: 08                                             RET 
 00001b2e: 70                                             NOP 
 00001b2f: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00001b30: 10 47                                          SAVE %r7
 00001b32: 9c 4f 08 00 00 00 4c                           ADDW2 &0x8,%sp
 00001b39: 84 4f 00 90 04 00 7f 18 04 00 02               MOVW &0x49000,$0x2000418
@@ -740,6 +931,10 @@
 000020c7: 08                                             RET 
 000020c8: 70                                             NOP 
 000020c9: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 000020ca: 10 49                                          SAVE %fp
 000020cc: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 000020d3: 38 7f 60 40 04 00 04                           BITW $0x44060,&0x4
@@ -754,10 +949,18 @@
 0000210a: 18 49                                          RESTORE %fp
 0000210c: 08                                             RET 
 0000210d: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 0000210e: 10 49                                          SAVE %fp
 00002110: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00002117: 18 49                                          RESTORE %fp
 00002119: 08                                             RET 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 0000211a: 10 48                                          SAVE %r8
 0000211c: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00002123: 84 4f 00 40 00 02 48                           MOVW &0x2004000,%r8
@@ -794,6 +997,10 @@
 00002197: 08                                             RET 
 00002198: 70                                             NOP 
 00002199: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 0000219a: 10 49                                          SAVE %fp
 0000219c: 9c 4f 04 00 00 00 4c                           ADDW2 &0x4,%sp
 000021a3: 87 20 7f 02 90 04 00                           MOVB &0x20,$0x49002
@@ -918,6 +1125,31 @@
 00002429: 08                                             RET 
 0000242a: 70                                             NOP 
 0000242b: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function:
+;;
+;;   Compute installed memory size.
+;;
+;;   - Probes each SnEQUIP line from MEM0 to MEM3
+;;   - While SnEQUIP is 1:
+;;     - Probes SSIZE[0,1] for that slot
+;;     - Computes size of the equipped card based on truth table:
+;;         [0,0] = 2.0 MB
+;;         [0,1] = 8.0 MB
+;;         [1,0] = 4.0 MB
+;;         [1,1] = 16.0 MB
+;;     - Adds the size to the total amount of memory in 20(%fp)
+;;     - Returns total size in %r1
+;;
+;;  The pertinent details are in the memory slot latches at 0x4d000, 0x4d004,
+;;  0x4d008, and 0x4d00c. The bottom three bits tell all!
+;;
+;;         ---+---+---+---+
+;;         ...|EQP|SZ1|SZ0|
+;;         ---+---+---+---+
+;;
+
 0000242c: 10 49                                          SAVE %fp
 0000242e: 9c 4f 18 00 00 00 4c                           ADDW2 &0x18,%sp
 00002435: 80 c9 14                                       CLRW 20(%fp)
@@ -927,31 +1159,78 @@
 0000244d: 84 4f 00 00 00 01 6c                           MOVW &0x1000000,12(%fp)
 00002454: 80 c9 10                                       CLRW 16(%fp)
 00002457: 7b 10                                          BRB &0x10 <0x2467>
+
+;; Clears an array of words from 0x200042C to 0x200043C using the
+;; index pointer in 16(%fp) [ranges from 0 to 3]
+;;
+;;     0x200042c := 0
+;;     0x2000430 := 0
+;;     0x2000434 := 0
+;;     0x2000438 := 0
+;;    
 00002459: d0 02 c9 10 40                                 LLSW3 &0x2,16(%fp),%r0
 0000245e: 80 80 2c 04 00 02                              CLRW 0x200042c(%r0)
 00002464: 90 c9 10                                       INCW 16(%fp)
 00002467: 3c 04 c9 10                                    CMPW &0x4,16(%fp)
 0000246b: 5b ee                                          BLUB &0xee <0x2459>
+
+;; Index pointer in 16(%fp) gets set back to 0
 0000246d: 80 c9 10                                       CLRW 16(%fp)
+
+
+;; The loop below is a bit of spaghetti code, but essentially,
+;; in pseudocode:
+;;
+;;  while bit 2 in word from 4d000 to 4d00c is 1:
+;;      
+
+;; Jump to 24BA
 00002470: 7b 4a                                          BRB &0x4a <0x24ba>
+
+;; Multiply pointer in 16(%fp) by 4 bytes
 00002472: d0 02 c9 10 40                                 LLSW3 &0x2,16(%fp),%r0
+
+;; Read register at 4d000, 4d004, 4d008, and 4d00c.
+;;
+;; Extract bit 2 (zero-indexed) and put in %r0, such that %r0 will be
+;; either 1 or 0.
 00002477: cc 00 02 80 00 d0 04 00 40                     EXTFW &0x0,&0x2,0x4d000(%r0),%r0
+
+;; If %r0 == 0, jump to 24B5 
 00002480: 28 40                                          TSTW %r0
 00002482: 7f 33                                          BEB &0x33 <0x24b5>
+
+;; Otherwise: make %r0 := 0, 4, 8, C
 00002484: d0 02 c9 10 40                                 LLSW3 &0x2,16(%fp),%r0
+;; Move 0x200000 into %r1
 00002489: 04 59 41                                       MOVAW (%fp),%r1
+;; Make %r2 := 0, 4, 8, C
 0000248c: d0 02 c9 10 42                                 LLSW3 &0x2,16(%fp),%r2
+
+;; Extract the 2 bits from 4d000[0]-4d00C[1]
 00002491: cc 01 00 82 00 d0 04 00 42                     EXTFW &0x1,&0x0,0x4d000(%r2),%r2
 0000249a: d0 02 42 42                                    LLSW3 &0x2,%r2,%r2
+;; Add those two bits (b00, b01, b10, or b11) to the address in %r1
 0000249e: 9c 42 41                                       ADDW2 %r2,%r1
+;; Move the word pointed at by that address into array at 200042c
 000024a1: 84 51 80 2c 04 00 02                           MOVW (%r1),0x200042c(%r0)
+;; Make Read that back into %r0
 000024a8: 84 80 2c 04 00 02 40                           MOVW 0x200042c(%r0),%r0
+;; Add that to 20(%fp), which started at 0
 000024af: 9c 40 c9 14                                    ADDW2 %r0,20(%fp)
 000024b3: 7b 04                                          BRB &0x4 <0x24b7>
+
+;; Exit the loop immediately
 000024b5: 7b 0b                                          BRB &0xb <0x24c0>
+
+;; Increment the pointer and loop back to 2472
 000024b7: 90 c9 10                                       INCW 16(%fp)
+
+;; Enter loop. If pointer in 16(%fp) is < 4, go to 2472
 000024ba: 3c 04 c9 10                                    CMPW &0x4,16(%fp)
 000024be: 5b b4                                          BLUB &0xb4 <0x2472>
+
+;; Exit
 000024c0: 84 c9 14 40                                    MOVW 20(%fp),%r0
 000024c4: 7b 02                                          BRB &0x2 <0x24c6>
 000024c6: 18 49                                          RESTORE %fp
@@ -964,6 +1243,10 @@
 000024d5: 70                                             NOP 
 000024d6: 70                                             NOP 
 000024d7: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 000024d8: 10 43                                          SAVE %r3
 000024da: 9c 4f c0 01 00 00 4c                           ADDW2 &0x1c0,%sp
 000024e1: a0 4f 0d 30 04 00                              PUSHW &0x4300d
@@ -1803,6 +2086,10 @@
 00003319: 70                                             NOP 
 0000331a: 70                                             NOP 
 0000331b: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 0000331c: 10 49                                          SAVE %fp
 0000331e: 9c 4f 04 00 00 00 4c                           ADDW2 &0x4,%sp
 00003325: 82 59                                          CLRH (%fp)
@@ -1836,6 +2123,10 @@
 0000336f: 70                                             NOP 
 00003370: 70                                             NOP 
 00003371: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00003372: 10 49                                          SAVE %fp
 00003374: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 0000337b: a0 4f ca 0a 00 00                              PUSHW &0xaca
@@ -1846,6 +2137,10 @@
 00003399: 08                                             RET 
 0000339a: 70                                             NOP 
 0000339b: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 0000339c: 10 49                                          SAVE %fp
 0000339e: 9c 4f 04 00 00 00 4c                           ADDW2 &0x4,%sp
 000033a5: a0 4f 80 30 04 00                              PUSHW &0x43080
@@ -1888,6 +2183,10 @@
 00003439: 2c cc f8 7f 60 35 00 00                        CALL -8(%sp),$0x3560
 00003441: 18 49                                          RESTORE %fp
 00003443: 08                                             RET 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00003444: 10 48                                          SAVE %r8
 00003446: 9c 4f 04 00 00 00 4c                           ADDW2 &0x4,%sp
 0000344d: 86 01 48                                       MOVH &0x1,%r8
@@ -1959,6 +2258,10 @@
 0000355d: 70                                             NOP 
 0000355e: 70                                             NOP 
 0000355f: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00003560: 10 47                                          SAVE %r7
 00003562: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00003569: 86 01 48                                       MOVH &0x1,%r8
@@ -2051,6 +2354,10 @@
 000036a1: 08                                             RET 
 000036a2: 70                                             NOP 
 000036a3: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 000036a4: 10 49                                          SAVE %fp
 000036a6: 9c 4f 54 00 00 00 4c                           ADDW2 &0x54,%sp
 000036ad: a0 4f 80 30 04 00                              PUSHW &0x43080
@@ -2097,6 +2404,10 @@
 00003756: 70                                             NOP 
 00003757: 70                                             NOP 
 00003758: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00003759: 10 49                                          SAVE %fp
 0000375b: 84 5a 42                                       MOVW (%ap),%r2
 0000375e: 84 74 41                                       MOVW 4(%ap),%r1
@@ -2198,6 +2509,10 @@
 00003962: 2c 5c 7f 48 6f 00 00                           CALL (%sp),$0x6f48
 00003969: 30 c8                                          RETPS 
 0000396b: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 0000396c: 10 49                                          SAVE %fp
 0000396e: 9c 4f 04 00 00 00 4c                           ADDW2 &0x4,%sp
 00003975: 7b 21                                          BRB &0x21 <0x3996>
@@ -2235,6 +2550,10 @@
 000039eb: 7b 02                                          BRB &0x2 <0x39ed>
 000039ed: 18 49                                          RESTORE %fp
 000039ef: 08                                             RET 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 000039f0: 10 47                                          SAVE %r7
 000039f2: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 000039f9: 2b ef c4 04 00 00                              TSTB *$0x4c4
@@ -2330,6 +2649,10 @@
 00003b48: 18 47                                          RESTORE %r7
 00003b4a: 08                                             RET 
 00003b4b: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00003b4c: 10 49                                          SAVE %fp
 00003b4e: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00003b55: 2c 5c ef 2c 00 00 02                           CALL (%sp),*$0x200002c
@@ -2340,6 +2663,10 @@
 00003b65: 70                                             NOP 
 00003b66: 70                                             NOP 
 00003b67: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00003b68: 10 49                                          SAVE %fp
 00003b6a: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00003b71: 2b ef 10 05 00 00                              TSTB *$0x510
@@ -2361,6 +2688,12 @@
 00003bb1: 08                                             RET 
 00003bb2: 70                                             NOP 
 00003bb3: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+;;
+;; Print a string
+
 00003bb4: 10 49                                          SAVE %fp
 00003bb6: 9c 4f 38 00 00 00 4c                           ADDW2 &0x38,%sp
 00003bbd: 2b ef c4 04 00 00                              TSTB *$0x4c4
@@ -2636,6 +2969,10 @@
 00003f61: 70                                             NOP 
 00003f62: 70                                             NOP 
 00003f63: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00003f64: 10 49                                          SAVE %fp
 00003f66: 9c 4f 04 00 00 00 4c                           ADDW2 &0x4,%sp
 00003f6d: 2b ef 10 05 00 00                              TSTB *$0x510
@@ -2742,6 +3079,10 @@
 000040dd: 08                                             RET 
 000040de: 70                                             NOP 
 000040df: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 000040e0: 10 45                                          SAVE %r5
 000040e2: 9c 4f 10 00 00 00 4c                           ADDW2 &0x10,%sp
 000040e9: 04 78 40                                       MOVAW 8(%ap),%r0
@@ -2968,6 +3309,10 @@
 00004379: 70                                             NOP 
 0000437a: 70                                             NOP 
 0000437b: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 0000437c: 10 49                                          SAVE %fp
 0000437e: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00004385: 7b 05                                          BRB &0x5 <0x438a>
@@ -2994,6 +3339,10 @@
 000043c1: 08                                             RET 
 000043c2: 70                                             NOP 
 000043c3: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 000043c4: 10 49                                          SAVE %fp
 000043c6: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 000043cd: 3f 30 73                                       CMPB &0x30,3(%ap)
@@ -3014,6 +3363,10 @@
 000043fc: 18 49                                          RESTORE %fp
 000043fe: 08                                             RET 
 000043ff: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00004400: 10 48                                          SAVE %r8
 00004402: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00004409: 87 7b e0 40                                    MOVB 11(%ap),{uword}%r0
@@ -3071,6 +3424,10 @@
 00004495: 70                                             NOP 
 00004496: 70                                             NOP 
 00004497: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00004498: 10 49                                          SAVE %fp
 0000449a: 9c 4f 08 00 00 00 4c                           ADDW2 &0x8,%sp
 000044a1: 87 77 e0 40                                    MOVB 7(%ap),{uword}%r0
@@ -3091,6 +3448,10 @@
 000044cd: 08                                             RET 
 000044ce: 70                                             NOP 
 000044cf: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 000044d0: 10 49                                          SAVE %fp
 000044d2: 9c 4f 54 00 00 00 4c                           ADDW2 &0x54,%sp
 000044d9: a0 00                                          PUSHW &0x0
@@ -3343,6 +3704,10 @@
 000048d9: 2c cc fc af 09 00                              CALL -4(%sp),0x9(%pc)
 000048df: 18 49                                          RESTORE %fp
 000048e1: 08                                             RET 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 000048e2: 10 49                                          SAVE %fp
 000048e4: 9c 4f 04 00 00 00 4c                           ADDW2 &0x4,%sp
 000048eb: 87 73 7f 9d 0c 00 02                           MOVB 3(%ap),$0x2000c9d
@@ -3361,6 +3726,10 @@
 00004928: 18 49                                          RESTORE %fp
 0000492a: 08                                             RET 
 0000492b: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 0000492c: 10 48                                          SAVE %r8
 0000492e: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00004935: 3c 4f 00 30 04 00 5a                           CMPW &0x43000,(%ap)
@@ -3411,6 +3780,10 @@
 000049d9: 70                                             NOP 
 000049da: 70                                             NOP 
 000049db: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 000049dc: 10 48                                          SAVE %r8
 000049de: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 000049e5: 3c 4f 00 30 04 00 74                           CMPW &0x43000,4(%ap)
@@ -3461,6 +3834,10 @@
 00004a89: 70                                             NOP 
 00004a8a: 70                                             NOP 
 00004a8b: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00004a8c: 10 46                                          SAVE %r6
 00004a8e: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00004a95: 82 48                                          CLRH %r8
@@ -3570,6 +3947,10 @@
 00004c0d: 70                                             NOP 
 00004c0e: 70                                             NOP 
 00004c0f: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00004c10: 10 49                                          SAVE %fp
 00004c12: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00004c19: 87 01 7f 84 12 00 02                           MOVB &0x1,$0x2001284
@@ -3578,6 +3959,10 @@
 00004c29: 08                                             RET 
 00004c2a: 70                                             NOP 
 00004c2b: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00004c2c: 10 49                                          SAVE %fp
 00004c2e: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00004c35: 86 e2 72 e0 40                                 MOVH {uhalf}2(%ap),{uword}%r0
@@ -3588,6 +3973,10 @@
 00004c4b: 7b 02                                          BRB &0x2 <0x4c4d>
 00004c4d: 18 49                                          RESTORE %fp
 00004c4f: 08                                             RET 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00004c50: 10 49                                          SAVE %fp
 00004c52: 9c 4f 04 00 00 00 4c                           ADDW2 &0x4,%sp
 00004c59: 83 7f 84 12 00 02                              CLRB $0x2001284
@@ -3611,6 +4000,7 @@
 00004cc4: 80 ef 8c 04 00 00                              CLRW *$0x48c
 00004cca: 80 7f 44 40 04 00                              CLRW $0x44044
 00004cd0: 7b 00                                          BRB &0x0 <0x4cd0>
+
 00004cd2: 2b 7f 84 12 00 02                              TSTB $0x2001284
 00004cd8: 7f 1b                                          BEB &0x1b <0x4cf3>
 00004cda: 87 7f 0f 90 04 00 59                           MOVB $0x4900f,(%fp)
@@ -3632,6 +4022,10 @@
 00004d25: 08                                             RET 
 00004d26: 70                                             NOP 
 00004d27: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00004d28: 10 49                                          SAVE %fp
 00004d2a: 9c 4f 08 00 00 00 4c                           ADDW2 &0x8,%sp
 00004d31: 28 5a                                          TSTW (%ap)
@@ -3733,6 +4127,10 @@
 00004ec5: 08                                             RET 
 00004ec6: 70                                             NOP 
 00004ec7: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00004ec8: 10 49                                          SAVE %fp
 00004eca: 9c 4f 08 00 00 00 4c                           ADDW2 &0x8,%sp
 00004ed1: 87 73 e0 40                                    MOVB 3(%ap),{uword}%r0
@@ -3787,6 +4185,10 @@
 00004f9f: 7b 02                                          BRB &0x2 <0x4fa1>
 00004fa1: 18 49                                          RESTORE %fp
 00004fa3: 08                                             RET 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00004fa4: 10 49                                          SAVE %fp
 00004fa6: 9c 4f 08 00 00 00 4c                           ADDW2 &0x8,%sp
 00004fad: 70                                             NOP 
@@ -3883,6 +4285,10 @@
 00005123: 08                                             RET 
 00005124: 70                                             NOP 
 00005125: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00005126: 10 49                                          SAVE %fp
 00005128: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 0000512f: 2b ef 10 05 00 00                              TSTB *$0x510
@@ -3921,6 +4327,10 @@
 000051dc: 18 49                                          RESTORE %fp
 000051de: 08                                             RET 
 000051df: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 000051e0: 10 49                                          SAVE %fp
 000051e2: 9c 4f 04 00 00 00 4c                           ADDW2 &0x4,%sp
 000051e9: 80 7f a8 12 00 02                              CLRW $0x20012a8
@@ -3952,8 +4362,13 @@
 00005241: 08                                             RET 
 00005242: 70                                             NOP 
 00005243: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+
 00005244: 10 49                                          SAVE %fp
 00005246: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
+;; Call to set up CSER
 0000524d: 2c 5c af 31 01                                 CALL (%sp),0x131(%pc)
 00005252: 87 01 ef c4 04 00 00                           MOVB &0x1,*$0x4c4
 00005259: 38 7f 98 0c 00 02 4f 00 00 00 20               BITW $0x2000c98,&0x20000000
@@ -4008,6 +4423,13 @@
 0000537b: 70                                             NOP 
 0000537c: 70                                             NOP 
 0000537d: 70                                             NOP 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+;;
+;; Set up CSER
+;;
+
 0000537e: 10 49                                          SAVE %fp
 00005380: 9c 4f 04 00 00 00 4c                           ADDW2 &0x4,%sp
 00005387: 87 01 7f 0d 80 04 00                           MOVB &0x1,$0x4800d
@@ -4043,6 +4465,8 @@
 00005446: 18 49                                          RESTORE %fp
 00005448: 08                                             RET 
 00005449: 70                                             NOP 
+
+
 0000544a: 10 49                                          SAVE %fp
 0000544c: 9c 4f 1c 00 00 00 4c                           ADDW2 &0x1c,%sp
 00005453: a0 4f df 33 04 00                              PUSHW &0x433df
@@ -5535,6 +5959,7 @@
 000069fd: 70                                             NOP 
 000069fe: 70                                             NOP 
 000069ff: 70                                             NOP 
+
 00006a00: 10 49                                          SAVE %fp
 00006a02: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00006a09: 84 4f a0 03 00 02 7f 08 00 00 02               MOVW &0x20003a0,$0x2000008
@@ -5551,6 +5976,8 @@
 00006a79: 08                                             RET 
 00006a7a: 70                                             NOP 
 00006a7b: 70                                             NOP 
+
+
 00006a7c: 10 47                                          SAVE %r7
 00006a7e: 9c 4f 5c 00 00 00 4c                           ADDW2 &0x5c,%sp
 00006a85: 87 01 ef c4 04 00 00                           MOVB &0x1,*$0x4c4
