@@ -2,125 +2,130 @@
 ;;  Embedded Strings
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-;;  650 \nEnter name of program to execute [ %s ]: \n
-;;  67d passwd\n
-;;  684 \nenter old password: \n
-;;  69a \nenter new password: \n
-;;  6b0 \nconfirmation: \n
-;;  6c2 newkey\n
-;;  6c9 \nCreating a floppy key to enable clearing of saved NVRAM information\n\n\n
-;;  713 Insert a formatted floppy, then type 'go' (q to quit): \n
-;;  74b \nCreation of floppy key complete\n\n\n
-;;  76e sysdump\n
-;;  776 version\n
-;;  77e \nCreated: %s\n\n
-;;  78c Issue: %08lx\n\n
-;;  79a Release: %s\nLoad: %s\n\n
-;;  7b0 Serial Number: %08lx\n\n\n
-;;  7c9 express\n
-;;  7d5 errorinfo\n
-;;  7df baud\n
-;;  7e6 \nEnter an executable or system file, a directory name,\nor one of the possible firmware program names:\n\nbaud\nedt\nerrorinfo\nexpress\nnewkey\npasswd\nsysdump\nversion\n(q to quit)\n\n\n
-;;  894 *VOID*\n
-;;  89b 	Possible load devices are:\n\n\n
-;;  8b9 Option Number    Slot     Type         Name\n\n
-;;  8e6 -------------------------------------------\n\n
-;;  913       %2d         %2d\n
-;;  929      I/O BUS \n
-;;  937       BUBUS  \n
-;;  945      INTEGRAL\n
-;;  953              \n
-;;  961 *VOID*\n
-;;  968      %10s\n
-;;  974 \nEnter Load Device Option Number \n
-;;  99a *VOID*\n
-;;  9a1  (%s)\n
-;;  9b0 \n%s is not a valid option number.\n\n
-;;  9d3 Possible subdevices are:\n\n\n
-;;  9ee Option Number   Subdevice    Name\n\n
-;;  a11 --------------------------------------------\n\n
-;;  a3f       %2d          %2d\n
-;;  a56 *VOID*\n
-;;  a5d          %10s\n
-;;  a6d \nEnter Subdevice Option Number \n
-;;  a91 *VOID*\n
-;;  a98  (%s)\n
-;;  aa7 \n%s is not a valid option number.\n\n
-;;  aca \nSORRY!\n\n
-;;  b54 Unsupported Baud Rate: %d\n\n
-;;  b6f Enter new rate [%d]: \n
-;;  b88 Unsupported Baud Rate: %s\n\n
-;;  ba3 Change baud rate to %d\n\n
-;;  bbf \nmax input of %d characters, re-enter entire line\n\n
-;;  bf4 0123456789abcdef\n
-;;  c08 (null pointer)\n
-;;  c26 Fw\n\nCurrent System Configuration\n\n\n
-;;  c49 System Board memory size: \n
-;;  c64 %d megabyte(s)\n\n
-;;  c74 #%d - %d megabyte(s), \n
-;;  c8b \n\n%02d - device name = %-9s, \n
-;;  ca9 occurrence = %2d, slot = %02d, ID code = 0x%02x\n\n
-;;  cda integral i/o bus\n
-;;  ceb co-processor\n
-;;  cf8 microbus\n
-;;  d01 buffered microbus\n
-;;  d15      type = %s\n\n
-;;  d25      boot device = %c, board width = %s, word width = %d byte(s)\n\n
-;;  d67 double\n
-;;  d6e single\n
-;;  d75      req Q size = 0x%02x, comp Q size = 0x%02x\n
-;;  da4 , indirect edt\n
-;;  db3 \n     subdevice(s)\n
-;;  dc6 %s#%02d = %-9s, ID code = 0x%02x\n
-;;  de7 \n     \n
-;;  df1 \n\nPress any key to continue\n\n
-;;  e0e \nDONE\n\n\n
-;;  e18 PERIPHERAL I/O %s ERROR AT BLOCK %d, SUBDEVICE %d, SLOT %d\n\n
-;;  e54 READ\n
-;;  e59 WRITE\n
-;;  e5f 04: UNEXPECTED INTERRUPT\n\n
-;;  e7c \nFW ERROR 2-%s\n\n
-;;  e8c                EXECUTION HALTED\n\n
-;;  eb0 01: NVRAM SANITY FAILURE\n
-;;  ec9                DEFAULT VALUES ASSUMED\n               IF REPEATED, CHECK THE BATTERY\n\n
-;;  f1e \nFW WARNING: NVRAM DEFAULT VALUES ASSUMED\n\n\n
-;;  f4a 05: SELF-CONFIGURATION FAILURE\n
-;;  f69 06: BOOT FAILURE\n
-;;  f7a 07: FLOPPY KEY CREATE FAILURE\n
-;;  f98 08: MEMORY TEST FAILURE\n
-;;  fb3 \n\nSELF-CHECK\n\n
-;;  fc1 \nNONE\n\n\n
-;;  fc9 \nTHERMAL SHUTDOWN\n\n
-;;  fdc \nINTERRUPT   LVL = %d\n\n
-;;  ff3 \nEXCEPTION\n\n
-;;  fff \nABORT\n\n
-;; 1007 PC = 0x%08x\nPSW = 0x%08x\nCSER = 0x%08x\n\n
-;; 102f FL1 = 0x%08x\nFL2 = 0x%08x\n\n\n
-;; 104b \nNONE\n\n\n
-;; 1053 \nAutomatic diagnostics are %sabled\n	toggle? (n) \n
-;; 1090 \nFW ERROR 2-11: MEMORY CONFIGURATION OF %d MEGABYTES UNSUPPORTED\nMAXIMUM IS %d MEGABYTES\n\n
-;; 10ea \nFW ERROR 2-13: MEMORY BOARD NOT SUPPORTED ON THIS SYSTEM\n\n
-;; 1125 \nFW ERROR 2-12: MEMORY GAP IN SLOT %d\n\n
-;; 114c \nFW ERROR 2-02: NO LOAD DEVICE IN %s SLOT %d\n\n
-;; 117a I/O BUS\n
-;; 1182 BUBUS\n
-;; 1188 04:  UNEXPECTED INTERRUPT\n
-;; 11a2 03:  UNEXPECTED FAULT\n
-;; 11b8 if CRC error at disk address %08x (%d retries)\n\n
-;; 11f0 \nSYSTEM FAILURE: CONSULT YOUR SYSTEM ADMINISTRATION DOCUMENTATION\n\n\n
-;; 1234 \nFIRMWARE MODE\n\n\n
-;; 1245 /filledt\n
-;; 124e /dgmon\n
-;; 1255 /unix\n
-;; 125c 04: UNEXPECTED INTERRUPT\n\n
-;; 1276 \nTHERMAL SHUTDOWN\n\n
-;; 1289 09: UNEXPECTED SANITY TIME-OUT\n\n
-;; 12a9 10: UNEXPECTED ABORT\n\n
-;; 12c0 03: UNEXPECTED FAULT\n\n
-;; 12d8 05/06/88\n
-;; 12e4 3FP13\n
-;; 12ec 3.2.1\n
-;; 12f4 (c) 1984, 1987, 1988 AT&T\n
+;;  648 SBD
+;;  64c FD5
+;;  650 \nEnter name of program to execute [ %s ]: 
+;;  67d passwd
+;;  684 \nenter old password: 
+;;  69a \nenter new password: 
+;;  6b0 \nconfirmation: 
+;;  6c2 newkey
+;;  6c9 \nCreating a floppy key to enable clearing of saved NVRAM information\n\n
+;;  710 go
+;;  713 Insert a formatted floppy, then type 'go' (q to quit): 
+;;  74b \nCreation of floppy key complete\n\n
+;;  76e sysdump
+;;  776 version
+;;  77e \nCreated: %s\n
+;;  78c Issue: %08lx\n
+;;  79a Release: %s\nLoad: %s\n
+;;  7b0 Serial Number: %08lx\n\n
+;;  7c9 express
+;;  7d5 errorinfo
+;;  7df baud
+;;  7e6 \nEnter an executable or system file, a directory name,\nor one of the possible firmware program names:\n\nbaud\nedt\nerrorinfo\nexpress\nnewkey\npasswd\nsysdump\nversion\n(q to quit)\n\n
+;;  894 *VOID*
+;;  89b 	Possible load devices are:\n\n
+;;  8b9 Option Number    Slot     Type         Name\n
+;;  8e6 -------------------------------------------\n
+;;  913       %2d         %2d
+;;  929      I/O BUS 
+;;  937       BUBUS  
+;;  945      INTEGRAL
+;;  953              
+;;  961 *VOID*
+;;  968      %10s
+;;  974 \nEnter Load Device Option Number 
+;;  9a6 [%d
+;;  99a *VOID*
+;;  9a1  (%s)
+;;  9a7 ]:
+;;  9b0 \n%s is not a valid option number.\n
+;;  9d3 Possible subdevices are:\n\n
+;;  9ee Option Number   Subdevice    Name\n
+;;  a11 --------------------------------------------\n
+;;  a3f       %2d          %2d
+;;  a56 *VOID*
+;;  a5d          %10s
+;;  a6d \nEnter Subdevice Option Number 
+;;  a91 *VOID*
+;;  a98  (%s)
+;;  aa7 \n%s is not a valid option number.\n
+;;  aca \nSORRY!\n
+;;  b54 Unsupported Baud Rate: %d\n
+;;  b6f Enter new rate [%d]: 
+;;  b88 Unsupported Baud Rate: %s\n
+;;  ba3 Change baud rate to %d\n
+;;  bbf \nmax input of %d characters, re-enter entire line\n
+;;  bf4 0123456789abcdef
+;;  c08 (null pointer)
+;;  c26 Fw\n\nCurrent System Configuration\n\n
+;;  c49 System Board memory size: 
+;;  c64 %d megabyte(s)\n
+;;  c74 #%d - %d megabyte(s), 
+;;  c8b \n\n%02d - device name = %-9s, 
+;;  ca9 occurrence = %2d, slot = %02d, ID code = 0x%02x\n
+;;  cda integral i/o bus
+;;  ceb co-processor
+;;  cf8 microbus
+;;  d01 buffered microbus
+;;  d15      type = %s\n
+;;  d25      boot device = %c, board width = %s, word width = %d byte(s)\n
+;;  d67 double
+;;  d6e single
+;;  d75      req Q size = 0x%02x, comp Q size = 0x%02x
+;;  da4 , indirect edt
+;;  db3 \n     subdevice(s)
+;;  dc6 %s#%02d = %-9s, ID code = 0x%02x
+;;  de7 \n     
+;;  df1 \n\nPress any key to continue\n
+;;  e0e \nDONE\n\n
+;;  e18 PERIPHERAL I/O %s ERROR AT BLOCK %d, SUBDEVICE %d, SLOT %d\n
+;;  e54 READ
+;;  e59 WRITE
+;;  e5f 04: UNEXPECTED INTERRUPT\n
+;;  e7c \nFW ERROR 2-%s\n
+;;  e8c                EXECUTION HALTED\n
+;;  eb0 01: NVRAM SANITY FAILURE
+;;  ec9                DEFAULT VALUES ASSUMED\n               IF REPEATED, CHECK THE BATTERY\n
+;;  f1e \nFW WARNING: NVRAM DEFAULT VALUES ASSUMED\n\n
+;;  f4a 05: SELF-CONFIGURATION FAILURE
+;;  f69 06: BOOT FAILURE
+;;  f7a 07: FLOPPY KEY CREATE FAILURE
+;;  f98 08: MEMORY TEST FAILURE
+;;  fb3 \n\nSELF-CHECK\n
+;;  fc1 \nNONE\n\n
+;;  fc9 \nTHERMAL SHUTDOWN\n
+;;  fdc \nINTERRUPT   LVL = %d\n
+;;  ff3 \nEXCEPTION\n
+;;  fff \nABORT\n
+;; 1007 PC = 0x%08x\nPSW = 0x%08x\nCSER = 0x%08x\n
+;; 102f FL1 = 0x%08x\nFL2 = 0x%08x\n\n
+;; 104b \nNONE\n\n
+;; 1053 \nAutomatic diagnostics are %sabled\n	toggle? (n) 
+;; 1090 \nFW ERROR 2-11: MEMORY CONFIGURATION OF %d MEGABYTES UNSUPPORTED\nMAXIMUM IS %d MEGABYTES\n
+;; 10ea \nFW ERROR 2-13: MEMORY BOARD NOT SUPPORTED ON THIS SYSTEM\n
+;; 1125 \nFW ERROR 2-12: MEMORY GAP IN SLOT %d\n
+;; 114c \nFW ERROR 2-02: NO LOAD DEVICE IN %s SLOT %d\n
+;; 117a I/O BUS
+;; 1182 BUBUS
+;; 1188 04:  UNEXPECTED INTERRUPT
+;; 11a2 03:  UNEXPECTED FAULT
+;; 11b8 if CRC error at disk address %08x (%d retries)\n
+;; 11f0 \nSYSTEM FAILURE: CONSULT YOUR SYSTEM ADMINISTRATION DOCUMENTATION\n\n
+;; 1234 \nFIRMWARE MODE\n\n
+;; 1245 /filledt
+;; 124e /dgmon
+;; 1255 /unix
+;; 125c 04: UNEXPECTED INTERRUPT\n
+;; 1276 \nTHERMAL SHUTDOWN\n
+;; 1289 09: UNEXPECTED SANITY TIME-OUT\n
+;; 12a9 10: UNEXPECTED ABORT\n
+;; 12c0 03: UNEXPECTED FAULT\n
+;; 12d8 05/06/88
+;; 12e4 3FP13
+;; 12ec 3.2.1
+;; 12f4 (c) 1984, 1987, 1988 AT&T
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Main Entry Point
@@ -515,11 +520,14 @@
 000017ba: 2c 5c 7f 7e 53 00 00                           CALL (%sp),$0x537e
 000017c1: 3c 4f ed 0d 1c a1 7f a0 03 00 02               CMPW &0xa11c0ded,$0x20003a0
 000017cc: 77 0b                                          BNEB &0xb <0x17d7>
+
 000017ce: 2c 5c ef ac 03 00 02                           CALL (%sp),*$0x20003ac
 000017d5: 7b 32                                          BRB &0x32 <0x1807>
 000017d7: 3c 4f 05 b2 a6 5d 7f a0 03 00 02               CMPW &0x5da6b205,$0x20003a0
 000017e2: 77 1f                                          BNEB &0x1f <0x1801>
 000017e4: 83 ef a0 04 00 00                              CLRB *$0x4a0
+
+;; Call the boot code that was loaded at 0x2004000
 000017ea: 2c 5c 7f 00 40 00 02                           CALL (%sp),$0x2004000
 000017f1: a0 4f ef be ed fe                              PUSHW &0xfeedbeef
 000017f7: 2c cc fc 7f fe 58 00 00                        CALL -4(%sp),$0x58fe
@@ -801,6 +809,9 @@
 00001dd7: 24 7f 89 1e 00 00                              JMP $0x1e89
 00001ddd: 86 7f 44 12 00 02 e4 40                        MOVH $0x2001244,{word}%r0
 00001de5: d0 1a 40 40                                    LLSW3 &0x1a,%r0,%r0
+;; Probe the buffered microbus, looking for the microbus card's ID.
+;; This will in turn read a byte from 0x6014003, 0xa014003, 0xe014003,
+;; and 0x12014003.
 00001de9: 87 80 03 40 01 06 e2 40                        MOVB 0x6014003(%r0),{uhalf}%r0
 00001df1: 86 40 59                                       MOVH %r0,(%fp)
 00001df4: 87 ef e0 04 00 00 e0 40                        MOVB *$0x4e0,{uword}%r0
@@ -873,12 +884,21 @@
 00001f76: 86 ff 7f 44 12 00 02                           MOVH &-1,$0x2001244
 00001f7d: 2c 5c ef c0 04 00 00                           CALL (%sp),*$0x4c0
 00001f84: 24 7f 0d 20 00 00                              JMP $0x200d
+;; Read the Buffered Microbus Slot, looking for VCACHE
+
+;; %r0 gets 0xfe
 00001f8a: 87 7f 00 00 c0 01 e2 40                        MOVB $0x1c00000,{uhalf}%r0
+
+;; (%fp) gets 0xfe
 00001f92: 86 40 59                                       MOVH %r0,(%fp)
 00001f95: 87 ef e0 04 00 00 e0 40                        MOVB *$0x4e0,{uword}%r0
 00001f9d: d0 05 40 40                                    LLSW3 &0x5,%r0,%r0
 00001fa1: 9c 7f 90 04 00 00 40                           ADDW2 $0x490,%r0
+
+;; %r1 gets 0xfe00
 00001fa8: 84 4f 00 fe 00 00 41                           MOVW &0xfe00,%r1
+
+;; 
 00001faf: 86 e2 41 e0 41                                 MOVH {uhalf}%r1,{uword}%r1
 00001fb4: 86 e2 59 e0 42                                 MOVH {uhalf}(%fp),{uword}%r2
 00001fb9: b0 42 41                                       ORW2 %r2,%r1
@@ -936,7 +956,8 @@
 ;; Function
 
 000020ca: 10 49                                          SAVE %fp
-000020cc: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
+000020cc: 9c 4f 00 00 00 00 4c                           ADDW1 &0x0,%sp
+;; Check for UBUS TIMER TIMEOUT bit in CSR
 000020d3: 38 7f 60 40 04 00 04                           BITW $0x44060,&0x4
 000020da: 7f 0a                                          BEB &0xa <0x20e4>
 000020dc: 80 7f 68 40 04 00                              CLRW $0x44068
@@ -1651,6 +1672,7 @@
 00002c06: a0 4f 37 09 00 00                              PUSHW &0x937
 00002c0c: 2c cc fc 7f b4 3b 00 00                        CALL -4(%sp),$0x3bb4
 00002c14: 7b 33                                          BRB &0x33 <0x2c47>
+;; print "INTEGRAL"
 00002c16: a0 4f 45 09 00 00                              PUSHW &0x945
 00002c1c: 2c cc fc 7f b4 3b 00 00                        CALL -4(%sp),$0x3bb4
 00002c24: 7b 23                                          BRB &0x23 <0x2c47>
@@ -1674,6 +1696,7 @@
 00002c62: 2c cc f8 7f e8 6f 00 00                        CALL -8(%sp),$0x6fe8
 00002c6a: 28 40                                          TSTW %r0
 00002c6c: 7f 25                                          BEB &0x25 <0x2c91>
+;; Print name
 00002c6e: a0 4f 68 09 00 00                              PUSHW &0x968
 00002c74: 04 a9 ac 00 40                                 MOVAW 0xac(%fp),%r0
 00002c79: 86 44 e4 41                                    MOVH %r4,{word}%r1
@@ -1762,10 +1785,12 @@
 00002dd0: 7b 0c                                          BRB &0xc <0x2ddc>
 00002dd2: fa 5f ff 00 44 e3 40                           ANDH3 &0xff,%r4,{ubyte}%r0
 00002dd9: 87 40 45                                       MOVB %r0,%r5
+;; Print "Enter Load Device Option Number [%d"
 00002ddc: a0 4f 74 09 00 00                              PUSHW &0x974
 00002de2: 2c cc fc 7f b4 3b 00 00                        CALL -4(%sp),$0x3bb4
 00002dea: a0 4f 96 09 00 00                              PUSHW &0x996
 00002df0: 87 45 e0 40                                    MOVB %r5,{uword}%r0
+;; Print device number
 00002df4: a0 40                                          PUSHW %r0
 00002df6: 2c cc f8 7f b4 3b 00 00                        CALL -8(%sp),$0x3bb4
 00002dfe: 04 a9 ac 00 40                                 MOVAW 0xac(%fp),%r0
@@ -1785,6 +1810,7 @@
 00002e38: 9c 41 40                                       ADDW2 %r1,%r0
 00002e3b: 9c 06 40                                       ADDW2 &0x6,%r0
 00002e3e: a0 40                                          PUSHW %r0
+;; Print name
 00002e40: 2c cc f8 7f b4 3b 00 00                        CALL -8(%sp),$0x3bb4
 00002e48: a0 4f a7 09 00 00                              PUSHW &0x9a7
 00002e4e: 2c cc fc 7f b4 3b 00 00                        CALL -4(%sp),$0x3bb4
@@ -1924,6 +1950,8 @@
 00003063: 87 48 e0 41                                    MOVB %r8,{uword}%r1
 00003067: 3c 41 40                                       CMPW %r1,%r0
 0000306a: 5b a5                                          BLUB &0xa5 <0x300f>
+
+;; Print device table
 0000306c: a0 4f d3 09 00 00                              PUSHW &0x9d3
 00003072: 2c cc fc 7f b4 3b 00 00                        CALL -4(%sp),$0x3bb4
 0000307a: a0 4f ee 09 00 00                              PUSHW &0x9ee
@@ -2430,24 +2458,28 @@
 000037a2: 87 00 7f 25 04 00 02                           MOVB &0x0,$0x2000425
 000037a9: 2c 5c 7f bc 6d 00 00                           CALL (%sp),$0x6dbc
 000037b0: 30 c8                                          RETPS 
+;;
 000037b2: 84 ce fc 40                                    MOVW -4(%isp),%r0
 000037b6: 84 50 7f 10 04 00 02                           MOVW (%r0),$0x2000410
 000037bd: 84 c0 04 7f 14 04 00 02                        MOVW 4(%r0),$0x2000414
 000037c5: 87 08 7f 25 04 00 02                           MOVB &0x8,$0x2000425
 000037cc: 2c 5c 7f bc 6d 00 00                           CALL (%sp),$0x6dbc
 000037d3: 30 c8                                          RETPS 
+;;
 000037d5: 84 ce fc 40                                    MOVW -4(%isp),%r0
 000037d9: 84 50 7f 10 04 00 02                           MOVW (%r0),$0x2000410
 000037e0: 84 c0 04 7f 14 04 00 02                        MOVW 4(%r0),$0x2000414
 000037e8: 87 09 7f 25 04 00 02                           MOVB &0x9,$0x2000425
 000037ef: 2c 5c 7f bc 6d 00 00                           CALL (%sp),$0x6dbc
 000037f6: 30 c8                                          RETPS 
+;;
 000037f8: 84 ce fc 40                                    MOVW -4(%isp),%r0
 000037fc: 84 50 7f 10 04 00 02                           MOVW (%r0),$0x2000410
 00003803: 84 c0 04 7f 14 04 00 02                        MOVW 4(%r0),$0x2000414
 0000380b: 87 0a 7f 25 04 00 02                           MOVB &0xa,$0x2000425
 00003812: 2c 5c 7f bc 6d 00 00                           CALL (%sp),$0x6dbc
 00003819: 30 c8                                          RETPS 
+;;
 0000381b: 84 ce fc 40                                    MOVW -4(%isp),%r0
 0000381f: 84 50 7f 10 04 00 02                           MOVW (%r0),$0x2000410
 00003826: 84 c0 04 7f 14 04 00 02                        MOVW 4(%r0),$0x2000414
@@ -2486,6 +2518,8 @@
 000038df: 84 c0 1c 7f 1c 04 00 02                        MOVW 28(%r0),$0x200041c
 000038e7: 2c 5c 7f 48 6f 00 00                           CALL (%sp),$0x6f48
 000038ee: 30 c8                                          RETPS 
+
+;; Handle error
 000038f0: 84 cc fc 7f 10 04 00 02                        MOVW -4(%sp),$0x2000410
 000038f8: 84 cc f8 7f 14 04 00 02                        MOVW -8(%sp),$0x2000414
 00003900: 84 40 7f 1c 04 00 02                           MOVW %r0,$0x200041c
@@ -2666,22 +2700,37 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Function
+;;
+;; Shut down the power supply if the CSR Power Down Request bit is set.
+;;
 
 00003b68: 10 49                                          SAVE %fp
 00003b6a: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00003b71: 2b ef 10 05 00 00                              TSTB *$0x510
 00003b77: 77 19                                          BNEB &0x19 <0x3b90>
+
+;; Check for power down request
 00003b79: 38 7f 00 40 04 00 02                           BITW $0x44000,&0x2
 00003b80: 7f 10                                          BEB &0x10 <0x3b90>
 00003b82: 80 ef 8c 04 00 00                              CLRW *$0x48c
+
+;; Force a power-down if bit 2 is set
 00003b88: 80 7f 44 40 04 00                              CLRW $0x44044
 00003b8e: 7b 00                                          BRB &0x0 <0x3b8e>
+
+;; No power down is requested.
+
+;; 2000418 is a pointer to the UART (0x49000)
 00003b90: 84 7f 18 04 00 02 40                           MOVW $0x2000418,%r0
+
+;; Check some state in the UART
 00003b97: 3b c0 01 01                                    BITB 1(%r0),&0x1
 00003b9b: 7f 10                                          BEB &0x10 <0x3bab>
 00003b9d: 84 7f 18 04 00 02 40                           MOVW $0x2000418,%r0
+
 00003ba4: 87 c0 03 e0 40                                 MOVB 3(%r0),{uword}%r0
 00003ba9: 7b 06                                          BRB &0x6 <0x3baf>
+
 00003bab: 80 40                                          CLRW %r0
 00003bad: 7b 02                                          BRB &0x2 <0x3baf>
 00003baf: 18 49                                          RESTORE %fp
@@ -4053,6 +4102,7 @@
 00004d84: c8 03 0d 0f 4b                                 INSFW &0x3,&0xd,&0xf,%psw
 00004d89: 70                                             NOP 
 00004d8a: 84 4f 94 12 00 02 7f 00 00 00 02               MOVW &0x2001294,$0x2000000
+;; Request Queue Pointer is 20037f4
 00004d95: 84 4f f4 37 00 02 7f 94 12 00 02               MOVW &0x20037f4,$0x2001294
 00004da0: 84 4f ec 37 00 02 7f 98 12 00 02               MOVW &0x20037ec,$0x2001298
 00004dab: 87 02 7f 9c 12 00 02                           MOVB &0x2,$0x200129c
@@ -4149,6 +4199,14 @@
 00004f0b: cc 03 0d 4b 7f a0 12 00 02                     EXTFW &0x3,&0xd,%psw,$0x20012a0
 00004f14: c8 03 0d 0f 4b                                 INSFW &0x3,&0xd,&0xf,%psw
 00004f19: 70                                             NOP 
+
+;; Opcode a (10)
+
+
+;;   bytect = 20037f4-20037f5
+;;   subdev = 20037f6
+;;   opcode = 20037f7
+;;   addr   = 20037f8-20037fb
 00004f1a: 87 0a 7f f7 37 00 02                           MOVB &0xa,$0x20037f7
 00004f21: 87 77 7f f6 37 00 02                           MOVB 7(%ap),$0x20037f6
 00004f28: 87 5f ff 00 7f ef 37 00 02                     MOVB &0xff,$0x20037ef
@@ -4160,6 +4218,8 @@
 00004f45: 7b 12                                          BRB &0x12 <0x4f57>
 00004f47: ff 01 73 40                                    SUBB3 &0x1,3(%ap),%r0
 00004f4b: d0 15 40 40                                    LLSW3 &0x15,%r0,%r0
+
+;; Trigger express job
 00004f4f: 87 80 01 00 20 00 e0 64                        MOVB 0x200001(%r0),{uword}4(%fp)
 00004f57: 80 64                                          CLRW 4(%fp)
 00004f59: 7b 2e                                          BRB &0x2e <0x4f87>
@@ -4206,6 +4266,8 @@
 00004ff0: 7b 2d                                          BRB &0x2d <0x501d>
 00004ff2: 2b ca 0f                                       TSTB 15(%ap)
 00004ff5: 77 0b                                          BNEB &0xb <0x5000>
+
+;; Opcode 0xb
 00004ff7: 87 0b 7f f7 37 00 02                           MOVB &0xb,$0x20037f7
 00004ffe: 7b 1f                                          BRB &0x1f <0x501d>
 00005000: 84 7f a4 12 00 02 ef 94 04 00 00               MOVW $0x20012a4,*$0x494
@@ -4220,6 +4282,8 @@
 00005035: 70                                             NOP 
 00005036: 80 40                                          CLRW %r0
 00005038: 24 7f 21 51 00 00                              JMP $0x5121
+
+
 0000503e: 83 63                                          CLRB 3(%fp)
 00005040: 87 73 e0 40                                    MOVB 3(%ap),{uword}%r0
 00005044: d4 04 40 40                                    LRSW3 &0x4,%r0,%r0
@@ -4239,21 +4303,29 @@
 00005082: 77 14                                          BNEB &0x14 <0x5096>
 00005084: ff 01 62 40                                    SUBB3 &0x1,2(%fp),%r0
 00005088: d0 15 40 40                                    LLSW3 &0x15,%r0,%r0
+
+;; Trigger the job
 0000508c: 87 80 01 00 20 00 e0 64                        MOVB 0x200001(%r0),{uword}4(%fp)
 00005094: 7b 11                                          BRB &0x11 <0x50a5>
+
 00005096: 87 61 e0 40                                    MOVB 1(%fp),{uword}%r0
 0000509a: d0 1a 40 40                                    LLSW3 &0x1a,%r0,%r0
 0000509e: 87 01 80 37 00 01 06                           MOVB &0x1,0x6010037(%r0)
+
+
 000050a5: 80 64                                          CLRW 4(%fp)
 000050a7: 7b 2a                                          BRB &0x2a <0x50d1>
+
 000050a9: a0 01                                          PUSHW &0x1
 000050ab: 2c cc fc ef 28 05 00 00                        CALL -4(%sp),*$0x528
+
 000050b3: 3f 5f ff 00 7f ef 37 00 02                     CMPB &0xff,$0x20037ef
 000050bc: 7f 13                                          BEB &0x13 <0x50cf>
 000050be: 2b 7f ef 37 00 02                              TSTB $0x20037ef
 000050c4: 77 07                                          BNEB &0x7 <0x50cb>
 000050c6: 87 01 59                                       MOVB &0x1,(%fp)
 000050c9: 7b 0f                                          BRB &0xf <0x50d8>
+
 000050cb: 83 59                                          CLRB (%fp)
 000050cd: 7b 0b                                          BRB &0xb <0x50d8>
 000050cf: 90 64                                          INCW 4(%fp)
@@ -4291,27 +4363,47 @@
 
 00005126: 10 49                                          SAVE %fp
 00005128: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
+
+;; Check if 2000424 is 0.
 0000512f: 2b ef 10 05 00 00                              TSTB *$0x510
 00005135: 77 19                                          BNEB &0x19 <0x514e>
+
+;; If it is, 
 00005137: 38 7f 00 40 04 00 02                           BITW $0x44000,&0x2
 0000513e: 7f 10                                          BEB &0x10 <0x514e>
 00005140: 80 ef 8c 04 00 00                              CLRW *$0x48c
 00005146: 80 7f 44 40 04 00                              CLRW $0x44044
 0000514c: 7b 00                                          BRB &0x0 <0x514c>
+
+;; Is UNIX interval timeout set?
 0000514e: 38 7f 00 40 04 00 01                           BITW $0x44000,&0x1
 00005155: 77 3b                                          BNEB &0x3b <0x5190>
+
+;; Is PIR 8 set?
 00005157: 38 7f 00 40 04 00 6f 40                        BITW $0x44000,&0x40
 0000515f: 77 31                                          BNEB &0x31 <0x5190>
+
+;; Is PIR 9 set?
 00005161: 38 7f 00 40 04 00 20                           BITW $0x44000,&0x20
 00005168: 77 28                                          BNEB &0x28 <0x5190>
+
+;; Is the DUART interrupt set?
 0000516a: 38 7f 00 40 04 00 08                           BITW $0x44000,&0x8
 00005171: 77 1f                                          BNEB &0x1f <0x5190>
+
+;; Did DUART complete DMA?
 00005173: 38 7f 00 40 04 00 10                           BITW $0x44000,&0x10
 0000517a: 77 16                                          BNEB &0x16 <0x5190>
+
+;; Is Operator Interrupt Level 15 set?
 0000517c: 38 7f 00 40 04 00 04                           BITW $0x44000,&0x4
 00005183: 77 0d                                          BNEB &0xd <0x5190>
+
+;; Is single-bit error clear?
 00005185: 38 7f 40 40 04 00 5f 80 00                     BITW $0x44040,&0x80
 0000518e: 7f 47                                          BEB &0x47 <0x51d5>
+
+;; Hmm, none of those. Call 566a with argument 0x80
 00005190: a0 5f 80 00                                    PUSHW &0x80
 00005194: 2c cc fc 7f 6a 56 00 00                        CALL -4(%sp),$0x566a
 0000519c: a0 4f 7c 0e 00 00                              PUSHW &0xe7c
@@ -4323,6 +4415,8 @@
 000051c5: a0 4f ef be ed fe                              PUSHW &0xfeedbeef
 000051cb: 2c cc fc 7f fe 58 00 00                        CALL -4(%sp),$0x58fe
 000051d3: 7b 09                                          BRB &0x9 <0x51dc>
+
+;; Just set the flag in 20012a8 and return
 000051d5: 84 01 7f a8 12 00 02                           MOVW &0x1,$0x20012a8
 000051dc: 18 49                                          RESTORE %fp
 000051de: 08                                             RET 
@@ -4592,6 +4686,8 @@
 0000565f: 2c cc f4 7f dc 49 00 00                        CALL -12(%sp),$0x49dc
 00005667: 18 49                                          RESTORE %fp
 00005669: 08                                             RET 
+
+;; Function
 0000566a: 10 49                                          SAVE %fp
 0000566c: 9c 4f 04 00 00 00 4c                           ADDW2 &0x4,%sp
 00005673: 84 5a 7f 98 0c 00 02                           MOVW (%ap),$0x2000c98
@@ -4736,6 +4832,8 @@
 000058fb: 70                                             NOP 
 000058fc: 70                                             NOP 
 000058fd: 70                                             NOP 
+
+
 000058fe: 10 49                                          SAVE %fp
 00005900: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00005907: 2b ef 10 05 00 00                              TSTB *$0x510
@@ -5553,6 +5651,7 @@
 000063d7: 7b 10                                          BRB &0x10 <0x63e7>
 000063d9: ff 01 69 40                                    SUBB3 &0x1,9(%fp),%r0
 000063dd: d0 15 40 40                                    LLSW3 &0x15,%r0,%r0
+;; Reset
 000063e1: 83 80 05 00 20 00                              CLRB 0x200005(%r0)
 000063e7: 3c 4f ef be ed fe 7f a0 03 00 02               CMPW &0xfeedbeef,$0x20003a0
 000063f2: 77 06                                          BNEB &0x6 <0x63f8>
@@ -5568,6 +5667,8 @@
 0000641a: 18 49                                          RESTORE %fp
 0000641c: 08                                             RET 
 0000641d: 70                                             NOP 
+
+
 0000641e: 10 49                                          SAVE %fp
 00006420: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00006427: a0 4f 7c 0e 00 00                              PUSHW &0xe7c
@@ -5583,6 +5684,7 @@
 00006465: 08                                             RET 
 00006466: 10 49                                          SAVE %fp
 00006468: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
+;; Print "FW ERROR 2-03:  UNEXPECTED FAULT"
 0000646f: a0 4f 7c 0e 00 00                              PUSHW &0xe7c
 00006475: a0 4f a2 11 00 00                              PUSHW &0x11a2
 0000647b: 2c cc f8 7f b4 3b 00 00                        CALL -8(%sp),$0x3bb4
@@ -6149,8 +6251,17 @@
 00006db8: 18 47                                          RESTORE %r7
 00006dba: 08                                             RET 
 00006dbb: 70                                             NOP 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Function
+;;
+;; This appears to have something to do with probing the buffered microbus.
+;;
+
 00006dbc: 10 48                                          SAVE %r8
 00006dbe: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
+;; Call function at 0x5126
 00006dc5: 2c 5c ef a4 03 00 02                           CALL (%sp),*$0x20003a4
 00006dcc: 80 48                                          CLRW %r8
 00006dce: 7b 34                                          BRB &0x34 <0x6e02>
@@ -6171,6 +6282,8 @@
 00006e09: 08                                             RET 
 00006e0a: 70                                             NOP 
 00006e0b: 70                                             NOP 
+
+
 00006e0c: 10 49                                          SAVE %fp
 00006e0e: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00006e15: a0 5f 80 00                                    PUSHW &0x80
@@ -6188,12 +6301,16 @@
 00006e5b: 70                                             NOP 
 00006e5c: 70                                             NOP 
 00006e5d: 70                                             NOP 
+
+
 00006e5e: 10 49                                          SAVE %fp
 00006e60: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00006e67: 2c 5c ef 28 04 00 02                           CALL (%sp),*$0x2000428
 00006e6e: 18 49                                          RESTORE %fp
 00006e70: 08                                             RET 
 00006e71: 70                                             NOP 
+
+
 00006e72: 10 49                                          SAVE %fp
 00006e74: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00006e7b: 38 7f 20 40 04 00 5f 80 00                     BITW $0x44020,&0x80
@@ -6236,6 +6353,8 @@
 00006f45: 08                                             RET 
 00006f46: 70                                             NOP 
 00006f47: 70                                             NOP 
+
+;; Some sort of error handler
 00006f48: 10 49                                          SAVE %fp
 00006f4a: 9c 4f 00 00 00 00 4c                           ADDW2 &0x0,%sp
 00006f51: f8 03 7f 10 04 00 02 40                        ANDW3 &0x3,$0x2000410,%r0
