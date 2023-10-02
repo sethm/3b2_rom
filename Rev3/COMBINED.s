@@ -479,13 +479,25 @@
 000016b7: 2c 5c 7f 00 6a 00 00                           CALL (%sp),$0x6a00
 000016be: 80 7f 40 04 00 02                              CLRW $0x2000440
 000016c4: 80 7f 00 00 00 02                              CLRW $0x2000000
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; We see if we can write into 0x3000000. Physically, that maps to bit 24.
+;; If this system cannot address 24 bits, we would strip off the high bit 
+;; and wrap around, such that we're actually writing to RAM location 0.
 000016ca: 84 4f 32 30 6d 61 7f 00 00 00 03               MOVW &0x616d3032,$0x3000000
 000016d5: 3c 4f 32 30 6d 61 7f 00 00 00 02               CMPW &0x616d3032,$0x2000000
 000016e0: 77 0b                                          BNEB &0xb <0x16eb>
+
+;; If they were the same, system type is '2', I'm guessing this means a 3B2/500.
 000016e2: 87 02 7f 94 0c 00 02                           MOVB &0x2,$0x2000c94
 000016e9: 7b 09                                          BRB &0x9 <0x16f2>
+
+;; Otherweise, system type is set to '4'. This is just a guess so far.
 000016eb: 87 04 7f 94 0c 00 02                           MOVB &0x4,$0x2000c94
+;; Clear the data that we wrote to 0x3000000 above
 000016f2: 80 7f 00 00 00 03                              CLRW $0x3000000
+
+;; 
 000016f8: 80 7f 60 40 04 00                              CLRW $0x44060
 000016fe: 80 7f 5c 40 04 00                              CLRW $0x4405c
 00001704: 83 7f 0d 90 04 00                              CLRB $0x4900d
@@ -494,12 +506,17 @@
 00001717: 80 7f 28 40 04 00                              CLRW $0x44028
 0000171d: 80 7f 6c 40 04 00                              CLRW $0x4406c
 00001723: 80 7f 68 40 04 00                              CLRW $0x44068
-00001729: 84 7f 00 ff 04 00 45                           MOVW $0x4ff00,%r5
+00001729: 84 7f 00 ff 04 00 45                           MOVW $0x4ff00,%r5             ; Put MMU version in %r5
+;; But we don't do anything with it? I guess we just want to see if it faults.
+
+;; Now we check to see if bit 4 is set in the CSR, that's the bus timeout.
 00001730: 38 7f 60 40 04 00 04                           BITW $0x44060,&0x4
 00001737: 7f 10                                          BEB &0x10 <0x1747>
 00001739: 80 7f 68 40 04 00                              CLRW $0x44068
 0000173f: 80 7f 6c 40 04 00                              CLRW $0x4406c
 00001745: 7b 09                                          BRB &0x9 <0x174e>
+;; 2000c94 is magic, I think it holds the type of system we're running?
+;; I think 0x11 means we're running a 3B2/700. I hope.
 00001747: 87 11 7f 94 0c 00 02                           MOVB &0x11,$0x2000c94
 0000174e: 3c 4f ed 0d 1c a1 7f a0 03 00 02               CMPW &0xa11c0ded,$0x20003a0
 00001759: 7f 2f                                          BEB &0x2f <0x1788>
@@ -753,6 +770,7 @@
 00001c87: 84 4f 98 6f 00 00 ef 98 04 00 00               MOVW &0x6f98,*$0x498
 00001c92: 84 4f 98 6f 00 00 ef 0c 05 00 00               MOVW &0x6f98,*$0x50c
 00001c9d: 2c 5c 7f 7e 53 00 00                           CALL (%sp),$0x537e
+;;
 00001ca4: 84 4f ca 20 00 00 ef 98 04 00 00               MOVW &0x20ca,*$0x498
 00001caf: 87 01 ef e0 04 00 00                           MOVB &0x1,*$0x4e0
 00001cb6: 82 7f 44 12 00 02                              CLRH $0x2001244
@@ -1174,10 +1192,10 @@
 0000242c: 10 49                                          SAVE %fp
 0000242e: 9c 4f 18 00 00 00 4c                           ADDW2 &0x18,%sp
 00002435: 80 c9 14                                       CLRW 20(%fp)
-00002438: 84 4f 00 00 20 00 59                           MOVW &0x200000,(%fp)
-0000243f: 84 4f 00 00 80 00 64                           MOVW &0x800000,4(%fp)
-00002446: 84 4f 00 00 40 00 68                           MOVW &0x400000,8(%fp)
-0000244d: 84 4f 00 00 00 01 6c                           MOVW &0x1000000,12(%fp)
+00002438: 84 4f 00 00 20 00 59                           MOVW &0x200000,(%fp)    ;; 2MB
+0000243f: 84 4f 00 00 80 00 64                           MOVW &0x800000,4(%fp)   ;; 8MB
+00002446: 84 4f 00 00 40 00 68                           MOVW &0x400000,8(%fp)   ;; 4MB
+0000244d: 84 4f 00 00 00 01 6c                           MOVW &0x1000000,12(%fp) ;; 16MB
 00002454: 80 c9 10                                       CLRW 16(%fp)
 00002457: 7b 10                                          BRB &0x10 <0x2467>
 
@@ -5411,15 +5429,22 @@
 00005ff5: 78                                             RSB 
 00005ff6: 32 ff 4f 00 ff                                 SPOP &0xff004fff
 00005ffb: 78                                             RSB 
+
+;; Function
 00005ffc: 10 49                                          SAVE %fp
 00005ffe: 9c 4f 10 00 00 00 4c                           ADDW2 &0x10,%sp
+
+;; Get the memory size of the system and put it in %r0
 00006005: 2c 5c 7f 2c 24 00 00                           CALL (%sp),$0x242c
+;; Store memory size in local variable
 0000600c: 84 40 59                                       MOVW %r0,(%fp)
+;; Is the memory 16MB?
 0000600f: 3c 4f 00 00 00 01 59                           CMPW &0x1000000,(%fp)
 00006016: 5f 2d                                          BLEUB &0x2d <0x6043>
 00006018: fb 10 7f 94 0c 00 02 40                        ANDB3 &0x10,$0x2000c94,%r0
 00006020: 3c 10 40                                       CMPW &0x10,%r0
 00006023: 7f 20                                          BEB &0x20 <0x6043>
+;; "Memory size not supported"
 00006025: a0 4f 90 10 00 00                              PUSHW &0x1090
 0000602b: d4 14 59 40                                    LRSW3 &0x14,(%fp),%r0
 0000602f: a0 40                                          PUSHW %r0
@@ -5435,15 +5460,20 @@
 0000605e: 28 40                                          TSTW %r0
 00006060: 77 18                                          BNEB &0x18 <0x6078>
 00006062: a0 4f ea 10 00 00                              PUSHW &0x10ea
+
+;; Print "FW ERROR 2-13: MEMORY BOARD NOT SUPPORTED ON THIS SYSTEM"
 00006068: 2c cc fc 7f b4 3b 00 00                        CALL -4(%sp),$0x3bb4
 00006070: 80 40                                          CLRW %r0
 00006072: 24 7f 1a 64 00 00                              JMP $0x641a
+;; Unknown local variable (byte)
 00006078: 83 6e                                          CLRB 14(%fp)
+;; Unknown local variable (halfword)
 0000607a: 82 6c                                          CLRH 12(%fp)
 0000607c: 87 01 69                                       MOVB &0x1,9(%fp)
 0000607f: 7b 4a                                          BRB &0x4a <0x60c9>
 00006081: 87 69 e0 40                                    MOVB 9(%fp),{uword}%r0
 00006085: d0 02 40 40                                    LLSW3 &0x2,%r0,%r0
+;; Get fault register 2 (RAM size)
 00006089: cc 00 02 80 00 d0 04 00 40                     EXTFW &0x0,&0x2,0x4d000(%r0),%r0
 00006092: 28 40                                          TSTW %r0
 00006094: 77 07                                          BNEB &0x7 <0x609b>
@@ -5452,9 +5482,12 @@
 0000609b: 3f 01 6e                                       CMPB &0x1,14(%fp)
 0000609e: 77 09                                          BNEB &0x9 <0x60a7>
 000060a0: 87 69 e2 40                                    MOVB 9(%fp),{uhalf}%r0
+
+;; Memory size goes into 12(%fp)
 000060a4: 86 40 6c                                       MOVH %r0,12(%fp)
 000060a7: 2a 6c                                          TSTH 12(%fp)
 000060a9: 7f 1e                                          BEB &0x1e <0x60c7>
+;; Print "FW ERROR 2-12: MEMORY GAP IN SLOT %d"
 000060ab: a0 4f 25 11 00 00                              PUSHW &0x1125
 000060b1: 86 6c e4 40                                    MOVH 12(%fp),{word}%r0
 000060b5: a0 40                                          PUSHW %r0
